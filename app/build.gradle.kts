@@ -69,7 +69,7 @@ android {
     androidResources.additionalParameters += listOf(
         "--allow-reserved-package-id",
         "--package-id",
-        "0xAA"
+        "0x55"
     )
 }
 
