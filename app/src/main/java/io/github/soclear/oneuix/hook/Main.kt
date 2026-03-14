@@ -93,6 +93,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 }
             }
 
+            Package.HEALTH_MONITOR -> {
+                if (preference.other.bypassHealthMonitorCountryCheck) {
+                    HealthMonitor.bypassCountryCheck(lpparam)
+                }
+            }
+
             Package.INCALLUI -> {
                 if (preference.call.supportVoiceCallRecording) {
                     Call.supportVoiceCallRecording(
@@ -308,12 +314,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             Package.VIDEO -> {
                 if (preference.other.showMorePlaybackSpeeds) {
                     Video.showMorePlaybackSpeeds(lpparam)
-                }
-            }
-
-            Package.HEALTH_MONITOR -> {
-                if (preference.other.bypassHealthMonitorCountryCheck) {
-                    HealthMonitor.bypassCountryCheck(lpparam)
                 }
             }
         }

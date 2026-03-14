@@ -8,6 +8,7 @@ object Package {
     const val DIALER = "com.samsung.android.dialer"
     const val DUAL_APP = "com.samsung.android.da.daagent"
     const val GALLERY = "com.sec.android.gallery3d"
+    const val HEALTH_MONITOR = "com.samsung.android.shealthmonitor"
     const val INCALLUI = "com.samsung.android.incallui"
     const val LAUNCHER = "com.sec.android.app.launcher"
     const val MESSAGING = "com.samsung.android.messaging"
@@ -20,5 +21,4 @@ object Package {
     const val THEME_CENTER = "com.samsung.android.themecenter"
     const val WEATHER = "com.sec.android.daemonapp"
     const val VIDEO = "com.samsung.android.video"
-    const val HEALTH_MONITOR = "com.samsung.android.shealthmonitor"
 }

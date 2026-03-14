@@ -109,7 +109,7 @@ fun DetailPaneOther(
             onCheckedChange = { onEvent(OtherEvent.NoAIWatermark(it)) }
         )
         SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.person_pin_circle),
+            icon = ImageVector.vectorResource(id = R.drawable.health_metrics),
             title = stringResource(id = R.string.bypassHealthMonitorCountryCheck_title),
             summary = stringResource(id = R.string.bypassHealthMonitorCountryCheck_summary),
             checked = uiState.bypassHealthMonitorCountryCheck,
