@@ -158,6 +158,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.photoRetouching.noAIWatermark) {
                     PhotoRetouching.noAIWatermark()
                 }
+
+                if (preference.photoRetouching.enableSketch) {
+                    PhotoRetouching.enableSketch(lpparam)
+                }
             }
 
             Package.SETTINGS -> {

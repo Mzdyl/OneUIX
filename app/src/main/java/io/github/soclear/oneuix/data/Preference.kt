@@ -176,6 +176,7 @@ data class Preference(
     @Serializable
     data class PhotoRetouching(
         val noAIWatermark: Boolean = true,
+        val enableSketch: Boolean = false,
     )
 
     @Serializable

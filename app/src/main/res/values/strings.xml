@@ -114,6 +114,8 @@
     <string name="hideNavigationBarGestureHint_summary">Hide the bottom gesture hint bar for full-screen experience (requires root)</string>
     <string name="enableGoogleSearch_title">Enable Circle to Search</string>
     <string name="enableGoogleSearch_summary">Enable Google Circle to Search on Chinese region devices</string>
+    <string name="enableSketch_title">Enable Sketch to Image</string>
+    <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
 
     <string name="module_disabled_tip">Please enable this module in LSPosed</string>
     <string name="close">Close</string>

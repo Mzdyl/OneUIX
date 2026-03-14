@@ -26,6 +26,14 @@ fun DetailPanePhotoRetouching(
             .verticalScroll(rememberScrollState())
     ) {
         SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.format_paint),
+            title = stringResource(id = R.string.enableSketch_title),
+            summary = stringResource(id = R.string.enableSketch_summary),
+            checked = uiState.enableSketch,
+            onCheckedChange = { onEvent(PhotoRetouchingEvent.EnableSketch(it)) }
+        )
+
+        SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.branding_watermark),
             title = stringResource(id = R.string.noAIWatermark_title),
             checked = uiState.noAIWatermark,
@@ -36,12 +44,19 @@ fun DetailPanePhotoRetouching(
 
 sealed interface PhotoRetouchingEvent {
     @JvmInline
+    value class EnableSketch(val value: Boolean) : PhotoRetouchingEvent
+    @JvmInline
     value class NoAIWatermark(val value: Boolean) : PhotoRetouchingEvent
 }
 
 fun SettingViewModel.onPhotoRetouchingEvent(event: PhotoRetouchingEvent) {
     updateData { preference ->
         when (event) {
+            is PhotoRetouchingEvent.EnableSketch -> preference.copy(
+                photoRetouching = preference.photoRetouching.copy(
+                    enableSketch = event.value
+                )
+            )
             is PhotoRetouchingEvent.NoAIWatermark -> preference.copy(
                 photoRetouching = preference.photoRetouching.copy(
                     noAIWatermark = event.value
