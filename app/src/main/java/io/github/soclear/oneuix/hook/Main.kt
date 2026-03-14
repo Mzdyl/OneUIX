@@ -50,6 +50,14 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.android.disableShareUserCheck) {
                     Android.disableShareUserCheck(lpparam)
                 }
+
+                if (preference.android.allowGms) {
+                    Android.allowGms(lpparam)
+                }
+
+                if (preference.android.fcmFix) {
+                    Android.fcmFix(lpparam)
+                }
             }
 
             Package.BROWSER -> {

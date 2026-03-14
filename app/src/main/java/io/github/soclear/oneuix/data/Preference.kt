@@ -34,6 +34,8 @@ data class Preference(
         val disableAsksRestriction: Boolean = false,
         val disableSignVerification: Boolean = false,
         val disableShareUserCheck: Boolean = false,
+        val allowGms: Boolean = false,
+        val fcmFix: Boolean = false,
     )
 
     @Serializable

@@ -121,6 +121,22 @@ fun DetailPaneAndroid(
                 onCheckedChange = { onEvent(AndroidEvent.DisableShareUserCheck(it)) }
             )
         }
+        // GMS/FCM 限制绕过
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.five_g),
+            title = stringResource(id = R.string.allowGms_title),
+            summary = stringResource(id = R.string.allowGms_summary),
+            checked = uiState.allowGms,
+            onCheckedChange = { onEvent(AndroidEvent.AllowGms(it)) }
+        )
+        // FCM 强制唤醒
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.notifications),
+            title = stringResource(id = R.string.fcmFix_title),
+            summary = stringResource(id = R.string.fcmFix_summary),
+            checked = uiState.fcmFix,
+            onCheckedChange = { onEvent(AndroidEvent.FcmFix(it)) }
+        )
     }
 }
 
@@ -148,6 +164,12 @@ sealed interface AndroidEvent {
 
     @JvmInline
     value class DisableShareUserCheck(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class AllowGms(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class FcmFix(val value: Boolean) : AndroidEvent
 }
 
 fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
@@ -213,6 +235,22 @@ fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
                 preference.copy(
                     android = preference.android.copy(
                         disableShareUserCheck = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.AllowGms -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        allowGms = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.FcmFix -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        fcmFix = event.value
                     )
                 )
             }

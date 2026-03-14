@@ -187,4 +187,111 @@ object Android {
             XposedBridge.log(t)
         }
     }
+
+    // GMS/FCM 限制绕过
+    fun allowGms(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.ANDROID) return
+        try {
+            val gmsAlarmManagerClass = findClass(
+                "com.android.server.alarm.GmsAlarmManager",
+                loadPackageParam.classLoader
+            )
+
+            // 伪装为非中国区设备
+            XposedBridge.hookAllMethods(
+                gmsAlarmManagerClass,
+                "isChinaMode",
+                XC_MethodReplacement.returnConstant(false)
+            )
+
+            // 伪装为港版设备
+            XposedBridge.hookAllMethods(
+                gmsAlarmManagerClass,
+                "isHongKongMode",
+                XC_MethodReplacement.returnConstant(true)
+            )
+
+            // 绕过网络活动检查
+            XposedBridge.hookAllMethods(
+                gmsAlarmManagerClass,
+                "checkActiveNet",
+                XC_MethodReplacement.returnConstant(false)
+            )
+
+            // 绕过 Google 网络检查
+            XposedBridge.hookAllMethods(
+                gmsAlarmManagerClass,
+                "checkGoogleNetwork",
+                XC_MethodReplacement.returnConstant(false)
+            )
+
+            // 绕过 GMS 网络限制
+            XposedBridge.hookAllMethods(
+                gmsAlarmManagerClass,
+                "setGmsNetWorkAllow",
+                XC_MethodReplacement.returnConstant(false)
+            )
+
+            // 强制返回正常网络状态 (HTTP OK)
+            XposedBridge.hookAllMethods(
+                gmsAlarmManagerClass,
+                "getNetworkStatus",
+                XC_MethodReplacement.returnConstant(200)
+            )
+
+            XposedBridge.log("OneUIX: GMS/FCM restriction bypassed")
+        } catch (t: Throwable) {
+            XposedBridge.log("OneUIX: Failed to bypass GMS restriction")
+            XposedBridge.log(t)
+        }
+    }
+
+    // FCM 强制唤醒
+    fun fcmFix(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.ANDROID) return
+        try {
+            val amsClass = findClass(
+                "com.android.server.am.ActivityManagerService",
+                loadPackageParam.classLoader
+            )
+
+            XposedBridge.hookAllMethods(
+                amsClass,
+                "broadcastIntentLocked",
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        try {
+                            // intent 参数位置可能在不同的重载中不同
+                            // 尝试找到 Intent 参数
+                            for (i in param.args.indices) {
+                                val arg = param.args[i]
+                                if (arg is android.content.Intent) {
+                                    val action = arg.action
+                                    if (action != null && (
+                                        action == "com.google.firebase.INSTANCE_ID_EVENT" ||
+                                        action == "com.google.firebase.MESSAGING_EVENT" ||
+                                        action.endsWith(".android.c2dm.intent.RECEIVE")
+                                    )) {
+                                        XposedBridge.log("OneUIX: Forced FCM to awake: $action")
+                                        // 移除广播限制标志 (第一个参数通常是 flags)
+                                        if (param.args.isNotEmpty() && param.args[0] is Int) {
+                                            param.args[0] = 0
+                                        }
+                                    }
+                                    break
+                                }
+                            }
+                        } catch (e: Throwable) {
+                            XposedBridge.log("OneUIX: FCM broadcast hook error - ${e.message}")
+                        }
+                    }
+                }
+            )
+
+            XposedBridge.log("OneUIX: FCM force wake enabled")
+        } catch (t: Throwable) {
+            XposedBridge.log("OneUIX: Failed to enable FCM force wake")
+            XposedBridge.log(t)
+        }
+    }
 }
