@@ -5,10 +5,10 @@ import android.app.Application
 import android.content.Context
 import android.content.Context.CONTEXT_IGNORE_SECURITY
 import android.content.Context.MODE_PRIVATE
+import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.res.loader.ResourcesLoader
 import android.content.res.loader.ResourcesProvider
-import android.os.Build
 import android.os.ParcelFileDescriptor
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
@@ -53,20 +53,28 @@ fun afterAttach(action: Context.() -> Unit) {
 }
 
 // 向宿主添加资源，路径为apk文件路径。例如添加模块的资源
-fun addAssetPath(path: String) = afterAttach {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        val loader = ResourcesLoader()
-        val moduleFile = File(path)
-        val parcelFileDescriptor = ParcelFileDescriptor.open(
-            moduleFile,
-            ParcelFileDescriptor.MODE_READ_ONLY
-        )
-        val provider = ResourcesProvider.loadFromApk(parcelFileDescriptor)
-        loader.addProvider(provider)
-        resources.addLoaders(loader)
-    } else {
-        callMethod(assets, "addAssetPath", path)
-    }
+fun addAssetPath(modulePath: String) {
+    findAndHookMethod(
+        ContextWrapper::class.java,
+        "attachBaseContext",
+        Context::class.java,
+        object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                val context = param.thisObject as Context
+                if (context !is Application) return
+                try {
+                    val moduleApk = File(modulePath)
+                    val parcelFileDescriptor = ParcelFileDescriptor.open(moduleApk, ParcelFileDescriptor.MODE_READ_ONLY)
+                    val resourcesProvider = ResourcesProvider.loadFromApk(parcelFileDescriptor)
+                    val resourcesLoader = ResourcesLoader()
+                    resourcesLoader.addProvider(resourcesProvider)
+                    context.resources.addLoaders(resourcesLoader)
+                } catch (t: Throwable) {
+                    XposedBridge.log(t)
+                }
+            }
+        }
+    )
 }
 
 fun xlog(string: String) {
