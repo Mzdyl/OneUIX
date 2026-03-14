@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,9 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
+import io.github.soclear.oneuix.hook.util.restartSystemUI
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import java.time.LocalDateTime
@@ -230,15 +233,6 @@ fun DetailPaneSystemUI(
             }
         )
         SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.today),
-            title = stringResource(id = R.string.setCompactChineseDateTime_title),
-            summary = stringResource(id = R.string.setCompactChineseDateTime_summary),
-            checked = uiState.statusBar.setCompactChineseDateTime,
-            onCheckedChange = {
-                onEvent(SystemUIEvent.StatusBar.setCompactChineseDateTime(it))
-            }
-        )
-        SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.folder_managed),
             title = stringResource(id = R.string.hideSecureFolderStatusBarIcon_title),
             checked = uiState.statusBar.hideSecureFolderStatusBarIcon,
@@ -290,6 +284,15 @@ fun DetailPaneSystemUI(
                 )
             }
         }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.battery),
+            title = stringResource(id = R.string.showBatteryTemperature_title),
+            summary = stringResource(id = R.string.showBatteryTemperature_summary),
+            checked = uiState.statusBar.showBatteryTemperature,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.StatusBar.ShowBatteryTemperature(it))
+            }
+        )
 
         DividerText(R.string.qs)
         SwitchItem(
@@ -469,6 +472,19 @@ fun DetailPaneSystemUI(
                 onEvent(SystemUIEvent.Other.DisableScreenshotCaptureSound(it))
             }
         )
+        ListItem(
+            headlineContent = { Text(stringResource(id = R.string.restartSystemUI_title)) },
+            supportingContent = { Text(stringResource(id = R.string.restartSystemUI_summary)) },
+            leadingContent = {
+                Icon(
+                    ImageVector.vectorResource(id = R.drawable.power_settings_new),
+                    stringResource(id = R.string.restartSystemUI_title)
+                )
+            },
+            modifier = Modifier
+                .animateContentSize()
+                .clickable(role = Role.Button) { restartSystemUI() }
+        )
     }
 }
 
@@ -513,9 +529,6 @@ sealed interface SystemUIEvent {
         value class UpdateStatusBarClockEverySecond(val value: Boolean) : StatusBar
 
         @JvmInline
-        value class setCompactChineseDateTime(val value: Boolean) : StatusBar
-
-        @JvmInline
         value class HideSecureFolderStatusBarIcon(val value: Boolean) : StatusBar
 
         @JvmInline
@@ -526,6 +539,9 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class StatusBarMaxNotificationIcons(val value: Int) : StatusBar
+
+        @JvmInline
+        value class ShowBatteryTemperature(val value: Boolean) : StatusBar
     }
 
     sealed interface QS : SystemUIEvent {
@@ -699,16 +715,6 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                 )
             }
 
-            is SystemUIEvent.StatusBar.setCompactChineseDateTime -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            setCompactChineseDateTime = event.value
-                        )
-                    )
-                )
-            }
-
             is SystemUIEvent.StatusBar.HideSecureFolderStatusBarIcon -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(
@@ -744,6 +750,16 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             statusBarMaxNotificationIcons = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.ShowBatteryTemperature -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            showBatteryTemperature = event.value
                         )
                     )
                 )

@@ -49,18 +49,9 @@ object SystemUI {
         SmartViewAndModes,
     }
 
-    fun setCompactChineseDateTime(lpparam: LoadPackageParam) {
-        if (lpparam.packageName != Package.SYSTEMUI) return
-        val dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm Ed", Locale.SIMPLIFIED_CHINESE)
-        setStatusBarClockText(lpparam) {
-            dateTimeFormatter.format(LocalDateTime.now()).replace("周", "")
-        }
-    }
-
     fun setStatusBarPaddingDp(loadPackageParam: LoadPackageParam, left: Float?, right: Float?) {
-        if (loadPackageParam.packageName != Package.SYSTEMUI) {
-            return
-        }
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        if (left == null && right == null) return
         try {
             val clazz = findClass(
                 "com.android.systemui.statusbar.phone.IndicatorGardenAlgorithmCenterCutout",
@@ -523,6 +514,53 @@ object SystemUI {
         }
     }
 
+    // 状态栏显示电池温度
+    // 在下拉通知栏日期后面追加温度显示，不替换原有内容
+    fun showBatteryTemperature(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorView",
+                loadPackageParam.classLoader,
+                "notifyTimeChanged",
+                "com.android.systemui.statusbar.policy.QSClockBellSound",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        try {
+                            val clockTextView = param.thisObject as TextView
+                            val context = clockTextView.context
+
+                            // 获取当前显示的文本（已经是时间/日期了）
+                            val originalText = clockTextView.text.toString()
+
+                            // 获取电池温度
+                            val batteryIntent = context.registerReceiver(
+                                null,
+                                android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
+                            )
+
+                            if (batteryIntent != null) {
+                                val tempRaw = batteryIntent.getIntExtra("temperature", 0)
+                                val tempCelsius = tempRaw / 10.0f
+                                val tempText = String.format(Locale.getDefault(), " %.1f°C", tempCelsius)
+
+                                // 如果还没有追加过温度，则追加
+                                if (!originalText.contains("°C")) {
+                                    clockTextView.text = "$originalText $tempText"
+                                }
+                            }
+                        } catch (t: Throwable) {
+                            XposedBridge.log("OneUIX: showBatteryTemperature error: ${t.message}")
+                        }
+                    }
+                }
+            )
+            XposedBridge.log("OneUIX: showBatteryTemperature hooked")
+        } catch (t: Throwable) {
+            XposedBridge.log("OneUIX: Failed to hook showBatteryTemperature: ${t.message}")
+        }
+    }
+
     fun hideSecureFolderStatusBarIcon(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
         val callback = object : XC_MethodHook() {
@@ -899,4 +937,5 @@ object SystemUI {
             XposedBridge.log(t)
         }
     }
+
 }

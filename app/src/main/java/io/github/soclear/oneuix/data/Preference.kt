@@ -60,11 +60,11 @@ data class Preference(
             val setStatusBarClockFormat: Boolean = false,
             val statusBarClockFormat: String = "HH:mm",
             val updateStatusBarClockEverySecond: Boolean = false,
-            val setCompactChineseDateTime: Boolean = false,
             val hideSecureFolderStatusBarIcon: Boolean = false,
             val doubleTapStatusBarToSleep: Boolean = false,
             val modifyStatusBarMaxNotificationIcons: Boolean = false,
             val statusBarMaxNotificationIcons: Int = 4,
+            val showBatteryTemperature: Boolean = false,
         )
 
         @Serializable

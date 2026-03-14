@@ -6,8 +6,6 @@
 
     <string name="statusBarLeftPaddingDp_title">Modify status bar left padding</string>
     <string name="statusBarRightPaddingDp_title">Modify status bar right padding</string>
-    <string name="setCompactChineseDateTime_title">Compact Chinese time and date</string>
-    <string name="setCompactChineseDateTime_summary">Hour:Minute Day Date, e.g., 12:34 五6</string>
     <string name="hideBatteryPercentageSign_title">Hide battery percentage sign in status bar</string>
     <string name="hideBatteryPercentageSign_summary">Remove the % sign only, keep the numbers</string>
     <string name="supportRealTimeNetworkSpeed_title">Support displaying real-time network speed</string>
@@ -116,6 +114,10 @@
     <string name="enableGoogleSearch_summary">Enable Google Circle to Search on Chinese region devices</string>
     <string name="enableSketch_title">Enable Sketch to Image</string>
     <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
+    <string name="showBatteryTemperature_title">Show battery temperature</string>
+    <string name="showBatteryTemperature_summary">Display battery temperature in status bar clock area</string>
+    <string name="restartSystemUI_title">Restart System UI</string>
+    <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
     <string name="useGoogleTranslate_title">Use Google Translate</string>
     <string name="useGoogleTranslate_summary">Use Google Translate for S Pen translation (default is Baidu Translate)</string>
 

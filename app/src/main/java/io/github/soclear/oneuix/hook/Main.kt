@@ -237,10 +237,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     SystemUI.updateStatusBarClockEverySecond(lpparam)
                 }
 
-                if (preference.systemUI.statusBar.setCompactChineseDateTime) {
-                    SystemUI.setCompactChineseDateTime(lpparam)
-                }
-
                 if (preference.systemUI.statusBar.hideSecureFolderStatusBarIcon) {
                     SystemUI.hideSecureFolderStatusBarIcon(lpparam)
                 }
@@ -322,6 +318,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
 
                 if (preference.android.enableGoogleSearch) {
                     SystemUI.enableGoogleSearch(lpparam, true)
+                }
+
+                if (preference.systemUI.statusBar.showBatteryTemperature) {
+                    SystemUI.showBatteryTemperature(lpparam)
                 }
             }
 

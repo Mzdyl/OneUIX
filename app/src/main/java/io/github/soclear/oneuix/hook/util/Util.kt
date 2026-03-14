@@ -189,3 +189,20 @@ fun setNavigationBarGestureHint(hide: Boolean): Boolean {
 
     return allSuccess
 }
+
+/**
+ * 重启 SystemUI
+ * @return 是否执行成功
+ */
+fun restartSystemUI(): Boolean {
+    return try {
+        val command = "pkill -f com.android.systemui"
+        val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+        val exitCode = process.waitFor()
+        log("Restart SystemUI: ${if (exitCode == 0) "success" else "failed"}")
+        exitCode == 0
+    } catch (t: Throwable) {
+        log("Failed to restart SystemUI - ${t.message}")
+        false
+    }
+}
