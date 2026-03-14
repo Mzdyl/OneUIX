@@ -110,6 +110,8 @@
     <string name="allowGms_summary">在国行设备上启用 FCM 推送服务</string>
     <string name="fcmFix_title">强制唤醒 FCM</string>
     <string name="fcmFix_summary">接收推送通知时强制唤醒 FCM 服务</string>
+    <string name="hideNavigationBarGestureHint_title">隐藏导航栏手势提示条</string>
+    <string name="hideNavigationBarGestureHint_summary">隐藏底部手势提示条，获得更纯净的全面屏体验（需要 root 权限）</string>
 
     <string name="module_disabled_tip">请在 LSPosed 中启用本模块</string>
     <string name="close">关闭</string>

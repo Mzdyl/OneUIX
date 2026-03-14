@@ -23,6 +23,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
+import io.github.soclear.oneuix.hook.util.setNavigationBarGestureHint
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import kotlin.math.roundToInt
@@ -137,6 +138,19 @@ fun DetailPaneAndroid(
             checked = uiState.fcmFix,
             onCheckedChange = { onEvent(AndroidEvent.FcmFix(it)) }
         )
+        // 隐藏导航栏手势提示条
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.expand),
+            title = stringResource(id = R.string.hideNavigationBarGestureHint_title),
+            summary = stringResource(id = R.string.hideNavigationBarGestureHint_summary),
+            checked = uiState.hideNavigationBarGestureHint,
+            onCheckedChange = {
+                // 执行 shell 命令修改系统设置
+                if (setNavigationBarGestureHint(it)) {
+                    onEvent(AndroidEvent.HideNavigationBarGestureHint(it))
+                }
+            }
+        )
     }
 }
 
@@ -170,6 +184,9 @@ sealed interface AndroidEvent {
 
     @JvmInline
     value class FcmFix(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class HideNavigationBarGestureHint(val value: Boolean) : AndroidEvent
 }
 
 fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
@@ -251,6 +268,14 @@ fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
                 preference.copy(
                     android = preference.android.copy(
                         fcmFix = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.HideNavigationBarGestureHint -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        hideNavigationBarGestureHint = event.value
                     )
                 )
             }

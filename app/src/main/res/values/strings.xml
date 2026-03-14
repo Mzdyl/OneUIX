@@ -110,6 +110,8 @@
     <string name="allowGms_summary">Enable FCM push service on Chinese region devices</string>
     <string name="fcmFix_title">Force FCM wake</string>
     <string name="fcmFix_summary">Force wake FCM service when receiving push notifications</string>
+    <string name="hideNavigationBarGestureHint_title">Hide navigation bar gesture hint</string>
+    <string name="hideNavigationBarGestureHint_summary">Hide the bottom gesture hint bar for full-screen experience (requires root)</string>
 
     <string name="module_disabled_tip">Please enable this module in LSPosed</string>
     <string name="close">Close</string>

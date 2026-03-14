@@ -10,6 +10,7 @@ import android.content.res.loader.ResourcesLoader
 import android.content.res.loader.ResourcesProvider
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.callMethod
@@ -18,6 +19,25 @@ import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.io.File
+
+private const val TAG = "OneUIX"
+
+/**
+ * 兼容 Xposed 和非 Xposed 环境的日志函数
+ * 在 Xposed 环境中使用 XposedBridge.log，否则使用 android.util.Log
+ */
+fun log(message: String) {
+    try {
+        // 尝试使用 XposedBridge.log
+        XposedBridge.log("$TAG: $message")
+    } catch (_: NoClassDefFoundError) {
+        // Xposed 环境不可用，使用 Log
+        Log.d(TAG, message)
+    } catch (_: Throwable) {
+        // 其他异常也使用 Log
+        Log.d(TAG, message)
+    }
+}
 
 fun getSystemContext(): Context {
     val activityThreadClass = findClass("android.app.ActivityThread", null)
@@ -71,7 +91,7 @@ fun addAssetPath(path: String) = afterAttach {
 
 fun xlog(string: String) {
     val result = "\n\n////////////////\n\n////////////////\n\n$string\n\n////////////////\n\n"
-    XposedBridge.log(result)
+    log(result)
 }
 
 /**
@@ -88,7 +108,7 @@ fun putSettings(namespace: String, key: String, value: String): Boolean {
         val exitCode = process.waitFor()
         exitCode == 0
     } catch (t: Throwable) {
-        XposedBridge.log("OneUIX: Failed to put settings - ${t.message}")
+        log("Failed to put settings - ${t.message}")
         false
     }
 }
@@ -106,7 +126,7 @@ fun getSettings(namespace: String, key: String): String? {
         val result = process.inputStream.bufferedReader().readText().trim()
         if (result == "null" || result.isEmpty()) null else result
     } catch (t: Throwable) {
-        XposedBridge.log("OneUIX: Failed to get settings - ${t.message}")
+        log("Failed to get settings - ${t.message}")
         null
     }
 }
@@ -124,7 +144,48 @@ fun launchActivity(packageName: String, activityName: String): Boolean {
         val exitCode = process.waitFor()
         exitCode == 0
     } catch (t: Throwable) {
-        XposedBridge.log("OneUIX: Failed to launch activity - ${t.message}")
+        log("Failed to launch activity - ${t.message}")
         false
     }
+}
+
+/**
+ * 设置导航栏手势提示条显示/隐藏
+ * 需要修改三个 Settings.Global 参数:
+ * - navigation_bar_gesture_hint: 0=隐藏, 1=显示
+ * - navigationbar_switch_apps_when_hint_hidden: 1=启用滑动切换应用
+ * - navigationbar_splugin_flags: 4=启用导航栏插件功能
+ *
+ * @param hide true=隐藏手势提示条, false=显示
+ * @return 是否全部设置成功
+ */
+fun setNavigationBarGestureHint(hide: Boolean): Boolean {
+    var allSuccess = true
+
+    // 设置1: 隐藏手势提示条
+    val hintValue = if (hide) "0" else "1"
+    if (!putSettings("global", "navigation_bar_gesture_hint", hintValue)) {
+        log("Failed to set navigation_bar_gesture_hint")
+        allSuccess = false
+    }
+
+    // 设置2: 提示隐藏时切换应用
+    val switchValue = if (hide) "1" else "0"
+    if (!putSettings("global", "navigationbar_switch_apps_when_hint_hidden", switchValue)) {
+        log("Failed to set navigationbar_switch_apps_when_hint_hidden")
+        allSuccess = false
+    }
+
+    // 设置3: 导航栏插件标志
+    val flagsValue = if (hide) "4" else "0"
+    if (!putSettings("global", "navigationbar_splugin_flags", flagsValue)) {
+        log("Failed to set navigationbar_splugin_flags")
+        allSuccess = false
+    }
+
+    if (allSuccess) {
+        log("Navigation bar gesture hint ${if (hide) "hidden" else "shown"}")
+    }
+
+    return allSuccess
 }

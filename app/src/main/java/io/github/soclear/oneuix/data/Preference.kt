@@ -36,6 +36,7 @@ data class Preference(
         val disableShareUserCheck: Boolean = false,
         val allowGms: Boolean = false,
         val fcmFix: Boolean = false,
+        val hideNavigationBarGestureHint: Boolean = false,
     )
 
     @Serializable
