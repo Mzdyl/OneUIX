@@ -40,6 +40,8 @@
 
 - 修改状态栏左边距
 - 修改状态栏右边距
+- 设置电池图标宽度缩放倍数
+- 设置电池图标高度缩放倍数
 - 隐藏状态栏电池的百分号
 - 支持显示实时网速
 - 状态栏显示上传下载网速
@@ -147,6 +149,8 @@
 
 - Modify status bar left padding
 - Modify status bar right padding
+- Set battery icon width scale factor
+- Set battery icon height scale factor
 - Hide battery percentage sign in status bar
 - Support displaying real-time network speed
 - Show separate upload/download speeds in status bar

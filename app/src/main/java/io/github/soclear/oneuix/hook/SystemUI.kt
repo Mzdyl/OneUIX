@@ -15,6 +15,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -37,7 +38,6 @@ import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.roundToInt
 
 
@@ -86,6 +86,32 @@ object SystemUI {
                     }
                 )
             }
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
+    fun setBatteryIconScale(loadPackageParam: LoadPackageParam, widthScale: Float?, heightScale: Float?) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI || widthScale == null && heightScale == null) return
+        try {
+            findAndHookMethod(
+                "com.android.systemui.battery.BatteryMeterView",
+                loadPackageParam.classLoader,
+                "scaleBatteryMeterViewsLegacy",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val mBatteryIconView = getObjectField(param.thisObject, "mBatteryIconView") as ImageView
+                        mBatteryIconView.layoutParams = mBatteryIconView.layoutParams.apply {
+                            if (widthScale != null) {
+                                width = (width * widthScale).roundToInt()
+                            }
+                            if (heightScale != null) {
+                                height = (height * heightScale).roundToInt()
+                            }
+                        }
+                    }
+                }
+            )
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }

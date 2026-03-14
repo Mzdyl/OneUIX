@@ -10,6 +10,8 @@
     <string name="aod">AOD (Always On Display)</string>
     <string name="statusBarLeftPaddingDp_title">Modifier la marge gauche de la barre d\'état</string>
     <string name="statusBarRightPaddingDp_title">Modifier la marge droite de la barre d\'état</string>
+    <string name="setBatteryIconWidthScale_title">Définir le facteur d\'échelle de largeur de l\'icône de batterie</string>
+    <string name="setBatteryIconHeightScale_title">Définir le facteur d\'échelle de hauteur de l\'icône de batterie</string>
     <string name="hideBatteryPercentageSign_title">Masquer le symbole de pourcentage de la batterie</string>
     <string name="hideBatteryPercentageSign_summary">Supprimer uniquement le symbole %, conserver les chiffres</string>
     <string name="supportRealTimeNetworkSpeed_title">Afficher la vitesse du réseau en temps réel</string>

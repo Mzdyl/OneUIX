@@ -127,6 +127,80 @@ fun DetailPaneSystemUI(
                 )
             }
         }
+        Column {
+            var widthScale by remember {
+                mutableFloatStateOf(uiState.statusBar.batteryIconWidthScale)
+            }
+            var expanded by rememberSaveable { mutableStateOf(false) }
+
+            SwitchItem(
+                title = stringResource(id = R.string.setBatteryIconWidthScale_title),
+                modifier = Modifier.animateContentSize(),
+                summary = if (uiState.statusBar.setBatteryIconWidthScale) {
+                    "%.2f".format(widthScale)
+                } else null,
+                icon = ImageVector.vectorResource(id = R.drawable.battery),
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.statusBar.setBatteryIconWidthScale,
+                onCheckedChange = {
+                    if (it && widthScale == 0f) {
+                        expanded = true
+                    } else if (!it) {
+                        expanded = false
+                    }
+                    onEvent(SystemUIEvent.StatusBar.SetBatteryIconWidthScale(it))
+                }
+            )
+            AnimatedVisibility(expanded && uiState.statusBar.setBatteryIconWidthScale) {
+                Slider(
+                    value = widthScale,
+                    onValueChange = { widthScale = it },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    valueRange = 0.5f..2f,
+                    onValueChangeFinished = {
+                        onEvent(SystemUIEvent.StatusBar.BatteryIconWidthScale(widthScale))
+                    }
+                )
+            }
+        }
+        Column {
+            var heightScale by remember {
+                mutableFloatStateOf(uiState.statusBar.batteryIconHeightScale)
+            }
+            var expanded by rememberSaveable { mutableStateOf(false) }
+
+            SwitchItem(
+                title = stringResource(id = R.string.setBatteryIconHeightScale_title),
+                modifier = Modifier.animateContentSize(),
+                summary = if (uiState.statusBar.setBatteryIconHeightScale) {
+                    "%.2f".format(heightScale)
+                } else null,
+                icon = ImageVector.vectorResource(id = R.drawable.battery),
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.statusBar.setBatteryIconHeightScale,
+                onCheckedChange = {
+                    if (it && heightScale == 0f) {
+                        expanded = true
+                    } else if (!it) {
+                        expanded = false
+                    }
+                    onEvent(SystemUIEvent.StatusBar.SetBatteryIconHeightScale(it))
+                }
+            )
+            AnimatedVisibility(expanded && uiState.statusBar.setBatteryIconHeightScale) {
+                Slider(
+                    value = heightScale,
+                    onValueChange = { heightScale = it },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    valueRange = 0.5f..2f,
+                    onValueChangeFinished = {
+                        onEvent(SystemUIEvent.StatusBar.BatteryIconHeightScale(heightScale))
+                    }
+                )
+            }
+        }
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.battery),
@@ -486,6 +560,18 @@ sealed interface SystemUIEvent {
         value class StatusBarRightPaddingDp(val value: Float) : StatusBar
 
         @JvmInline
+        value class SetBatteryIconWidthScale(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class BatteryIconWidthScale(val value: Float) : StatusBar
+
+        @JvmInline
+        value class SetBatteryIconHeightScale(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class BatteryIconHeightScale(val value: Float) : StatusBar
+
+        @JvmInline
         value class HideBatteryPercentageSign(val value: Boolean) : StatusBar
 
         @JvmInline
@@ -621,6 +707,46 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             statusBarRightPaddingDp = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.SetBatteryIconWidthScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setBatteryIconWidthScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.BatteryIconWidthScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            batteryIconWidthScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.SetBatteryIconHeightScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setBatteryIconHeightScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.BatteryIconHeightScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            batteryIconHeightScale = event.value
                         )
                     )
                 )
