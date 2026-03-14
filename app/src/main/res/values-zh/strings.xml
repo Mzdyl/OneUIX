@@ -112,6 +112,8 @@
     <string name="fcmFix_summary">接收推送通知时强制唤醒 FCM 服务</string>
     <string name="hideNavigationBarGestureHint_title">隐藏导航栏手势提示条</string>
     <string name="hideNavigationBarGestureHint_summary">隐藏底部手势提示条，获得更纯净的全面屏体验（需要 root 权限）</string>
+    <string name="enableGoogleSearch_title">启用谷歌即圈即搜</string>
+    <string name="enableGoogleSearch_summary">在国行设备上启用谷歌即圈即搜功能</string>
 
     <string name="module_disabled_tip">请在 LSPosed 中启用本模块</string>
     <string name="close">关闭</string>

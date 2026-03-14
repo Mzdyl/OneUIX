@@ -58,6 +58,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.android.fcmFix) {
                     Android.fcmFix(lpparam)
                 }
+
+                if (preference.android.enableGoogleSearch) {
+                    Android.enableGoogleSearch(lpparam)
+                }
             }
 
             Package.BROWSER -> {
@@ -310,6 +314,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
 
                 if (preference.systemUI.other.disableScreenshotCaptureSound) {
                     SystemUI.disableScreenshotCaptureSound(lpparam)
+                }
+
+                if (preference.android.enableGoogleSearch) {
+                    SystemUI.enableGoogleSearch(lpparam, true)
                 }
             }
 

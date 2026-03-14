@@ -294,4 +294,76 @@ object Android {
             XposedBridge.log(t)
         }
     }
+
+    // 谷歌即圈即搜 (ContextualSearch)
+    fun enableGoogleSearch(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.ANDROID) return
+        try {
+            // 1. Hook ContextualSearchManagerService
+            val contextualSearchClass = findClass(
+                "com.android.server.contextualsearch.ContextualSearchManagerService",
+                loadPackageParam.classLoader
+            )
+
+            // 阻止更新黑名单
+            XposedBridge.hookAllMethods(
+                contextualSearchClass,
+                "updateDenylist",
+                DO_NOTHING
+            )
+
+            // 绕过权限检查
+            XposedBridge.hookAllMethods(
+                contextualSearchClass,
+                "enforceOverridingPermission",
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        param.result = null  // 跳过权限检查
+                    }
+                }
+            )
+
+            // 修改上下文搜索包名为 Google 搜索
+            XposedBridge.hookAllMethods(
+                contextualSearchClass,
+                "getContextualSearchPackageName",
+                XC_MethodReplacement.returnConstant("com.google.android.googlequicksearchbox")
+            )
+
+            // 2. Hook HighRefreshRateDenylist (确保流畅体验)
+            try {
+                val highRefreshRateClass = findClass(
+                    "com.android.server.wm.HighRefreshRateDenylist",
+                    loadPackageParam.classLoader
+                )
+                XposedBridge.hookAllMethods(
+                    highRefreshRateClass,
+                    "updateDenylist",
+                    DO_NOTHING
+                )
+            } catch (_: Throwable) {
+                // 可能不存在，忽略
+            }
+
+            // 3. 解锁 WiFi 服务工厂测试权限
+            try {
+                val wifiServiceClass = findClass(
+                    "com.samsung.android.server.wifi.SemWifiServiceImpl",
+                    loadPackageParam.classLoader
+                )
+                XposedBridge.hookAllMethods(
+                    wifiServiceClass,
+                    "enforceFactoryTestPermission",
+                    DO_NOTHING
+                )
+            } catch (_: Throwable) {
+                // 可能不存在，忽略
+            }
+
+            XposedBridge.log("OneUIX: Google Search (Circle to Search) enabled")
+        } catch (t: Throwable) {
+            XposedBridge.log("OneUIX: Failed to enable Google Search")
+            XposedBridge.log(t)
+        }
+    }
 }

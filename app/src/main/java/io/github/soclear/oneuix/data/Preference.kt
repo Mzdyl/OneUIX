@@ -37,6 +37,7 @@ data class Preference(
         val allowGms: Boolean = false,
         val fcmFix: Boolean = false,
         val hideNavigationBarGestureHint: Boolean = false,
+        val enableGoogleSearch: Boolean = false,
     )
 
     @Serializable

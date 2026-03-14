@@ -151,6 +151,14 @@ fun DetailPaneAndroid(
                 }
             }
         )
+        // 谷歌即圈即搜
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.search),
+            title = stringResource(id = R.string.enableGoogleSearch_title),
+            summary = stringResource(id = R.string.enableGoogleSearch_summary),
+            checked = uiState.enableGoogleSearch,
+            onCheckedChange = { onEvent(AndroidEvent.EnableGoogleSearch(it)) }
+        )
     }
 }
 
@@ -187,6 +195,9 @@ sealed interface AndroidEvent {
 
     @JvmInline
     value class HideNavigationBarGestureHint(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class EnableGoogleSearch(val value: Boolean) : AndroidEvent
 }
 
 fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
@@ -276,6 +287,14 @@ fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
                 preference.copy(
                     android = preference.android.copy(
                         hideNavigationBarGestureHint = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.EnableGoogleSearch -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        enableGoogleSearch = event.value
                     )
                 )
             }

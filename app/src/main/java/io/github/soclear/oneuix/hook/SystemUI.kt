@@ -876,4 +876,27 @@ object SystemUI {
             XposedBridge.log(t)
         }
     }
+
+    // 谷歌即圈即搜 - 启用中国区 CTS 支持
+    fun enableGoogleSearch(loadPackageParam: LoadPackageParam, enabled: Boolean) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        try {
+            val settingsHelperClass = findClass(
+                "com.android.systemui.util.SettingsHelper",
+                loadPackageParam.classLoader
+            )
+
+            // isCNSupportCTS 返回 true，启用中国区 CTS 支持
+            XposedBridge.hookAllMethods(
+                settingsHelperClass,
+                "isCNSupportCTS",
+                returnConstant(enabled)
+            )
+
+            XposedBridge.log("OneUIX: Google Search CTS support for CN -> $enabled")
+        } catch (t: Throwable) {
+            XposedBridge.log("OneUIX: Failed to enable Google Search CTS support")
+            XposedBridge.log(t)
+        }
+    }
 }
