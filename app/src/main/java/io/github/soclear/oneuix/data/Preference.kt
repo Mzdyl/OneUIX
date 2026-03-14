@@ -92,6 +92,7 @@ data class Preference(
         val preferRecordingButton: Boolean = true,
         val showGeocodedLocationInRecentCall: Boolean = false,
         val isOpStyleCHN: Boolean = false,
+        val supportCallAndTextOnOtherDevices: Boolean = false,
     )
 
     @Serializable

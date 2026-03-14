@@ -11,6 +11,7 @@ object Package {
     const val HEALTH_MONITOR = "com.samsung.android.shealthmonitor"
     const val INCALLUI = "com.samsung.android.incallui"
     const val LAUNCHER = "com.sec.android.app.launcher"
+    const val MDEC_SERVICE = "com.samsung.android.mdecservice"
     const val MESSAGING = "com.samsung.android.messaging"
     const val NOTES = "com.samsung.android.app.notes"
     const val PHOTO_RETOUCHING = "com.sec.android.mimage.photoretouching"

@@ -90,6 +90,7 @@
 - 通话界面显示“录音”按钮而不是“添加通话”按钮
 - 显示来电归属地
 - 中国大陆样式的通话记录
+- 支持跨设备接打电话和收发短信
 
 #### 相机
 
@@ -197,6 +198,7 @@
 - Show 'Record' button instead of 'Add call' button on call screen
 - Show caller location in recent calls
 - Mainland China style call log
+- Support call & text on other devices
 
 #### Camera
 

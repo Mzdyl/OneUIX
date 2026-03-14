@@ -49,6 +49,13 @@ fun DetailPaneCall(
             checked = uiState.isOpStyleCHN,
             onCheckedChange = { onEvent(CallEvent.IsOpStyleCHN(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
+            title = stringResource(id = R.string.supportCallAndTextOnOtherDevices_title),
+            summary = stringResource(id = R.string.supportCallAndTextOnOtherDevices_summary),
+            checked = uiState.supportCallAndTextOnOtherDevices,
+            onCheckedChange = { onEvent(CallEvent.SupportCallAndTextOnOtherDevices(it)) }
+        )
     }
 }
 
@@ -65,6 +72,9 @@ sealed interface CallEvent {
 
     @JvmInline
     value class IsOpStyleCHN(val value: Boolean) : CallEvent
+
+    @JvmInline
+    value class SupportCallAndTextOnOtherDevices(val value: Boolean) : CallEvent
 }
 
 fun SettingViewModel.onCallEvent(event: CallEvent) {
@@ -84,6 +94,10 @@ fun SettingViewModel.onCallEvent(event: CallEvent) {
 
             is CallEvent.IsOpStyleCHN -> {
                 it.copy(call = it.call.copy(isOpStyleCHN = event.value))
+            }
+
+            is CallEvent.SupportCallAndTextOnOtherDevices -> {
+                it.copy(call = it.call.copy(supportCallAndTextOnOtherDevices = event.value))
             }
         }
     }

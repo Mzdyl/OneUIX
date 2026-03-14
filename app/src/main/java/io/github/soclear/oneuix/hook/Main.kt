@@ -114,6 +114,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 }
             }
 
+            Package.MDEC_SERVICE -> {
+                if (preference.call.supportCallAndTextOnOtherDevices) {
+                    MdecService.supportCallAndTextOnOtherDevices(lpparam)
+                }
+            }
+
             Package.MESSAGING -> {
                 if (preference.other.supportBlockMessage) {
                     Messaging.isSupportBlock(lpparam)
