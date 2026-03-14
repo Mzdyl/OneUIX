@@ -28,14 +28,23 @@ private const val TAG = "OneUIX"
  */
 fun log(message: String) {
     try {
-        // 尝试使用 XposedBridge.log
         XposedBridge.log("$TAG: $message")
     } catch (_: NoClassDefFoundError) {
-        // Xposed 环境不可用，使用 Log
         Log.d(TAG, message)
     } catch (_: Throwable) {
-        // 其他异常也使用 Log
         Log.d(TAG, message)
+    }
+}
+
+fun logError(message: String, t: Throwable? = null) {
+    val fullMessage = if (t != null) "$message - ${t.message}" else message
+    try {
+        XposedBridge.log("$TAG: $fullMessage")
+        if (t != null) XposedBridge.log(t)
+    } catch (_: NoClassDefFoundError) {
+        Log.e(TAG, fullMessage, t)
+    } catch (_: Throwable) {
+        Log.e(TAG, fullMessage, t)
     }
 }
 

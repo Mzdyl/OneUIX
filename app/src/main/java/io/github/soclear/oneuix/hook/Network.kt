@@ -12,7 +12,6 @@ import android.view.View
 import android.widget.TextView
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
@@ -20,6 +19,8 @@ import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.XposedHelpers.getSurroundingThis
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.log
+import io.github.soclear.oneuix.hook.util.logError
 import java.net.NetworkInterface
 import kotlin.math.roundToInt
 
@@ -47,7 +48,7 @@ object Network {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("supportRealTimeNetworkSpeed failed", t)
         }
     }
 
@@ -98,7 +99,7 @@ object Network {
                     }
                 } catch (t: Throwable) {
                     // 如果出错，回退到可能不准的方法，但至少不会崩溃
-                    XposedBridge.log("Error getting specific network stats, falling back to total: ${t.message}")
+                    log("Network stats fallback: ${t.message}")
                     return NetworkStats(
                         TrafficStats.getMobileTxBytes(),
                         TrafficStats.getTotalRxBytes(),
@@ -180,7 +181,7 @@ object Network {
                         }
                     }
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("showSeparateUpDownNetworkSpeeds callback failed", t)
                 }
                 return null
             }
@@ -209,7 +210,7 @@ object Network {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showSeparateUpDownNetworkSpeeds failed", t)
         }
     }
 
@@ -299,7 +300,7 @@ object Network {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showWiFiLinkSpeed failed", t)
         }
     }
 }

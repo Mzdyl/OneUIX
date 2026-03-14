@@ -3,7 +3,6 @@ package io.github.soclear.oneuix.hook
 import android.content.Context
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedBridge.hookMethod
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import kotlinx.serialization.Serializable
@@ -12,6 +11,8 @@ import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.getHookConfig
+import io.github.soclear.oneuix.hook.util.log
+import io.github.soclear.oneuix.hook.util.logError
 import io.github.soclear.oneuix.hook.util.longVersionCode
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.wrap.DexClass
@@ -104,7 +105,7 @@ object Camera {
                         }
                     }
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("setBooleanFeature callback failed", t)
                 }
             }
         }
@@ -114,14 +115,14 @@ object Camera {
                     DexClass(hookConfig.deviceFeatureClass).getInstance(classLoader)
                 XposedHelpers.findAndHookConstructor(clazz, callback)
             } else {
-                hookMethod(
+                XposedBridge.hookMethod(
                     DexMethod(hookConfig.initializeBooleanFeatureMapMethod)
                         .getMethodInstance(classLoader),
                     callback
                 )
             }
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setBooleanFeature failed", t)
         }
     }
 
@@ -201,7 +202,7 @@ object Camera {
                         })
                     }
             } catch (t: Throwable) {
-                XposedBridge.log("OneUIX: Watermark hook error: ${t.message}")
+                logError("supportFrameWatermark failed", t)
             }
         }
     }

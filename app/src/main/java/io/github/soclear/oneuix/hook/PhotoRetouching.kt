@@ -76,13 +76,12 @@ object PhotoRetouching {
                 "com.samsung.android.feature.SemFloatingFeature",
                 classLoader
             )
-            findAndHookMethod(
+            XposedBridge.hookAllMethods(
                 semFloatingFeatureClass,
                 "isFeatureEnabled",
-                String::class.java,
                 object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam) {
-                        val key = param.args[0] as? String ?: return
+                        val key = param.args.firstOrNull() as? String ?: return
                         // 启用涂鸦生图相关功能
                         if (key.contains("SketchToImage", ignoreCase = true) ||
                             key.contains("AiDrawing", ignoreCase = true) ||

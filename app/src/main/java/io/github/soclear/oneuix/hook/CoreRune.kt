@@ -3,13 +3,13 @@ package io.github.soclear.oneuix.hook
 import android.content.Context
 import android.os.Build
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.findAndHookConstructor
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.XposedHelpers.setStaticBooleanField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 
 object CoreRune {
     fun supportAppJumpBlock(loadPackageParam: LoadPackageParam) {
@@ -27,7 +27,7 @@ object CoreRune {
                         findClass("com.samsung.android.rune.CoreRune", loadPackageParam.classLoader)
                     setStaticBooleanField(coreRuneClass, "SUPPORT_APP_JUMP_BLOCK", true)
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("supportAppJumpBlock callback failed", t)
                 }
             }
         }
@@ -56,7 +56,7 @@ object CoreRune {
                 )
             }
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("supportAppJumpBlock failed", t)
         }
     }
 }

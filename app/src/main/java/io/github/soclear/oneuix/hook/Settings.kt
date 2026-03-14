@@ -8,11 +8,11 @@ import android.view.View
 import android.widget.TextView
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 
 
 object Settings {
@@ -36,7 +36,7 @@ object Settings {
                         setTextIsSelectable(true)
                     }
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("showPackageInfo callback failed", t)
                 }
             }
         }
@@ -50,7 +50,7 @@ object Settings {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showPackageInfo failed", t)
         }
     }
 
@@ -67,7 +67,7 @@ object Settings {
                 returnConstant(false)
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("supportAnyFont failed", t)
         }
     }
 
@@ -83,7 +83,7 @@ object Settings {
                 returnConstant(0)
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showMoreBatteryInfo failed", t)
         }
     }
 
@@ -97,7 +97,7 @@ object Settings {
                 returnConstant(true)
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showForcePeakRefreshRatePreference failed", t)
         }
     }
 

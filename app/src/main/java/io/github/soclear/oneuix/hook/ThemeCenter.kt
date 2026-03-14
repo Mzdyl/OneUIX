@@ -5,6 +5,7 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 
 object ThemeCenter {
     fun setTrialNeverExpired(loadPackageParam: XC_LoadPackage.LoadPackageParam) {
@@ -27,7 +28,7 @@ object ThemeCenter {
                 XC_MethodReplacement.DO_NOTHING
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setTrialNeverExpired failed", t)
         }
     }
 }

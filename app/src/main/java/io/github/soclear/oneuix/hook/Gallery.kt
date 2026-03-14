@@ -2,12 +2,12 @@ package io.github.soclear.oneuix.hook
 
 import android.content.Context
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.XposedHelpers.getStaticObjectField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 
 object Gallery {
     fun supportAllSettings(loadPackageParam: LoadPackageParam) {
@@ -44,7 +44,7 @@ object Gallery {
             try {
                 findAndHookMethod(featureInstance.javaClass, "getEnabling", returnTrue)
             } catch (t: Throwable) {
-                XposedBridge.log(t)
+                logError("supportAllSettings hook failed for $feature", t)
             }
         }
 
