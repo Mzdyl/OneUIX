@@ -191,6 +191,16 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     SystemUI.setStatusBarPaddingDp(lpparam, leftPaddingDp, rightPaddingDp)
                 }
 
+                run {
+                    val widthScale = if (preference.systemUI.statusBar.setBatteryIconWidthScale) {
+                        preference.systemUI.statusBar.batteryIconWidthScale
+                    } else null
+                    val heightScale = if (preference.systemUI.statusBar.setBatteryIconHeightScale) {
+                        preference.systemUI.statusBar.batteryIconHeightScale
+                    } else null
+                    SystemUI.setBatteryIconScale(lpparam, widthScale, heightScale)
+                }
+
                 if (preference.systemUI.statusBar.supportRealTimeNetworkSpeed) {
                     Network.supportRealTimeNetworkSpeed(lpparam)
                 }

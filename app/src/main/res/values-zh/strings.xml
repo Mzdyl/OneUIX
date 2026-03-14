@@ -10,6 +10,8 @@
     <string name="aod">息屏提醒</string>
     <string name="statusBarLeftPaddingDp_title">修改状态栏左边距</string>
     <string name="statusBarRightPaddingDp_title">修改状态栏右边距</string>
+    <string name="setBatteryIconWidthScale_title">设置电池图标宽度缩放倍数</string>
+    <string name="setBatteryIconHeightScale_title">设置电池图标高度缩放倍数</string>
     <string name="hideBatteryPercentageSign_title">隐藏状态栏电池的百分号</string>
     <string name="hideBatteryPercentageSign_summary">仅去掉百分号，保留数字</string>
     <string name="supportRealTimeNetworkSpeed_title">支持显示实时网速</string>
