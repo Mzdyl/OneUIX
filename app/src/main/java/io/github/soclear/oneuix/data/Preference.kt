@@ -102,6 +102,7 @@ data class Preference(
         val showWiFiLinkSpeed: Boolean = false,
         val supportAnyFont: Boolean = true,
         val supportAutoPowerOnOff: Boolean = false,
+        val showNotificationCategory: Boolean = false,
     )
 
     @Serializable

@@ -73,3 +73,58 @@ fun xlog(string: String) {
     val result = "\n\n////////////////\n\n////////////////\n\n$string\n\n////////////////\n\n"
     XposedBridge.log(result)
 }
+
+/**
+ * 通过 shell 命令写入 settings 数据库
+ * @param namespace 命名空间: system, secure, global
+ * @param key 设置项名称
+ * @param value 设置值
+ * @return 是否执行成功
+ */
+fun putSettings(namespace: String, key: String, value: String): Boolean {
+    return try {
+        val command = "settings put $namespace $key $value"
+        val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+        val exitCode = process.waitFor()
+        exitCode == 0
+    } catch (t: Throwable) {
+        XposedBridge.log("OneUIX: Failed to put settings - ${t.message}")
+        false
+    }
+}
+
+/**
+ * 通过 shell 命令读取 settings 数据库
+ * @param namespace 命名空间: system, secure, global
+ * @param key 设置项名称
+ * @return 设置值，失败返回 null
+ */
+fun getSettings(namespace: String, key: String): String? {
+    return try {
+        val command = "settings get $namespace $key"
+        val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+        val result = process.inputStream.bufferedReader().readText().trim()
+        if (result == "null" || result.isEmpty()) null else result
+    } catch (t: Throwable) {
+        XposedBridge.log("OneUIX: Failed to get settings - ${t.message}")
+        null
+    }
+}
+
+/**
+ * 启动 Activity
+ * @param packageName 包名
+ * @param activityName Activity 名称
+ * @return 是否执行成功
+ */
+fun launchActivity(packageName: String, activityName: String): Boolean {
+    return try {
+        val command = "am start -n $packageName/$activityName"
+        val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+        val exitCode = process.waitFor()
+        exitCode == 0
+    } catch (t: Throwable) {
+        XposedBridge.log("OneUIX: Failed to launch activity - ${t.message}")
+        false
+    }
+}

@@ -95,6 +95,8 @@
     <string name="isOpStyleCHN_title">中国大陆样式的通话记录</string>
     <string name="supportAutoPowerOnOff_title">支持自动开/关机</string>
     <string name="supportAutoPowerOnOff_summary">设置->重置->自动开/关机</string>
+    <string name="showNotificationCategory_title">显示通知类别设置</string>
+    <string name="showNotificationCategory_summary">在设置中启用隐藏的通知类别选项（需要 root 权限）</string>
     <string name="noAIWatermark_title">禁用图片编辑器 AI 水印</string>
     <string name="bypassHealthMonitorCountryCheck_title">绕过 Samsung Health Monitor 国家检查</string>
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>

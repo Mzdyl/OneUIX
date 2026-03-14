@@ -95,6 +95,8 @@
     <string name="isOpStyleCHN_title">Mainland China style call log</string>
     <string name="supportAutoPowerOnOff_title">Support Auto power on/off</string>
     <string name="supportAutoPowerOnOff_summary">Settings -> Reset -> Auto power on/off</string>
+    <string name="showNotificationCategory_title">Show notification category settings</string>
+    <string name="showNotificationCategory_summary">Enable hidden notification category options in Settings (requires root)</string>
     <string name="noAIWatermark_title">Disable Photo Editor AI watermark</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
     <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries</string>

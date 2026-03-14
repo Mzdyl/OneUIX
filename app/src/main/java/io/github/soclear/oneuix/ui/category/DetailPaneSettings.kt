@@ -11,6 +11,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
+import io.github.soclear.oneuix.hook.util.launchActivity
+import io.github.soclear.oneuix.hook.util.putSettings
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 
@@ -66,6 +68,23 @@ fun DetailPaneSettings(
             checked = uiState.supportAutoPowerOnOff,
             onCheckedChange = { onEvent(SettingsEvent.SupportAutoPowerOnOff(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.notifications),
+            title = stringResource(id = R.string.showNotificationCategory_title),
+            summary = stringResource(id = R.string.showNotificationCategory_summary),
+            checked = uiState.showNotificationCategory,
+            onCheckedChange = {
+                // 执行 shell 命令修改系统设置
+                val value = if (it) "1" else "0"
+                if (putSettings("secure", "show_notification_category_setting", value)) {
+                    // 启动通知设置界面刷新
+                    launchActivity("com.android.settings", ".Settings\$StatusBarNotificationActivity")
+                    onEvent(SettingsEvent.ShowNotificationCategory(it))
+                }
+                // 如果失败，状态不会更新，Switch 保持原状态
+                // 用户可以检查是否有 root 权限
+            }
+        )
     }
 }
 
@@ -87,6 +106,9 @@ sealed interface SettingsEvent {
 
     @JvmInline
     value class SupportAutoPowerOnOff(val value: Boolean) : SettingsEvent
+
+    @JvmInline
+    value class ShowNotificationCategory(val value: Boolean) : SettingsEvent
 }
 
 fun SettingViewModel.onSettingsEvent(event: SettingsEvent) {
@@ -124,6 +146,11 @@ fun SettingViewModel.onSettingsEvent(event: SettingsEvent) {
             is SettingsEvent.SupportAutoPowerOnOff -> preference.copy(
                 settings = preference.settings.copy(
                     supportAutoPowerOnOff = event.value
+                )
+            )
+            is SettingsEvent.ShowNotificationCategory -> preference.copy(
+                settings = preference.settings.copy(
+                    showNotificationCategory = event.value
                 )
             )
         }
