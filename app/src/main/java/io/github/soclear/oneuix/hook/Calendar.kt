@@ -1,10 +1,10 @@
 package io.github.soclear.oneuix.hook
 
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 
 object Calendar {
     fun enableChineseHolidayDisplay(loadPackageParam: LoadPackageParam) {
@@ -36,7 +36,7 @@ object Calendar {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("enableChineseHolidayDisplay failed", t)
         }
     }
 }

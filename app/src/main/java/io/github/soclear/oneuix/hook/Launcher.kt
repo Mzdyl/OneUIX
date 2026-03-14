@@ -14,12 +14,12 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 import java.io.File
 import java.lang.ref.WeakReference
 import java.lang.reflect.Constructor
@@ -146,7 +146,7 @@ object Launcher {
                 updateTextViewCallback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showMemoryUsageInRecentsTargetSdk36 failed", t)
         }
     }
 
@@ -216,7 +216,7 @@ object Launcher {
                         constraintLayoutLayoutParamsConstructor
                     )
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("getViewCallback failed", t)
                 }
             }
 
@@ -283,7 +283,7 @@ object Launcher {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showMemoryUsageInRecentsTargetSdk35 onCreate hook failed", t)
         }
 
 
@@ -357,7 +357,7 @@ object Launcher {
                 updateTextViewCallback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showMemoryUsageInRecentsTargetSdk35 updateTextViewCallback failed", t)
         }
     }
 }

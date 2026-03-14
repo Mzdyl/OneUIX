@@ -6,7 +6,6 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
@@ -15,6 +14,7 @@ import de.robv.android.xposed.XposedHelpers.setObjectField
 import de.robv.android.xposed.XposedHelpers.setStaticObjectField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 import kotlin.math.roundToInt
 
 object Browser {
@@ -42,7 +42,7 @@ object Browser {
                             setPlaybackRateViewWidth(param)
                             addMoreSpeeds(param)
                         } catch (t: Throwable) {
-                            XposedBridge.log(t)
+                            logError("showMorePlaybackSpeeds init hook failed", t)
                         }
                     }
 
@@ -114,14 +114,14 @@ object Browser {
                                 radioButton
                             )
                         } catch (t: Throwable) {
-                            XposedBridge.log(t)
+                            logError("setInitialSpeed hook failed", t)
                         }
                         return null
                     }
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showMorePlaybackSpeeds failed", t)
         }
     }
 
@@ -158,7 +158,7 @@ object Browser {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setCountryIsoCode failed", t)
         }
     }
 }

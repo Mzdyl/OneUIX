@@ -15,6 +15,8 @@ import de.robv.android.xposed.XposedHelpers.setObjectField
 import de.robv.android.xposed.XposedHelpers.setStaticIntField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.log
+import io.github.soclear.oneuix.hook.util.logError
 
 
 object Android {
@@ -41,7 +43,7 @@ object Android {
                 DO_NOTHING
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setBlockableNotificationChannel failed", t)
         }
     }
 
@@ -55,7 +57,7 @@ object Android {
             )
             setStaticIntField(clazz, "MAX_NEVERKILLEDAPP_NUM", num)
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setMaxNeverKilledAppNum failed", t)
         }
     }
 
@@ -72,7 +74,7 @@ object Android {
                 DO_NOTHING
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("disablePinVerifyPer72h failed", t)
         }
     }
 
@@ -98,7 +100,7 @@ object Android {
                             setObjectField(param.thisObject, "mASKSPidMap", null)
                         }
                     } catch (e: Throwable) {
-                        XposedBridge.log("OneUIX: ASKS field access error - ${e.message}")
+                        logError("ASKS field access error", e)
                     }
                 }
             })
@@ -131,10 +133,9 @@ object Android {
                 XC_MethodReplacement.returnConstant(false)
             )
 
-            XposedBridge.log("OneUIX: ASKS restriction disabled")
+            log("ASKS restriction disabled")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to disable ASKS restriction")
-            XposedBridge.log(t)
+            logError("Failed to disable ASKS restriction", t)
         }
     }
 
@@ -156,10 +157,9 @@ object Android {
                 XC_MethodReplacement.returnConstant(1)
             )
 
-            XposedBridge.log("OneUIX: Signature verification disabled (Android 15)")
+            log("Signature verification disabled (Android 15)")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to disable signature verification")
-            XposedBridge.log(t)
+            logError("Failed to disable signature verification", t)
         }
     }
 
@@ -181,10 +181,9 @@ object Android {
                 XC_MethodReplacement.returnConstant(true)
             )
 
-            XposedBridge.log("OneUIX: Shared user check disabled (Android 15)")
+            log("Shared user check disabled (Android 15)")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to disable shared user check")
-            XposedBridge.log(t)
+            logError("Failed to disable shared user check", t)
         }
     }
 
@@ -239,10 +238,9 @@ object Android {
                 XC_MethodReplacement.returnConstant(200)
             )
 
-            XposedBridge.log("OneUIX: GMS/FCM restriction bypassed")
+            log("GMS/FCM restriction bypassed")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to bypass GMS restriction")
-            XposedBridge.log(t)
+            logError("Failed to bypass GMS restriction", t)
         }
     }
 
@@ -272,7 +270,7 @@ object Android {
                                         action == "com.google.firebase.MESSAGING_EVENT" ||
                                         action.endsWith(".android.c2dm.intent.RECEIVE")
                                     )) {
-                                        XposedBridge.log("OneUIX: Forced FCM to awake: $action")
+                                        log("Forced FCM to awake: $action")
                                         // 移除广播限制标志 (第一个参数通常是 flags)
                                         if (param.args.isNotEmpty() && param.args[0] is Int) {
                                             param.args[0] = 0
@@ -282,16 +280,15 @@ object Android {
                                 }
                             }
                         } catch (e: Throwable) {
-                            XposedBridge.log("OneUIX: FCM broadcast hook error - ${e.message}")
+                            logError("FCM broadcast hook error", e)
                         }
                     }
                 }
             )
 
-            XposedBridge.log("OneUIX: FCM force wake enabled")
+            log("FCM force wake enabled")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to enable FCM force wake")
-            XposedBridge.log(t)
+            logError("Failed to enable FCM force wake", t)
         }
     }
 
@@ -360,10 +357,9 @@ object Android {
                 // 可能不存在，忽略
             }
 
-            XposedBridge.log("OneUIX: Google Search (Circle to Search) enabled")
+            log("Google Search (Circle to Search) enabled")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to enable Google Search")
-            XposedBridge.log(t)
+            logError("Failed to enable Google Search", t)
         }
     }
 }

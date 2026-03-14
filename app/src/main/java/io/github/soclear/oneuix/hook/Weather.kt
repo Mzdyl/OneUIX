@@ -2,10 +2,10 @@ package io.github.soclear.oneuix.hook
 
 import android.os.Build
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.logError
 
 object Weather {
     fun setProviderCN(loadPackageParam: LoadPackageParam) {
@@ -27,7 +27,7 @@ object Weather {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setProviderCN failed", t)
         }
         /*
         findAndHookMethod(

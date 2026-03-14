@@ -9,6 +9,7 @@ import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.getHookConfig
+import io.github.soclear.oneuix.hook.util.logError
 import io.github.soclear.oneuix.hook.util.longVersionCode
 import kotlinx.serialization.Serializable
 import org.luckypray.dexkit.DexKitBridge
@@ -28,7 +29,7 @@ object HealthMonitor {
                 try {
                     hook(classLoader, hookConfig)
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("bypassCountryCheck failed", t)
                 }
             }
         }

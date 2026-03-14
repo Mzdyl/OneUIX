@@ -12,6 +12,7 @@ import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.getHookConfig
+import io.github.soclear.oneuix.hook.util.logError
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.result.MethodData
 import org.luckypray.dexkit.wrap.DexField
@@ -55,7 +56,7 @@ object Call {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("supportVoiceCallRecording failed", t)
         }
     }
 
@@ -95,7 +96,7 @@ object Call {
                 returnConstant(true)
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("isOpStyleCHN failed", t)
         }
     }
 

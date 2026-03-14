@@ -35,6 +35,8 @@ import de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResou
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
+import io.github.soclear.oneuix.hook.util.log
+import io.github.soclear.oneuix.hook.util.logError
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -86,7 +88,7 @@ object SystemUI {
                 )
             }
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setStatusBarPaddingDp failed", t)
         }
     }
 
@@ -114,7 +116,7 @@ object SystemUI {
             )
             hookAllMethods(screenshotCaptureSoundClass, "play", returnConstant(null))
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("disableScreenshotCaptureSound failed", t)
         }
     }
 
@@ -138,7 +140,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("hideDeviceControlQsTile failed", t)
         }
     }
 
@@ -188,7 +190,7 @@ object SystemUI {
                     )
                 }
             } catch (t: Throwable) {
-                XposedBridge.log(t)
+                logError("hideQsBar NearbyDevicesAndDeviceControl failed", t)
             }
         }
 
@@ -202,7 +204,7 @@ object SystemUI {
                     callback
                 )
             } catch (t: Throwable) {
-                XposedBridge.log(t)
+                logError("hideQsBar MediaPlayer failed", t)
             }
         }
 
@@ -251,7 +253,7 @@ object SystemUI {
                     )
                 }
             } catch (t: Throwable) {
-                XposedBridge.log(t)
+                logError("hideQsBar SecurityFooter failed", t)
             }
         }
 
@@ -265,7 +267,7 @@ object SystemUI {
                     callback
                 )
             } catch (t: Throwable) {
-                XposedBridge.log(t)
+                logError("hideQsBar SmartViewAndModes failed", t)
             }
         }
 
@@ -299,7 +301,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("hideQsBar TopLargeTileBar failed", t)
         }
     }
 
@@ -321,7 +323,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("alwaysExpandQsTileChunk setContainerHeight failed", t)
         }
 
         try {
@@ -341,7 +343,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("alwaysExpandQsTileChunk inflateViews failed", t)
         }
     }
 
@@ -369,7 +371,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("alwaysShowTimeDateOnQs setQs failed", t)
         }
 
         try {
@@ -396,7 +398,7 @@ object SystemUI {
                 )
             }
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("alwaysShowTimeDateOnQs updateViews failed", t)
         }
     }
 
@@ -439,7 +441,7 @@ object SystemUI {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setQsClockStyle failed", t)
         }
     }
 
@@ -510,7 +512,7 @@ object SystemUI {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setStatusBarClockText failed", t)
         }
     }
 
@@ -550,14 +552,14 @@ object SystemUI {
                                 }
                             }
                         } catch (t: Throwable) {
-                            XposedBridge.log("OneUIX: showBatteryTemperature error: ${t.message}")
+                            logError("showBatteryTemperature callback error", t)
                         }
                     }
                 }
             )
-            XposedBridge.log("OneUIX: showBatteryTemperature hooked")
+            log("showBatteryTemperature hooked")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to hook showBatteryTemperature: ${t.message}")
+            logError("Failed to hook showBatteryTemperature", t)
         }
     }
 
@@ -593,7 +595,7 @@ object SystemUI {
                 )
             }
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("hideSecureFolderStatusBarIcon failed", t)
         }
     }
 
@@ -629,7 +631,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("setStatusBarMaxNotificationIcons failed", t)
         }
     }
 
@@ -669,7 +671,7 @@ object SystemUI {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("doubleTapStatusBarToSleep failed", t)
         }
     }
 
@@ -721,7 +723,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("showTraditionalChineseDateOnQS failed", t)
         }
     }
 
@@ -755,7 +757,7 @@ object SystemUI {
                     }
                     sliderParent.addView(textView, layoutParams)
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("addVolumeProgressToQsBar inflateViews callback failed", t)
                 }
             }
         }
@@ -782,7 +784,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("addVolumeProgressToQsBar failed", t)
         }
     }
 
@@ -817,7 +819,7 @@ object SystemUI {
                     textViewList.add(textView)
                     frameLayout.addView(textView, layoutParams)
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("addBrightnessProgressToQsBar onViewAttached callback failed", t)
                 }
             }
         }
@@ -847,7 +849,7 @@ object SystemUI {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("addBrightnessProgressToQsBar failed", t)
         }
     }
 
@@ -866,7 +868,7 @@ object SystemUI {
                         parentView.visibility = View.GONE
                     }
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    logError("hideAODStatusBar callback failed", t)
                 }
             }
         }
@@ -878,7 +880,7 @@ object SystemUI {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("hideAODStatusBar failed", t)
         }
     }
 
@@ -911,7 +913,7 @@ object SystemUI {
                 callback
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("aodLockSupportLunar failed", t)
         }
     }
 
@@ -931,10 +933,9 @@ object SystemUI {
                 returnConstant(enabled)
             )
 
-            XposedBridge.log("OneUIX: Google Search CTS support for CN -> $enabled")
+            log("Google Search CTS support for CN -> $enabled")
         } catch (t: Throwable) {
-            XposedBridge.log("OneUIX: Failed to enable Google Search CTS support")
-            XposedBridge.log(t)
+            logError("Failed to enable Google Search CTS support", t)
         }
     }
 

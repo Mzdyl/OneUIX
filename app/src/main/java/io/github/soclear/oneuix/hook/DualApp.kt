@@ -5,12 +5,12 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.icu.text.Collator
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedBridge.hookAllMethods
 import de.robv.android.xposed.XposedHelpers.findClassIfExists
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.getSystemContext
+import io.github.soclear.oneuix.hook.util.logError
 
 object DualApp {
     fun makeAllUserAppsAvailable(loadPackageParam: LoadPackageParam) {
@@ -47,7 +47,7 @@ object DualApp {
                 returnConstant(dualAppPackages)
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("makeAllUserAppsAvailable failed", t)
         }
     }
 }
