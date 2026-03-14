@@ -110,6 +110,7 @@
 - 主题和图标试用永不过期
 - 自定义浏览器搜索引擎（国行专属）
 - 禁用图片编辑器 AI 水印
+- 绕过 Samsung Health Monitor 国家检查
 
 ### 📦 安装要求
 
@@ -216,6 +217,7 @@
 - Never expire theme and icon trials
 - Customize browser search engine (Mainland China ROM exclusive)
 - Disable Photo Editor AI watermark
+- Bypass Samsung Health Monitor country check
 
 ### 📦 Installation Requirements
 

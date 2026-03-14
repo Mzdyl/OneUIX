@@ -24,13 +24,21 @@ object HealthMonitor {
             return
         }
         afterAttach {
-            val hookConfig = getHookConfig { getHookConfigFromDexKit() }
-            if (hookConfig != null) {
-                try {
-                    hook(classLoader, hookConfig)
-                } catch (t: Throwable) {
-                    logError("bypassCountryCheck failed", t)
-                }
+            val hookConfig = getHookConfig { getHookConfigFromDexKit() } ?: return@afterAttach
+            try {
+                val supportedTypeClass = findClass(SUPPORTED_TYPE_CLASS, classLoader)
+
+                // 使用 准确的 ALL_SUPPORT 为后续可能的血压功能提前准备
+                // 开启血压功能需要手表区域检验通过
+                val allSupportType = supportedTypeClass.enumConstants
+                    ?.filterIsInstance<Enum<*>>()
+                    ?.firstOrNull { it.name == "ALL_SUPPORT" }
+                    ?: return@afterAttach
+
+                val method = DexMethod(hookConfig.isSupportedCountryMethod).getMethodInstance(classLoader)
+                XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(allSupportType))
+            } catch (t: Throwable) {
+                logError("bypassCountryCheck failed", t)
             }
         }
     }
@@ -64,19 +72,5 @@ object HealthMonitor {
                 isSupportedCountryMethod = isSupportedCountryMethod.toDexMethod().serialize()
             )
         }
-    }
-
-    private fun Context.hook(classLoader: ClassLoader, hookConfig: HealthMonitorHookConfig) {
-        val supportedTypeClass = findClass(SUPPORTED_TYPE_CLASS, classLoader)
-        
-        // 使用 准确的 ALL_SUPPORT 为后续可能的血压功能提前准备
-        // 开启血压功能需要手表区域检验通过
-        val allSupportType = supportedTypeClass.enumConstants
-            ?.filterIsInstance<Enum<*>>()
-            ?.firstOrNull { it.name == "ALL_SUPPORT" }
-            ?: return
-            
-        val method = DexMethod(hookConfig.isSupportedCountryMethod).getMethodInstance(classLoader)
-        XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(allSupportType))
     }
 }

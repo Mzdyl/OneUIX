@@ -12,3 +12,4 @@ keystore.properties
 /.kotlin
 *.keystore
 *.jks
+DEVELOPMENT.md
