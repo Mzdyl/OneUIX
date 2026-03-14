@@ -144,6 +144,83 @@ object Camera {
         SUPPORT_MOTION_PHOTO_BEFORE_AND_AFTER_AS_DEFAULT_CAPTURE_MODE,
     }
 
+    private const val WATERMARK_HOOK_CONFIG_FILE_NAME = "WatermarkHookConfig.json"
+    fun supportFrameWatermark(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.CAMERA) return
+
+        afterAttach {
+            val hookConfig = getHookConfig(File(filesDir, WATERMARK_HOOK_CONFIG_FILE_NAME)) {
+                getWatermarkHookConfigFromDexKit()
+            } ?: return@afterAttach
+
+            val enableFeatures = setOf(
+                "SUPPORT_BODY_BEAUTY",
+                "SUPPORT_FRAME_WATERMARK",
+                "SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS",
+            )
+
+            try {
+                val deviceFeatureClass = XposedHelpers.findClass(hookConfig.className, classLoader)
+
+                // 获取所有 Map 类型的字段
+                val mapFields = deviceFeatureClass.declaredFields
+                    .filter { it.type.name.contains("Map") || it.type.name.contains("HashMap") }
+                    .onEach { it.isAccessible = true }
+
+                // 设置 Map 中的特性值
+                fun setFeatureInMap(map: MutableMap<*, *>, features: Set<String>) {
+                    for (key in map.keys) {
+                        if (key?.toString() in features) {
+                            @Suppress("UNCHECKED_CAST")
+                            (map as MutableMap<Any?, Boolean>)[key] = true
+                        }
+                    }
+                }
+
+                // Hook 初始化方法
+                deviceFeatureClass.declaredMethods
+                    .filter { it.returnType == Void.TYPE && it.parameterTypes.isEmpty() }
+                    .forEach { method ->
+                        XposedBridge.hookMethod(method, object : XC_MethodHook() {
+                            override fun afterHookedMethod(param: MethodHookParam) {
+                                mapFields.forEach { field ->
+                                    (field.get(param.thisObject) as? MutableMap<*, *>)
+                                        ?.takeIf { it.isNotEmpty() }
+                                        ?.let { setFeatureInMap(it, enableFeatures) }
+                                }
+                            }
+                        })
+                    }
+            } catch (t: Throwable) {
+                XposedBridge.log("OneUIX: Watermark hook error: ${t.message}")
+            }
+        }
+    }
+
+    @Serializable
+    private data class WatermarkHookConfig(
+        override val versionCode: Long,
+        val className: String,
+    ) : HookConfig
+
+    private fun Context.getWatermarkHookConfigFromDexKit(): WatermarkHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val excludes = listOf(
+                "androidx", "android.support", "camera.samsung.smartscan",
+                "co.polarr", "dagger.android", "vizinsight.atl", "kotlin"
+            )
+
+            // 通过 initializeBooleanFeatureMap 字符串查找 DeviceFeature 类
+            return bridge.findClass {
+                excludePackages(excludes)
+                matcher { usingStrings("initializeBooleanFeatureMap") }
+            }.firstOrNull()?.let {
+                WatermarkHookConfig(longVersionCode, it.name)
+            }
+        }
+    }
+
     private fun Context.getHookConfigFromDexKit(): CameraHookConfig? {
         System.loadLibrary("dexkit")
         DexKitBridge.create(classLoader, true).use { bridge ->
