@@ -36,6 +36,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneMessaging
 import io.github.soclear.oneuix.ui.category.DetailPaneNotes
 import io.github.soclear.oneuix.ui.category.DetailPaneOther
 import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
+import io.github.soclear.oneuix.ui.category.DetailPaneSPen
 import io.github.soclear.oneuix.ui.category.DetailPaneSettings
 import io.github.soclear.oneuix.ui.category.DetailPaneSystemUI
 import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
@@ -56,6 +57,7 @@ import io.github.soclear.oneuix.ui.category.onMessagingEvent
 import io.github.soclear.oneuix.ui.category.onNotesEvent
 import io.github.soclear.oneuix.ui.category.onOtherEvent
 import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
+import io.github.soclear.oneuix.ui.category.onSPenEvent
 import io.github.soclear.oneuix.ui.category.onSettingsEvent
 import io.github.soclear.oneuix.ui.category.onSystemUIEvent
 import io.github.soclear.oneuix.ui.category.onThemeCenterEvent
@@ -178,6 +180,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.GalaxyStore -> DetailPaneGalaxyStore(
                             uiState = preference.galaxyStore,
                             onEvent = viewModel::onGalaxyStoreEvent
+                        )
+
+                        Category.SPen -> DetailPaneSPen(
+                            uiState = preference.sPen,
+                            onEvent = viewModel::onSPenEvent
                         )
 
                         Category.Other -> DetailPaneOther(

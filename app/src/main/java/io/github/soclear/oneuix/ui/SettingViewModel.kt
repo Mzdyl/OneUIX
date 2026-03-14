@@ -37,7 +37,8 @@ class SettingViewModel(application: Application) : ViewModel() {
         Category.Launcher,
         Category.DualApp,
         Category.PhotoRetouching,
-        Category.HealthMonitor
+        Category.HealthMonitor,
+        Category.SPen
     )
 
     val categoryAppInfoList: StateFlow<List<CategoryAppInfo>> = flow {

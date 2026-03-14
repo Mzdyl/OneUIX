@@ -22,6 +22,7 @@ data class Preference(
     val photoRetouching: PhotoRetouching = PhotoRetouching(),
     val healthMonitor: HealthMonitor = HealthMonitor(),
     val galaxyStore: GalaxyStore = GalaxyStore(),
+    val sPen: SPen = SPen(),
     val other: Other = Other(),
 ) {
     @Serializable
@@ -189,6 +190,11 @@ data class Preference(
         val blockGalaxyStoreAds: Boolean = true,
         val changeRegion: Boolean = false,
         val regionCode: String = "US",
+    )
+
+    @Serializable
+    data class SPen(
+        val useGoogleTranslate: Boolean = false,
     )
 
     @Serializable

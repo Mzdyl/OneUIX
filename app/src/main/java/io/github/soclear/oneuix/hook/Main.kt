@@ -355,6 +355,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     Weather.setProviderCN(lpparam)
                 }
             }
+
+            Package.SPEN -> {
+                SPen.switchTranslateSource(lpparam, preference.sPen.useGoogleTranslate)
+            }
         }
     }
 

@@ -22,5 +22,6 @@ enum class Category(val packageName: String) {
     PhotoRetouching(Package.PHOTO_RETOUCHING),
     HealthMonitor(Package.HEALTH_MONITOR),
     GalaxyStore(Package.STORE),
+    SPen(Package.SPEN),
     Other(BuildConfig.APPLICATION_ID);
 }
