@@ -40,6 +40,8 @@
     <string name="disableCameraTemperatureCheck_title">Disable camera temperature check</string>
     <string name="supportFrameWatermark_title">Enable camera frame watermark</string>
     <string name="supportFrameWatermark_summary">Add device frame overlay watermark to photos</string>
+    <string name="supportBodyBeauty_title">Enable body beauty feature</string>
+    <string name="supportBodyBeauty_summary">Enable body shaping and beauty features in camera</string>
     <string name="disableScreenshotCaptureSound_title">Disable screenshot sound</string>
     <string name="showPackageInfo_title">Show package info on App Info page</string>
     <string name="showPackageInfo_summary">Long press or double tap to copy</string>

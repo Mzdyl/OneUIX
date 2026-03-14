@@ -63,8 +63,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     disableTemperatureCheck = preference.camera.disableCameraTemperatureCheck
                 )
 
-                if (preference.camera.supportFrameWatermark) {
-                    Camera.supportFrameWatermark(lpparam)
+                if (preference.camera.supportFrameWatermark || preference.camera.supportBodyBeauty) {
+                    Camera.supportFrameWatermark(
+                        lpparam,
+                        supportFrameWatermark = preference.camera.supportFrameWatermark,
+                        supportBodyBeauty = preference.camera.supportBodyBeauty
+                    )
                 }
             }
 

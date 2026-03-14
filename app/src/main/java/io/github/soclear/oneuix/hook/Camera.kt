@@ -145,7 +145,12 @@ object Camera {
     }
 
     private const val WATERMARK_HOOK_CONFIG_FILE_NAME = "WatermarkHookConfig.json"
-    fun supportFrameWatermark(loadPackageParam: LoadPackageParam) {
+
+    fun supportFrameWatermark(
+        loadPackageParam: LoadPackageParam,
+        supportFrameWatermark: Boolean,
+        supportBodyBeauty: Boolean,
+    ) {
         if (loadPackageParam.packageName != Package.CAMERA) return
 
         afterAttach {
@@ -153,11 +158,15 @@ object Camera {
                 getWatermarkHookConfigFromDexKit()
             } ?: return@afterAttach
 
-            val enableFeatures = setOf(
-                "SUPPORT_BODY_BEAUTY",
-                "SUPPORT_FRAME_WATERMARK",
-                "SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS",
-            )
+            // 根据用户选择构建启用列表
+            val enableFeatures = mutableSetOf<String>()
+            if (supportFrameWatermark) {
+                enableFeatures.add("SUPPORT_FRAME_WATERMARK")
+                enableFeatures.add("SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS")
+            }
+            if (supportBodyBeauty) enableFeatures.add("SUPPORT_BODY_BEAUTY")
+
+            if (enableFeatures.isEmpty()) return@afterAttach
 
             try {
                 val deviceFeatureClass = XposedHelpers.findClass(hookConfig.className, classLoader)

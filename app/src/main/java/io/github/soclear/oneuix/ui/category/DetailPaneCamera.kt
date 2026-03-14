@@ -45,6 +45,13 @@ fun DetailPaneCamera(
             checked = uiState.supportFrameWatermark,
             onCheckedChange = { onEvent(CameraEvent.SupportFrameWatermark(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.camera),
+            title = stringResource(id = R.string.supportBodyBeauty_title),
+            summary = stringResource(id = R.string.supportBodyBeauty_summary),
+            checked = uiState.supportBodyBeauty,
+            onCheckedChange = { onEvent(CameraEvent.SupportBodyBeauty(it)) }
+        )
     }
 }
 
@@ -57,6 +64,9 @@ sealed interface CameraEvent {
 
     @JvmInline
     value class SupportFrameWatermark(val value: Boolean) : CameraEvent
+
+    @JvmInline
+    value class SupportBodyBeauty(val value: Boolean) : CameraEvent
 }
 
 fun SettingViewModel.onCameraEvent(event: CameraEvent) {
@@ -82,6 +92,14 @@ fun SettingViewModel.onCameraEvent(event: CameraEvent) {
                 preference.copy(
                     camera = preference.camera.copy(
                         supportFrameWatermark = event.value
+                    )
+                )
+            }
+
+            is CameraEvent.SupportBodyBeauty -> {
+                preference.copy(
+                    camera = preference.camera.copy(
+                        supportBodyBeauty = event.value
                     )
                 )
             }

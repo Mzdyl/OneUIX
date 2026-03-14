@@ -99,6 +99,7 @@ data class Preference(
         val supportAllCameraMenu: Boolean = true,
         val disableCameraTemperatureCheck: Boolean = false,
         val supportFrameWatermark: Boolean = false,
+        val supportBodyBeauty: Boolean = false,
     )
 
     @Serializable
