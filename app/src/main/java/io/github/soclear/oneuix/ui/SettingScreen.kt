@@ -23,18 +23,44 @@ import kotlinx.coroutines.launch
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.ui.category.Category
 import io.github.soclear.oneuix.ui.category.DetailPaneAndroid
+import io.github.soclear.oneuix.ui.category.DetailPaneBrowser
+import io.github.soclear.oneuix.ui.category.DetailPaneCalendar
 import io.github.soclear.oneuix.ui.category.DetailPaneCall
 import io.github.soclear.oneuix.ui.category.DetailPaneCamera
+import io.github.soclear.oneuix.ui.category.DetailPaneDualApp
+import io.github.soclear.oneuix.ui.category.DetailPaneGallery
+import io.github.soclear.oneuix.ui.category.DetailPaneGalaxyStore
+import io.github.soclear.oneuix.ui.category.DetailPaneHealthMonitor
+import io.github.soclear.oneuix.ui.category.DetailPaneLauncher
+import io.github.soclear.oneuix.ui.category.DetailPaneMessaging
+import io.github.soclear.oneuix.ui.category.DetailPaneNotes
 import io.github.soclear.oneuix.ui.category.DetailPaneOther
+import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
 import io.github.soclear.oneuix.ui.category.DetailPaneSettings
 import io.github.soclear.oneuix.ui.category.DetailPaneSystemUI
+import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
+import io.github.soclear.oneuix.ui.category.DetailPaneVideo
+import io.github.soclear.oneuix.ui.category.DetailPaneWeather
 import io.github.soclear.oneuix.ui.category.ListPaneCategory
 import io.github.soclear.oneuix.ui.category.onAndroidEvent
+import io.github.soclear.oneuix.ui.category.onBrowserEvent
+import io.github.soclear.oneuix.ui.category.onCalendarEvent
 import io.github.soclear.oneuix.ui.category.onCallEvent
 import io.github.soclear.oneuix.ui.category.onCameraEvent
+import io.github.soclear.oneuix.ui.category.onDualAppEvent
+import io.github.soclear.oneuix.ui.category.onGalleryEvent
+import io.github.soclear.oneuix.ui.category.onGalaxyStoreEvent
+import io.github.soclear.oneuix.ui.category.onHealthMonitorEvent
+import io.github.soclear.oneuix.ui.category.onLauncherEvent
+import io.github.soclear.oneuix.ui.category.onMessagingEvent
+import io.github.soclear.oneuix.ui.category.onNotesEvent
 import io.github.soclear.oneuix.ui.category.onOtherEvent
+import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
 import io.github.soclear.oneuix.ui.category.onSettingsEvent
 import io.github.soclear.oneuix.ui.category.onSystemUIEvent
+import io.github.soclear.oneuix.ui.category.onThemeCenterEvent
+import io.github.soclear.oneuix.ui.category.onVideoEvent
+import io.github.soclear.oneuix.ui.category.onWeatherEvent
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -87,6 +113,71 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.Camera -> DetailPaneCamera(
                             uiState = preference.camera,
                             onEvent = viewModel::onCameraEvent
+                        )
+
+                        Category.Gallery -> DetailPaneGallery(
+                            uiState = preference.gallery,
+                            onEvent = viewModel::onGalleryEvent
+                        )
+
+                        Category.Notes -> DetailPaneNotes(
+                            uiState = preference.notes,
+                            onEvent = viewModel::onNotesEvent
+                        )
+
+                        Category.Calendar -> DetailPaneCalendar(
+                            uiState = preference.calendar,
+                            onEvent = viewModel::onCalendarEvent
+                        )
+
+                        Category.Messaging -> DetailPaneMessaging(
+                            uiState = preference.messaging,
+                            onEvent = viewModel::onMessagingEvent
+                        )
+
+                        Category.Browser -> DetailPaneBrowser(
+                            uiState = preference.browser,
+                            onEvent = viewModel::onBrowserEvent
+                        )
+
+                        Category.Video -> DetailPaneVideo(
+                            uiState = preference.video,
+                            onEvent = viewModel::onVideoEvent
+                        )
+
+                        Category.Weather -> DetailPaneWeather(
+                            uiState = preference.weather,
+                            onEvent = viewModel::onWeatherEvent
+                        )
+
+                        Category.ThemeCenter -> DetailPaneThemeCenter(
+                            uiState = preference.themeCenter,
+                            onEvent = viewModel::onThemeCenterEvent
+                        )
+
+                        Category.Launcher -> DetailPaneLauncher(
+                            uiState = preference.launcher,
+                            onEvent = viewModel::onLauncherEvent
+                        )
+
+                        Category.DualApp -> DetailPaneDualApp(
+                            uiState = preference.dualApp,
+                            onEvent = viewModel::onDualAppEvent
+                        )
+
+                        Category.PhotoRetouching -> DetailPanePhotoRetouching(
+                            uiState = preference.photoRetouching,
+                            onEvent = viewModel::onPhotoRetouchingEvent
+                        )
+
+                        Category.HealthMonitor -> DetailPaneHealthMonitor(
+                            uiState = preference.healthMonitor,
+                            onEvent = viewModel::onHealthMonitorEvent
+                        )
+
+                        Category.GalaxyStore -> DetailPaneGalaxyStore(
+                            uiState = preference.galaxyStore,
+                            onEvent = viewModel::onGalaxyStoreEvent
                         )
 
                         Category.Other -> DetailPaneOther(

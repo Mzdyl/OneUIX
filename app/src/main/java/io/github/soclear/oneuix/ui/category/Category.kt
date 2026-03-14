@@ -9,5 +9,18 @@ enum class Category(val packageName: String) {
     Settings(Package.SETTINGS),
     Call(Package.DIALER),
     Camera(Package.CAMERA),
+    Gallery(Package.GALLERY),
+    Notes(Package.NOTES),
+    Calendar(Package.CALENDAR),
+    Messaging(Package.MESSAGING),
+    Browser(Package.BROWSER),
+    Video(Package.VIDEO),
+    Weather(Package.WEATHER),
+    ThemeCenter(Package.THEME_CENTER),
+    Launcher(Package.LAUNCHER),
+    DualApp(Package.DUAL_APP),
+    PhotoRetouching(Package.PHOTO_RETOUCHING),
+    HealthMonitor(Package.HEALTH_MONITOR),
+    GalaxyStore(Package.STORE),
     Other(BuildConfig.APPLICATION_ID);
 }

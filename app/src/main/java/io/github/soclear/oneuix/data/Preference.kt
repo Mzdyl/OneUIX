@@ -9,6 +9,19 @@ data class Preference(
     val settings: Settings = Settings(),
     val call: Call = Call(),
     val camera: Camera = Camera(),
+    val gallery: Gallery = Gallery(),
+    val notes: Notes = Notes(),
+    val calendar: Calendar = Calendar(),
+    val messaging: Messaging = Messaging(),
+    val browser: Browser = Browser(),
+    val video: Video = Video(),
+    val weather: Weather = Weather(),
+    val themeCenter: ThemeCenter = ThemeCenter(),
+    val launcher: Launcher = Launcher(),
+    val dualApp: DualApp = DualApp(),
+    val photoRetouching: PhotoRetouching = PhotoRetouching(),
+    val healthMonitor: HealthMonitor = HealthMonitor(),
+    val galaxyStore: GalaxyStore = GalaxyStore(),
     val other: Other = Other(),
 ) {
     @Serializable
@@ -103,19 +116,75 @@ data class Preference(
     )
 
     @Serializable
-    data class Other(
-        val blockGalaxyStoreAds: Boolean = true,
-        val makeAllUserAppsAvailable: Boolean = true,
-        val setWeatherProviderCN: Boolean = false,
-        val showMemoryUsageInRecents: Boolean = false,
-        val showMorePlaybackSpeeds: Boolean = false,
+    data class Gallery(
         val supportAllGallerySettings: Boolean = true,
+    )
+
+    @Serializable
+    data class Notes(
         val supportAllNotesFeatures: Boolean = true,
+    )
+
+    @Serializable
+    data class Calendar(
         val enableChineseHolidayDisplay: Boolean = false,
+    )
+
+    @Serializable
+    data class Messaging(
         val supportBlockMessage: Boolean = true,
-        val setThemeTrialNeverExpired: Boolean = true,
+    )
+
+    @Serializable
+    data class Browser(
         val customizeBrowserSearchEngine: Boolean = false,
+    )
+
+    @Serializable
+    data class Video(
+        val showMorePlaybackSpeeds: Boolean = false,
+    )
+
+    @Serializable
+    data class Weather(
+        val setWeatherProviderCN: Boolean = false,
+    )
+
+    @Serializable
+    data class ThemeCenter(
+        val setThemeTrialNeverExpired: Boolean = true,
+    )
+
+    @Serializable
+    data class Launcher(
+        val showMemoryUsageInRecents: Boolean = false,
+    )
+
+    @Serializable
+    data class DualApp(
+        val makeAllUserAppsAvailable: Boolean = true,
+    )
+
+    @Serializable
+    data class PhotoRetouching(
         val noAIWatermark: Boolean = true,
+    )
+
+    @Serializable
+    data class HealthMonitor(
         val bypassHealthMonitorCountryCheck: Boolean = false,
+    )
+
+    @Serializable
+    data class GalaxyStore(
+        val blockGalaxyStoreAds: Boolean = true,
+        val changeRegion: Boolean = false,
+        val regionCode: String = "US",
+    )
+
+    @Serializable
+    data class Other(
+        // 保留给模块自身设置或未分类功能
+        val placeholder: Boolean = false
     )
 }

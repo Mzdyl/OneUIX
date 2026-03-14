@@ -1,6 +1,7 @@
 package io.github.soclear.oneuix.hook
 
 import android.content.Context
+import android.os.Build
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
@@ -23,6 +24,114 @@ import java.lang.reflect.Modifier
 
 
 object GalaxyStore {
+    // 区域配置
+    private val regionConfigs = mapOf(
+        "US" to RegionConfig(
+            salesCode = "USA",
+            countryCode = "US",
+            countryIsoCode = "XAA",
+            simOperator = "310030",
+            simCountryIso = "us",
+            simOperatorName = "Centennial",
+        ),
+        "CN" to RegionConfig(
+            salesCode = "CHC",
+            countryCode = "CN",
+            countryIsoCode = "CHC",
+            simOperator = "46000",
+            simCountryIso = "cn",
+            simOperatorName = "中国移动",
+        ),
+        "HK" to RegionConfig(
+            salesCode = "TGY",
+            countryCode = "HK",
+            countryIsoCode = "TGY",
+            simOperator = "45400",
+            simCountryIso = "hk",
+            simOperatorName = "CSL",
+        ),
+        "TW" to RegionConfig(
+            salesCode = "BRI",
+            countryCode = "TW",
+            countryIsoCode = "BRI",
+            simOperator = "46697",
+            simCountryIso = "tw",
+            simOperatorName = "Taiwan Mobile",
+        ),
+        "JP" to RegionConfig(
+            salesCode = "DCM",
+            countryCode = "JP",
+            countryIsoCode = "DCM",
+            simOperator = "44010",
+            simCountryIso = "jp",
+            simOperatorName = "NTT Docomo",
+        ),
+        "KR" to RegionConfig(
+            salesCode = "SKC",
+            countryCode = "KR",
+            countryIsoCode = "SKC",
+            simOperator = "45005",
+            simCountryIso = "kr",
+            simOperatorName = "SK Telecom",
+        ),
+        "UK" to RegionConfig(
+            salesCode = "BTU",
+            countryCode = "GB",
+            countryIsoCode = "BTU",
+            simOperator = "23433",
+            simCountryIso = "gb",
+            simOperatorName = "EE",
+        ),
+        "DE" to RegionConfig(
+            salesCode = "DBT",
+            countryCode = "DE",
+            countryIsoCode = "DBT",
+            simOperator = "26202",
+            simCountryIso = "de",
+            simOperatorName = "Vodafone",
+        ),
+    )
+
+    private data class RegionConfig(
+        val salesCode: String,
+        val countryCode: String,
+        val countryIsoCode: String,
+        val simOperator: String,
+        val simCountryIso: String,
+        val simOperatorName: String,
+    )
+
+    /**
+     * 启用 Galaxy Store 换区功能
+     *
+     * **原理**:
+     * 通过 hook SystemProperties.get 和 TelephonyManager 的方法，
+     * 伪造设备区域信息，使 Galaxy Store 认为设备位于目标区域。
+     */
+    fun changeRegion(loadPackageParam: LoadPackageParam, regionCode: String) {
+        val config = regionConfigs[regionCode] ?: return
+
+        // Hook SystemProperties.get
+        val systemProperties = XposedHelpers.findClass("android.os.SystemProperties", loadPackageParam.classLoader)
+        hookMethod(systemProperties.getDeclaredMethod("get", String::class.java), object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                val key = param.args[0] as? String ?: return
+                when (key) {
+                    "ro.csc.sales_code" -> param.result = config.salesCode
+                    "ro.csc.country_code" -> param.result = config.countryCode
+                    "ro.csc.countryiso_code" -> param.result = config.countryIsoCode
+                }
+            }
+        })
+
+        // Hook TelephonyManager
+        val telephonyManager = XposedHelpers.findClass("android.telephony.TelephonyManager", loadPackageParam.classLoader)
+
+        findAndHookMethod(telephonyManager, "getSimOperator", XC_MethodReplacement.returnConstant(config.simOperator))
+        findAndHookMethod(telephonyManager, "getSimCountryIso", XC_MethodReplacement.returnConstant(config.simCountryIso))
+        findAndHookMethod(telephonyManager, "getSimOperatorName", XC_MethodReplacement.returnConstant(config.simOperatorName))
+    }
+
     fun blockGalaxyStoreAds(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.STORE) {
             return

@@ -2,6 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Android 11+ 包可见性 -->
+    <queries>
+        <package android:name="com.sec.android.app.samsungapps" />
+        <package android:name="com.sec.android.daemonapp" />
+        <package android:name="com.samsung.android.app.notes" />
+        <package android:name="com.samsung.android.calendar" />
+        <package android:name="com.sec.android.mimage.photoretouching" />
+        <package android:name="com.samsung.android.shealthmonitor" />
+    </queries>
+
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />

@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">One UI X</string>
     <string name="xposed_description">三星 One UI 扩展</string>
+    <string name="other">其他</string>
+    <string name="galaxy_store_label">Galaxy Store</string>
 
     <string name="statusBarLeftPaddingDp_title">修改状态栏左边距</string>
     <string name="statusBarRightPaddingDp_title">修改状态栏右边距</string>
@@ -35,6 +37,18 @@
     <string name="showMorePlaybackSpeeds_summary">包含本地播放器和浏览器内置播放器</string>
     <string name="blockGalaxyStoreAds_title">去除应用商店的广告</string>
     <string name="blockGalaxyStoreAds_summary">去除开屏广告、推荐广告和推荐弹窗，去除安装年龄限制弹窗</string>
+    <string name="galaxyStoreChangeRegion_title">切换应用商店区域</string>
+    <string name="galaxyStoreChangeRegion_summary">伪造设备区域以访问不同区域的商店内容</string>
+    <string name="galaxyStoreRegion_title">选择区域</string>
+    <string name="galaxyStoreRegion_summary">目标伪造区域</string>
+    <string name="region_us">美国</string>
+    <string name="region_cn">中国</string>
+    <string name="region_hk">香港</string>
+    <string name="region_tw">台湾</string>
+    <string name="region_jp">日本</string>
+    <string name="region_kr">韩国</string>
+    <string name="region_uk">英国</string>
+    <string name="region_de">德国</string>
     <string name="supportAllCameraMenu_title">显示相机的所有菜单</string>
     <string name="supportAllCameraMenu_summary">快门音、自动 HDR、Log</string>
     <string name="disableCameraTemperatureCheck_title">禁用相机过热检查</string>
@@ -88,7 +102,6 @@
     <string name="module_disabled_tip">请在 LSPosed 中启用本模块</string>
     <string name="close">关闭</string>
     <string name="confirm">确认</string>
-    <string name="other">其他</string>
     <string name="status_bar">状态栏</string>
     <string name="qs">快捷设置</string>
     <string name="aod">息屏提醒</string>

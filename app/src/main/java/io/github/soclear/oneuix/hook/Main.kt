@@ -41,17 +41,13 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.BROWSER -> {
-                if (preference.other.showMorePlaybackSpeeds) {
-                    Browser.showMorePlaybackSpeeds(lpparam)
-                }
-
-                if (preference.other.customizeBrowserSearchEngine) {
+                if (preference.browser.customizeBrowserSearchEngine) {
                     Browser.setCountryIsoCode(lpparam, "US")
                 }
             }
 
             Package.CALENDAR -> {
-                if (preference.other.enableChineseHolidayDisplay) {
+                if (preference.calendar.enableChineseHolidayDisplay) {
                     Calendar.enableChineseHolidayDisplay(lpparam)
                 }
             }
@@ -90,14 +86,20 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.DUAL_APP -> {
-                if (preference.other.makeAllUserAppsAvailable) {
+                if (preference.dualApp.makeAllUserAppsAvailable) {
                     DualApp.makeAllUserAppsAvailable(lpparam)
                 }
             }
 
             Package.GALLERY -> {
-                if (preference.other.supportAllGallerySettings) {
+                if (preference.gallery.supportAllGallerySettings) {
                     Gallery.supportAllSettings(lpparam)
+                }
+            }
+
+            Package.HEALTH_MONITOR -> {
+                if (preference.healthMonitor.bypassHealthMonitorCountryCheck) {
+                    HealthMonitor.bypassCountryCheck(lpparam)
                 }
             }
 
@@ -111,25 +113,25 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.LAUNCHER -> {
-                if (preference.other.showMemoryUsageInRecents) {
+                if (preference.launcher.showMemoryUsageInRecents) {
                     Launcher.showMemoryUsageInRecents(lpparam)
                 }
             }
 
             Package.MESSAGING -> {
-                if (preference.other.supportBlockMessage) {
+                if (preference.messaging.supportBlockMessage) {
                     Messaging.isSupportBlock(lpparam)
                 }
             }
 
             Package.NOTES -> {
-                if (preference.other.supportAllNotesFeatures) {
+                if (preference.notes.supportAllNotesFeatures) {
                     Notes.supportAllFeatures(lpparam)
                 }
             }
 
             Package.PHOTO_RETOUCHING -> {
-                if (preference.other.noAIWatermark) {
+                if (preference.photoRetouching.noAIWatermark) {
                     PhotoRetouching.noAIWatermark()
                 }
             }
@@ -169,8 +171,11 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.STORE -> {
-                if (preference.other.blockGalaxyStoreAds) {
+                if (preference.galaxyStore.blockGalaxyStoreAds) {
                     GalaxyStore.blockGalaxyStoreAds(lpparam)
+                }
+                if (preference.galaxyStore.changeRegion) {
+                    GalaxyStore.changeRegion(lpparam, preference.galaxyStore.regionCode)
                 }
             }
 
@@ -302,26 +307,20 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.THEME_CENTER -> {
-                if (preference.other.setThemeTrialNeverExpired) {
+                if (preference.themeCenter.setThemeTrialNeverExpired) {
                     ThemeCenter.setTrialNeverExpired(lpparam)
                 }
             }
 
-            Package.WEATHER -> {
-                if (preference.other.setWeatherProviderCN) {
-                    Weather.setProviderCN(lpparam)
-                }
-            }
-
             Package.VIDEO -> {
-                if (preference.other.showMorePlaybackSpeeds) {
+                if (preference.video.showMorePlaybackSpeeds) {
                     Video.showMorePlaybackSpeeds(lpparam)
                 }
             }
 
-            Package.HEALTH_MONITOR -> {
-                if (preference.other.bypassHealthMonitorCountryCheck) {
-                    HealthMonitor.bypassCountryCheck(lpparam)
+            Package.WEATHER -> {
+                if (preference.weather.setWeatherProviderCN) {
+                    Weather.setProviderCN(lpparam)
                 }
             }
         }
