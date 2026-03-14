@@ -31,6 +31,9 @@ data class Preference(
         val maxNeverKilledAppNum: Int = 5,
         val setBlockableNotificationChannel: Boolean = false,
         val supportAppJumpBlock: Boolean = false,
+        val disableAsksRestriction: Boolean = false,
+        val disableSignVerification: Boolean = false,
+        val disableShareUserCheck: Boolean = false,
     )
 
     @Serializable

@@ -93,6 +93,34 @@ fun DetailPaneAndroid(
                 onCheckedChange = { onEvent(AndroidEvent.SupportAppJumpBlock(it)) }
             )
         }
+        // ASKS 策略移除
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.block),
+            title = stringResource(id = R.string.disableAsksRestriction_title),
+            summary = stringResource(id = R.string.disableAsksRestriction_summary),
+            checked = uiState.disableAsksRestriction,
+            onCheckedChange = { onEvent(AndroidEvent.DisableAsksRestriction(it)) }
+        )
+        // 签名校验绕过 (仅 Android 15+)
+        if (Build.VERSION.SDK_INT >= 35) {
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.apk_document),
+                title = stringResource(id = R.string.disableSignVerification_title),
+                summary = stringResource(id = R.string.disableSignVerification_summary),
+                checked = uiState.disableSignVerification,
+                onCheckedChange = { onEvent(AndroidEvent.DisableSignVerification(it)) }
+            )
+        }
+        // 共享用户检查绕过 (仅 Android 15+)
+        if (Build.VERSION.SDK_INT >= 35) {
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.folder_managed),
+                title = stringResource(id = R.string.disableShareUserCheck_title),
+                summary = stringResource(id = R.string.disableShareUserCheck_summary),
+                checked = uiState.disableShareUserCheck,
+                onCheckedChange = { onEvent(AndroidEvent.DisableShareUserCheck(it)) }
+            )
+        }
     }
 }
 
@@ -111,6 +139,15 @@ sealed interface AndroidEvent {
 
     @JvmInline
     value class SupportAppJumpBlock(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class DisableAsksRestriction(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class DisableSignVerification(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class DisableShareUserCheck(val value: Boolean) : AndroidEvent
 }
 
 fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
@@ -152,6 +189,30 @@ fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
                 preference.copy(
                     android = preference.android.copy(
                         supportAppJumpBlock = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.DisableAsksRestriction -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        disableAsksRestriction = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.DisableSignVerification -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        disableSignVerification = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.DisableShareUserCheck -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        disableShareUserCheck = event.value
                     )
                 )
             }

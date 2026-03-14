@@ -38,6 +38,18 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.android.supportAppJumpBlock) {
                     CoreRune.supportAppJumpBlock(lpparam)
                 }
+
+                if (preference.android.disableAsksRestriction) {
+                    Android.disableAsksRestriction(lpparam)
+                }
+
+                if (preference.android.disableSignVerification) {
+                    Android.disableSignVerification(lpparam)
+                }
+
+                if (preference.android.disableShareUserCheck) {
+                    Android.disableShareUserCheck(lpparam)
+                }
             }
 
             Package.BROWSER -> {

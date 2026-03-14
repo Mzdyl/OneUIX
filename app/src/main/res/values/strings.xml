@@ -98,6 +98,12 @@
     <string name="noAIWatermark_title">Disable Photo Editor AI watermark</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
     <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries</string>
+    <string name="disableAsksRestriction_title">Disable ASKS restriction</string>
+    <string name="disableAsksRestriction_summary">Remove ASKS policy restrictions on app installation</string>
+    <string name="disableSignVerification_title">Disable signature verification</string>
+    <string name="disableSignVerification_summary">Bypass APK signature verification (Android 15+)</string>
+    <string name="disableShareUserCheck_title">Disable shared user check</string>
+    <string name="disableShareUserCheck_summary">Allow apps with different signatures to use the same sharedUserId (Android 15+)</string>
 
     <string name="module_disabled_tip">Please enable this module in LSPosed</string>
     <string name="close">Close</string>
