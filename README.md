@@ -50,6 +50,7 @@
 - 隐藏安全文件夹状态栏图标
 - 双击状态栏锁屏
 - 修改状态栏最大通知图标数量
+- 自定义运营商名称
 
 ##### 快捷设置
 
@@ -159,6 +160,7 @@
 - Hide Secure Folder status bar icon
 - Double tap status bar to sleep
 - Modify maximum number of notification icons in status bar
+- Set custom carrier name
 
 ##### Quick Settings
 
