@@ -15,6 +15,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -89,6 +90,32 @@ object SystemUI {
             }
         } catch (t: Throwable) {
             logError("setStatusBarPaddingDp failed", t)
+        }
+    }
+
+    fun setBatteryIconScale(loadPackageParam: LoadPackageParam, widthScale: Float?, heightScale: Float?) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI || widthScale == null && heightScale == null) return
+        try {
+            findAndHookMethod(
+                "com.android.systemui.battery.BatteryMeterView",
+                loadPackageParam.classLoader,
+                "scaleBatteryMeterViewsLegacy",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val mBatteryIconView = getObjectField(param.thisObject, "mBatteryIconView") as ImageView
+                        mBatteryIconView.layoutParams = mBatteryIconView.layoutParams.apply {
+                            if (widthScale != null) {
+                                width = (width * widthScale).roundToInt()
+                            }
+                            if (heightScale != null) {
+                                height = (height * heightScale).roundToInt()
+                            }
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            logError("setBatteryIconScale failed", t)
         }
     }
 
@@ -936,6 +963,28 @@ object SystemUI {
             log("Google Search CTS support for CN -> $enabled")
         } catch (t: Throwable) {
             logError("Failed to enable Google Search CTS support", t)
+        }
+    }
+
+    fun setCustomCarrierName(loadPackageParam: LoadPackageParam, carrierName: String) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        try {
+            findAndHookMethod(
+                "com.android.keyguard.CarrierTextManager", loadPackageParam.classLoader, "postToCallback",
+                "com.android.keyguard.CarrierTextManager\$CarrierTextCallbackInfo", object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        try {
+                            val carrierTextCallbackInfo = param.args[0] ?: return
+                            setObjectField(carrierTextCallbackInfo, "carrierText", carrierName)
+                            setObjectField(carrierTextCallbackInfo, "carrierTextShort", carrierName)
+                        } catch (t: Throwable) {
+                            logError("setCustomCarrierName callback error", t)
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            logError("setCustomCarrierName failed", t)
         }
     }
 

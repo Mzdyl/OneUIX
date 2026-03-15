@@ -64,6 +64,12 @@ data class Preference(
             val doubleTapStatusBarToSleep: Boolean = false,
             val modifyStatusBarMaxNotificationIcons: Boolean = false,
             val statusBarMaxNotificationIcons: Int = 4,
+            val setBatteryIconWidthScale: Boolean = false,
+            val batteryIconWidthScale: Float = 1f,
+            val setBatteryIconHeightScale: Boolean = false,
+            val batteryIconHeightScale: Float = 1f,
+            val setCustomCarrierName: Boolean = false,
+            val customCarrierName: String = "",
             val showBatteryTemperature: Boolean = false,
         )
 
@@ -114,6 +120,7 @@ data class Preference(
         val preferRecordingButton: Boolean = true,
         val showGeocodedLocationInRecentCall: Boolean = false,
         val isOpStyleCHN: Boolean = false,
+        val supportCallAndTextOnOtherDevices: Boolean = false,
     )
 
     @Serializable

@@ -130,6 +130,80 @@ fun DetailPaneSystemUI(
                 )
             }
         }
+        Column {
+            var widthScale by remember {
+                mutableFloatStateOf(uiState.statusBar.batteryIconWidthScale)
+            }
+            var expanded by rememberSaveable { mutableStateOf(false) }
+
+            SwitchItem(
+                title = stringResource(id = R.string.setBatteryIconWidthScale_title),
+                modifier = Modifier.animateContentSize(),
+                summary = if (uiState.statusBar.setBatteryIconWidthScale) {
+                    "%.2f".format(widthScale)
+                } else null,
+                icon = ImageVector.vectorResource(id = R.drawable.battery),
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.statusBar.setBatteryIconWidthScale,
+                onCheckedChange = {
+                    if (it && widthScale == 0f) {
+                        expanded = true
+                    } else if (!it) {
+                        expanded = false
+                    }
+                    onEvent(SystemUIEvent.StatusBar.SetBatteryIconWidthScale(it))
+                }
+            )
+            AnimatedVisibility(expanded && uiState.statusBar.setBatteryIconWidthScale) {
+                Slider(
+                    value = widthScale,
+                    onValueChange = { widthScale = it },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    valueRange = 0.5f..2f,
+                    onValueChangeFinished = {
+                        onEvent(SystemUIEvent.StatusBar.BatteryIconWidthScale(widthScale))
+                    }
+                )
+            }
+        }
+        Column {
+            var heightScale by remember {
+                mutableFloatStateOf(uiState.statusBar.batteryIconHeightScale)
+            }
+            var expanded by rememberSaveable { mutableStateOf(false) }
+
+            SwitchItem(
+                title = stringResource(id = R.string.setBatteryIconHeightScale_title),
+                modifier = Modifier.animateContentSize(),
+                summary = if (uiState.statusBar.setBatteryIconHeightScale) {
+                    "%.2f".format(heightScale)
+                } else null,
+                icon = ImageVector.vectorResource(id = R.drawable.battery),
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.statusBar.setBatteryIconHeightScale,
+                onCheckedChange = {
+                    if (it && heightScale == 0f) {
+                        expanded = true
+                    } else if (!it) {
+                        expanded = false
+                    }
+                    onEvent(SystemUIEvent.StatusBar.SetBatteryIconHeightScale(it))
+                }
+            )
+            AnimatedVisibility(expanded && uiState.statusBar.setBatteryIconHeightScale) {
+                Slider(
+                    value = heightScale,
+                    onValueChange = { heightScale = it },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    valueRange = 0.5f..2f,
+                    onValueChangeFinished = {
+                        onEvent(SystemUIEvent.StatusBar.BatteryIconHeightScale(heightScale))
+                    }
+                )
+            }
+        }
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.battery),
@@ -282,6 +356,58 @@ fun DetailPaneSystemUI(
                         onEvent(SystemUIEvent.StatusBar.StatusBarMaxNotificationIcons(max))
                     }
                 )
+            }
+        }
+        Column {
+            var expanded by rememberSaveable { mutableStateOf(false) }
+
+            SwitchItem(
+                title = stringResource(id = R.string.setCustomCarrierName_title),
+                modifier = Modifier.animateContentSize(),
+                summary = if (uiState.statusBar.setCustomCarrierName) {
+                    uiState.statusBar.customCarrierName
+                } else null,
+                icon = ImageVector.vectorResource(id = R.drawable.sim_card),
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.statusBar.setCustomCarrierName,
+                onCheckedChange = {
+                    if (it && uiState.statusBar.customCarrierName.isEmpty()) {
+                        expanded = true
+                    } else if (!it) {
+                        expanded = false
+                    }
+                    onEvent(SystemUIEvent.StatusBar.SetCustomCarrierName(it))
+                }
+            )
+
+            AnimatedVisibility(expanded && uiState.statusBar.setCustomCarrierName) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                ) {
+                    var tempCustomCarrierName by remember {
+                        mutableStateOf(uiState.statusBar.customCarrierName)
+                    }
+
+                    OutlinedTextField(
+                        value = tempCustomCarrierName,
+                        onValueChange = { tempCustomCarrierName = it },
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            onEvent(
+                                SystemUIEvent.StatusBar.CustomCarrierName(
+                                    tempCustomCarrierName
+                                )
+                            )
+                        }
+                    ) {
+                        Text(text = stringResource(id = R.string.confirm))
+                    }
+                }
             }
         }
         SwitchItem(
@@ -541,6 +667,24 @@ sealed interface SystemUIEvent {
         value class StatusBarMaxNotificationIcons(val value: Int) : StatusBar
 
         @JvmInline
+        value class SetBatteryIconWidthScale(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class BatteryIconWidthScale(val value: Float) : StatusBar
+
+        @JvmInline
+        value class SetBatteryIconHeightScale(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class BatteryIconHeightScale(val value: Float) : StatusBar
+
+        @JvmInline
+        value class SetCustomCarrierName(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class CustomCarrierName(val value: String) : StatusBar
+
+        @JvmInline
         value class ShowBatteryTemperature(val value: Boolean) : StatusBar
     }
 
@@ -750,6 +894,66 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             statusBarMaxNotificationIcons = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.SetBatteryIconWidthScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setBatteryIconWidthScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.BatteryIconWidthScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            batteryIconWidthScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.SetBatteryIconHeightScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setBatteryIconHeightScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.BatteryIconHeightScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            batteryIconHeightScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.SetCustomCarrierName -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setCustomCarrierName = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.CustomCarrierName -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            customCarrierName = event.value
                         )
                     )
                 )

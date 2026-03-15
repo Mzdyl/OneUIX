@@ -142,6 +142,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 }
             }
 
+            Package.MDEC_SERVICE -> {
+                if (preference.call.supportCallAndTextOnOtherDevices) {
+                    MdecService.supportCallAndTextOnOtherDevices(lpparam)
+                }
+            }
+
             Package.MESSAGING -> {
                 if (preference.messaging.supportBlockMessage) {
                     Messaging.isSupportBlock(lpparam)
@@ -248,6 +254,23 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.systemUI.statusBar.modifyStatusBarMaxNotificationIcons) {
                     val max = preference.systemUI.statusBar.statusBarMaxNotificationIcons
                     SystemUI.setStatusBarMaxNotificationIcons(lpparam, max)
+                }
+
+                run {
+                    val widthScale =
+                        if (preference.systemUI.statusBar.setBatteryIconWidthScale) {
+                            preference.systemUI.statusBar.batteryIconWidthScale
+                        } else null
+                    val heightScale =
+                        if (preference.systemUI.statusBar.setBatteryIconHeightScale) {
+                            preference.systemUI.statusBar.batteryIconHeightScale
+                        } else null
+                    SystemUI.setBatteryIconScale(lpparam, widthScale, heightScale)
+                }
+
+                if (preference.systemUI.statusBar.setCustomCarrierName) {
+                    val carrierName = preference.systemUI.statusBar.customCarrierName
+                    SystemUI.setCustomCarrierName(lpparam, carrierName)
                 }
 
                 run {

@@ -28,6 +28,9 @@
     <string name="alwaysExpandQsTileChunk_title">Always expand Quick Settings tile chunk</string>
     <string name="alwaysShowTimeDateOnQs_title">Always show time and date in QS panel</string>
     <string name="setStatusBarMaxNotificationIcons_title">Modify maximum number of notification icons in status bar</string>
+    <string name="setBatteryIconWidthScale_title">Set battery icon width scale</string>
+    <string name="setBatteryIconHeightScale_title">Set battery icon height scale</string>
+    <string name="setCustomCarrierName_title">Set custom carrier name</string>
     <string name="setQsClockMonospaced_title">Set Quick Settings clock to monospaced font</string>
     <string name="showWiFiLinkSpeed_title">Show current link speed in Wi-Fi list</string>
     <string name="showWiFiLinkSpeed_summary">Format is Tx, Rx in Mbps</string>
@@ -116,6 +119,7 @@
     <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
     <string name="showBatteryTemperature_title">Show battery temperature</string>
     <string name="showBatteryTemperature_summary">Display battery temperature in status bar clock area</string>
+    <string name="supportCallAndTextOnOtherDevices_title">Support call and text on other devices</string>
     <string name="restartSystemUI_title">Restart System UI</string>
     <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
     <string name="useGoogleTranslate_title">Use Google Translate</string>
