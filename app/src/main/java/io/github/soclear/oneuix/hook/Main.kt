@@ -43,14 +43,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     Android.disableAsksRestriction(lpparam)
                 }
 
-                if (preference.android.disableSignVerification) {
-                    Android.disableSignVerification(lpparam)
-                }
-
-                if (preference.android.disableShareUserCheck) {
-                    Android.disableShareUserCheck(lpparam)
-                }
-
                 if (preference.android.allowGms) {
                     Android.allowGms(lpparam)
                 }

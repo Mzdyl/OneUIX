@@ -103,10 +103,6 @@
     <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries</string>
     <string name="disableAsksRestriction_title">Disable ASKS restriction</string>
     <string name="disableAsksRestriction_summary">Remove ASKS policy restrictions on app installation</string>
-    <string name="disableSignVerification_title">Disable signature verification</string>
-    <string name="disableSignVerification_summary">Bypass APK signature verification (Android 15+)</string>
-    <string name="disableShareUserCheck_title">Disable shared user check</string>
-    <string name="disableShareUserCheck_summary">Allow apps with different signatures to use the same sharedUserId (Android 15+)</string>
     <string name="allowGms_title">Bypass GMS/FCM restriction</string>
     <string name="allowGms_summary">Enable FCM push service on Chinese region devices</string>
     <string name="fcmFix_title">Force FCM wake</string>

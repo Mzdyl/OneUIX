@@ -139,54 +139,6 @@ object Android {
         }
     }
 
-    // 系统分区签名校验绕过 (Android 15)
-    fun disableSignVerification(loadPackageParam: LoadPackageParam) {
-        if (loadPackageParam.packageName != Package.ANDROID) return
-        if (Build.VERSION.SDK_INT < 35) return
-
-        try {
-            val apkSignatureVerifierClass = findClass(
-                "android.util.apk.ApkSignatureVerifier",
-                loadPackageParam.classLoader
-            )
-
-            // 修改 getMinimumSignatureSchemeVersionForTargetSdk 返回 1 (V1 签名)
-            XposedBridge.hookAllMethods(
-                apkSignatureVerifierClass,
-                "getMinimumSignatureSchemeVersionForTargetSdk",
-                XC_MethodReplacement.returnConstant(1)
-            )
-
-            log("Signature verification disabled (Android 15)")
-        } catch (t: Throwable) {
-            logError("Failed to disable signature verification", t)
-        }
-    }
-
-    // 共享用户安装校验绕过 (Android 15)
-    fun disableShareUserCheck(loadPackageParam: LoadPackageParam) {
-        if (loadPackageParam.packageName != Package.ANDROID) return
-        if (Build.VERSION.SDK_INT < 35) return
-
-        try {
-            val packageImplClass = findClass(
-                "com.android.internal.pm.parsing.pkg.PackageImpl",
-                loadPackageParam.classLoader
-            )
-
-            // isLeavingSharedUser 始终返回 true
-            XposedBridge.hookAllMethods(
-                packageImplClass,
-                "isLeavingSharedUser",
-                XC_MethodReplacement.returnConstant(true)
-            )
-
-            log("Shared user check disabled (Android 15)")
-        } catch (t: Throwable) {
-            logError("Failed to disable shared user check", t)
-        }
-    }
-
     // GMS/FCM 限制绕过
     fun allowGms(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.ANDROID) return

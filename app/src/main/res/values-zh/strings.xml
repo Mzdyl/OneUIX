@@ -103,10 +103,6 @@
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>
     <string name="disableAsksRestriction_title">禁用 ASKS 限制</string>
     <string name="disableAsksRestriction_summary">移除 ASKS 策略对应用安装的限制</string>
-    <string name="disableSignVerification_title">禁用签名校验</string>
-    <string name="disableSignVerification_summary">绕过 APK 签名校验（仅限 Android 15+）</string>
-    <string name="disableShareUserCheck_title">禁用共享用户检查</string>
-    <string name="disableShareUserCheck_summary">允许不同签名的应用使用相同的 sharedUserId（仅限 Android 15+）</string>
     <string name="allowGms_title">绕过 GMS/FCM 限制</string>
     <string name="allowGms_summary">在国行设备上启用 FCM 推送服务</string>
     <string name="fcmFix_title">强制唤醒 FCM</string>
