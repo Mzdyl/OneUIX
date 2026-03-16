@@ -550,6 +550,7 @@ object SystemUI {
     private var secondUpdateHandler: Handler? = null
     private var secondUpdateRunnable: Runnable? = null
     private var clockIndicatorViewRef: WeakReference<TextView>? = null
+    @Volatile
     private var clockFormat: String = ""
 
     private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
@@ -712,8 +713,10 @@ object SystemUI {
         return result
     }
 
-    // 获取电池温度（带1秒缓存）
+    // 获取电池温度（带1秒缓存，使用 @Volatile 保证线程安全）
+    @Volatile
     private var lastTempText: String? = null
+    @Volatile
     private var lastTempTime: Long = 0
     
     private fun getBatteryTempText(context: Context): String? {
