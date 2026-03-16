@@ -226,13 +226,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     Network.showSeparateUpDownNetworkSpeeds(lpparam)
                 }
 
+                // 状态栏时钟格式（支持变量: {temp}, {lunar}, {rate}, {shichen}, {sec}, {date}）
                 if (preference.systemUI.statusBar.setStatusBarClockFormat) {
                     val format = preference.systemUI.statusBar.statusBarClockFormat
-                    SystemUI.setStatusBarClockFormat(lpparam, format)
-                }
-
-                if (preference.systemUI.statusBar.updateStatusBarClockEverySecond) {
-                    SystemUI.updateStatusBarClockEverySecond(lpparam)
+                    SystemUI.setStatusBarClockStyle(lpparam, format)
                 }
 
                 if (preference.systemUI.statusBar.hideSecureFolderStatusBarIcon) {
@@ -333,10 +330,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
 
                 if (preference.android.enableGoogleSearch) {
                     SystemUI.enableGoogleSearch(lpparam, true)
-                }
-
-                if (preference.systemUI.statusBar.showBatteryTemperature) {
-                    SystemUI.showBatteryTemperature(lpparam)
                 }
             }
 

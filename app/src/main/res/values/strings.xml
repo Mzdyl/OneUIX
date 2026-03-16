@@ -16,8 +16,7 @@
     <string name="turnOn5gQsTile_summary">Requires checking System UI and Call Settings</string>
     <string name="root5gQsTile_summary">Please grant root access to this app, then manually add the 5G tile</string>
     <string name="setStatusBarClockFormat_title">Set status bar date and time format</string>
-    <string name="updateStatusBarClockEverySecond_title">Update status bar clock every second</string>
-    <string name="updateStatusBarClockEverySecond_summary">Also sets numbers to monospaced font</string>
+    <string name="setStatusBarClockFormat_summary">Supports time format and variables:\n{temp} = battery temp, {lunar} = lunar date, {rate} = refresh rate, {shichen} = Chinese hour, {sec} = seconds, {date} = system date\nExample: HH:mm {temp} → 12:30 25.0°C</string>
     <string name="hideSecureFolderStatusBarIcon_title">Hide Secure Folder status bar icon</string>
     <string name="hideQsBarNearbyDevicesAndDeviceControl_title">Hide Nearby Devices and Device Control bar in QS panel</string>
     <string name="hideQsBarMediaPlayer_title">Hide Media Player bar in QS panel</string>
@@ -113,8 +112,6 @@
     <string name="enableGoogleSearch_summary">Enable Google Circle to Search on Chinese region devices</string>
     <string name="enableSketch_title">Enable Sketch to Image</string>
     <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
-    <string name="showBatteryTemperature_title">Show battery temperature</string>
-    <string name="showBatteryTemperature_summary">Display battery temperature in status bar clock area</string>
     <string name="supportCallAndTextOnOtherDevices_title">Support call and text on other devices</string>
     <string name="restartSystemUI_title">Restart System UI</string>
     <string name="restartSystemUI_summary">Restart System UI to apply changes</string>

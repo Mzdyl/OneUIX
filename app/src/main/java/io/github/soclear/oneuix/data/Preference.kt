@@ -57,7 +57,6 @@ data class Preference(
             val showSeparateUpDownNetworkSpeeds: Boolean = false,
             val setStatusBarClockFormat: Boolean = false,
             val statusBarClockFormat: String = "HH:mm",
-            val updateStatusBarClockEverySecond: Boolean = false,
             val hideSecureFolderStatusBarIcon: Boolean = false,
             val doubleTapStatusBarToSleep: Boolean = false,
             val modifyStatusBarMaxNotificationIcons: Boolean = false,
@@ -68,7 +67,6 @@ data class Preference(
             val batteryIconHeightScale: Float = 1f,
             val setCustomCarrierName: Boolean = false,
             val customCarrierName: String = "",
-            val showBatteryTemperature: Boolean = false,
         )
 
         @Serializable

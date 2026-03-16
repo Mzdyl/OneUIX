@@ -15,9 +15,8 @@
     <string name="turnOn5gQsTile_title">开启快捷设置 5G 磁贴</string>
     <string name="turnOn5gQsTile_summary">需要勾选系统 UI 和通话设置</string>
     <string name="root5gQsTile_summary">请授予本应用 root 权限后手动添加 5G 磁贴</string>
-    <string name="setStatusBarClockFormat_title">设置状态栏日期时间格式</string>
-    <string name="updateStatusBarClockEverySecond_title">状态栏时间每秒更新</string>
-    <string name="updateStatusBarClockEverySecond_summary">同时设置数字为等宽字体</string>
+    <string name="setStatusBarClockFormat_title">设置状态栏时钟格式</string>
+    <string name="setStatusBarClockFormat_summary">支持时间格式和变量：\n{temp}=电池温度, {lunar}=农历, {rate}=刷新率, {shichen}=时辰, {sec}=秒数, {date}=系统日期\n示例：HH:mm {temp} → 12:30 25.0°C</string>
     <string name="hideSecureFolderStatusBarIcon_title">隐藏安全文件夹状态栏图标</string>
     <string name="hideQsBarNearbyDevicesAndDeviceControl_title">隐藏快捷设置面板的附近设备和设备控制 Bar</string>
     <string name="hideQsBarMediaPlayer_title">隐藏快捷设置面板的媒体播放器 Bar</string>
@@ -115,8 +114,6 @@
     <string name="enableSketch_summary">在国行设备上启用涂鸦生图功能</string>
     <string name="useGoogleTranslate_title">使用谷歌翻译</string>
     <string name="useGoogleTranslate_summary">S Pen 翻译使用谷歌翻译（默认为百度翻译）</string>
-    <string name="showBatteryTemperature_title">显示电池温度</string>
-    <string name="showBatteryTemperature_summary">在状态栏时钟区域显示电池温度</string>
     <string name="supportCallAndTextOnOtherDevices_title">支持在其他设备上通话和收发短信</string>
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>

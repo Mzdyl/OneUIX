@@ -39,6 +39,7 @@ import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.hook.util.restartSystemUI
 import io.github.soclear.oneuix.ui.SettingViewModel
+import io.github.soclear.oneuix.ui.component.DropdownItem
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -241,7 +242,7 @@ fun DetailPaneSystemUI(
                 modifier = Modifier.animateContentSize(),
                 summary = if (uiState.statusBar.setStatusBarClockFormat) {
                     uiState.statusBar.statusBarClockFormat
-                } else null,
+                } else stringResource(id = R.string.setStatusBarClockFormat_summary),
                 icon = ImageVector.vectorResource(id = R.drawable.nest_clock_farsight_digital),
                 clickable = true,
                 onClick = { expanded = !expanded },
@@ -274,14 +275,30 @@ fun DetailPaneSystemUI(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
+                            // 移除变量后验证时间格式
+                            val timeOnly = tempDataTimeFormat
+                                .replace("{temp}", "")
+                                .replace("{lunar}", "")
+                                .replace("{rate}", "")
+                                .replace("{shichen}", "")
+                                .replace("{sec}", "")
+                                .replace("{date}", "")
+                                .trim()
+                            
                             var right = true
-                            label = try {
-                                DateTimeFormatter
-                                    .ofPattern(tempDataTimeFormat)
-                                    .format(LocalDateTime.now())
-                            } catch (_: Throwable) {
-                                right = false
-                                "error"
+                            label = if (timeOnly.isEmpty() || timeOnly == tempDataTimeFormat) {
+                                // 没有时间部分或只有变量，直接接受
+                                tempDataTimeFormat
+                            } else {
+                                try {
+                                    DateTimeFormatter
+                                        .ofPattern(timeOnly)
+                                        .format(LocalDateTime.now())
+                                    tempDataTimeFormat
+                                } catch (_: Throwable) {
+                                    right = false
+                                    "error"
+                                }
                             }
                             if (right) {
                                 onEvent(
@@ -297,15 +314,6 @@ fun DetailPaneSystemUI(
                 }
             }
         }
-        SwitchItem(
-            title = stringResource(id = R.string.updateStatusBarClockEverySecond_title),
-            summary = stringResource(id = R.string.updateStatusBarClockEverySecond_summary),
-            icon = ImageVector.vectorResource(id = R.drawable.nest_clock_farsight_digital),
-            checked = uiState.statusBar.updateStatusBarClockEverySecond,
-            onCheckedChange = {
-                onEvent(SystemUIEvent.StatusBar.UpdateStatusBarClockEverySecond(it))
-            }
-        )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.folder_managed),
             title = stringResource(id = R.string.hideSecureFolderStatusBarIcon_title),
@@ -410,15 +418,6 @@ fun DetailPaneSystemUI(
                 }
             }
         }
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.battery),
-            title = stringResource(id = R.string.showBatteryTemperature_title),
-            summary = stringResource(id = R.string.showBatteryTemperature_summary),
-            checked = uiState.statusBar.showBatteryTemperature,
-            onCheckedChange = {
-                onEvent(SystemUIEvent.StatusBar.ShowBatteryTemperature(it))
-            }
-        )
 
         DividerText(R.string.qs)
         SwitchItem(
@@ -652,9 +651,6 @@ sealed interface SystemUIEvent {
         value class StatusBarClockFormat(val value: String) : StatusBar
 
         @JvmInline
-        value class UpdateStatusBarClockEverySecond(val value: Boolean) : StatusBar
-
-        @JvmInline
         value class HideSecureFolderStatusBarIcon(val value: Boolean) : StatusBar
 
         @JvmInline
@@ -683,9 +679,6 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class CustomCarrierName(val value: String) : StatusBar
-
-        @JvmInline
-        value class ShowBatteryTemperature(val value: Boolean) : StatusBar
     }
 
     sealed interface QS : SystemUIEvent {
@@ -849,16 +842,6 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                 )
             }
 
-            is SystemUIEvent.StatusBar.UpdateStatusBarClockEverySecond -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            updateStatusBarClockEverySecond = event.value
-                        )
-                    )
-                )
-            }
-
             is SystemUIEvent.StatusBar.HideSecureFolderStatusBarIcon -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(
@@ -954,16 +937,6 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             customCarrierName = event.value
-                        )
-                    )
-                )
-            }
-
-            is SystemUIEvent.StatusBar.ShowBatteryTemperature -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            showBatteryTemperature = event.value
                         )
                     )
                 )

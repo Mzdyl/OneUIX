@@ -39,7 +39,9 @@ import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
 import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -475,61 +477,53 @@ object SystemUI {
 
     fun updateStatusBarClockEverySecond(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
-        // 每秒更新
-        findAndHookMethod(
-            "com.android.systemui.statusbar.policy.QSClockQuickStarHelper",
-            loadPackageParam.classLoader,
-            "updateSecondsClockHandler",
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    val mSecondsHandler = getObjectField(param.thisObject, "mSecondsHandler")
-                    if (mSecondsHandler != null) return
-                    val looper = Looper.myLooper() ?: return
-                    val handler = Handler(looper)
-                    setObjectField(param.thisObject, "mSecondsHandler", handler)
-                    val mSecondTick = getObjectField(param.thisObject, "mSecondTick") as Runnable
-                    handler.post(mSecondTick)
-                }
-            }
-        )
-
-        // 数字字体等宽
-        findAndHookMethod(
-            "com.android.systemui.statusbar.policy.QSClockIndicatorViewController",
-            loadPackageParam.classLoader,
-            "onViewAttached",
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    val clockTextView = getObjectField(param.thisObject, "view") as TextView
-                    clockTextView.fontFeatureSettings = "tnum"
-                }
-            }
-        )
+        // 直接使用 setupSecondUpdate
+        setupSecondUpdate(loadPackageParam)
     }
 
-    fun setStatusBarClockFormat(loadPackageParam: LoadPackageParam, format: String) {
+    // 状态栏时钟格式设置
+    // 支持时间格式变量：
+    // {temp} - 电池温度 (如 25.0°C)
+    // {lunar} - 农历日期 (如 三月十七)
+    // {rate} - 屏幕刷新率 (如 120Hz)
+    // {shichen} - 中国时辰 (如 午时)
+    // {sec} - 秒数 (如 45s)
+    // {date} - 系统日期 (如 3/16 Sun)
+    // 示例: "HH:mm {temp}" → "12:30 25.0°C"
+    fun setStatusBarClockStyle(loadPackageParam: LoadPackageParam, format: String, needsSecondUpdate: Boolean = false) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
-        val dateTimeFormatter = try {
-            DateTimeFormatter.ofPattern(format)
-        } catch (_: Throwable) {
-            DateTimeFormatter.ofPattern("HH:mm")
-        }
-        setStatusBarClockText(loadPackageParam) {
-            dateTimeFormatter.format(LocalDateTime.now())
-        }
-    }
 
-    fun setStatusBarClockText(loadPackageParam: LoadPackageParam, block: () -> String) {
-        if (loadPackageParam.packageName != Package.SYSTEMUI) return
-        val callback = object : XC_MethodReplacement() {
-            override fun replaceHookedMethod(param: MethodHookParam): Any? {
-                val clockTextView = param.thisObject as TextView
-                val dateTime = block()
-                clockTextView.text = dateTime
-                clockTextView.contentDescription = dateTime
-                return null
+        // 自动检测是否需要每秒更新
+        // 包含秒(ss)、时辰、温度、刷新率时都需要每秒更新
+        val autoDetectSecondUpdate = format.contains("ss") || 
+                                format.contains("SS") ||
+                                format.contains("{sec}") ||
+                                format.contains("{temp}") ||
+                                format.contains("{rate}")
+        
+        val shouldEnableSecondUpdate = needsSecondUpdate || autoDetectSecondUpdate
+
+        // 如果需要每秒更新，先启用秒更新机制
+        if (shouldEnableSecondUpdate) {
+            setupSecondUpdate(loadPackageParam)
+        }
+
+        val callback = object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                try {
+                    val clockTextView = param.thisObject as TextView
+                    val context = clockTextView.context
+                    
+                    val text = formatClockText(format, context)
+                    clockTextView.text = text
+                    clockTextView.contentDescription = text
+                    param.result = null
+                } catch (t: Throwable) {
+                    logError("setStatusBarClockStyle callback error", t)
+                }
             }
         }
+
         try {
             findAndHookMethod(
                 "com.android.systemui.statusbar.policy.QSClockIndicatorView",
@@ -538,56 +532,211 @@ object SystemUI {
                 "com.android.systemui.statusbar.policy.QSClockBellSound",
                 callback
             )
+            log("setStatusBarClockStyle hooked: format=$format, needsSecondUpdate=$shouldEnableSecondUpdate")
         } catch (t: Throwable) {
-            logError("setStatusBarClockText failed", t)
+            logError("setStatusBarClockStyle failed", t)
         }
     }
 
-    // 状态栏显示电池温度
-    // 在下拉通知栏日期后面追加温度显示，不替换原有内容
-    fun showBatteryTemperature(loadPackageParam: LoadPackageParam) {
-        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+    // 设置每秒更新机制
+    private var secondUpdateInitialized = false
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            // 通过发送时间变化广播触发更新
+            // 这个方法会被 notifyTimeChanged 捕获
+        }
+    }
+
+    private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
+        if (secondUpdateInitialized) return
+        secondUpdateInitialized = true
+
+        // 启用系统内置的秒更新机制
         try {
             findAndHookMethod(
-                "com.android.systemui.statusbar.policy.QSClockIndicatorView",
+                "com.android.systemui.statusbar.policy.QSClockQuickStarHelper",
                 loadPackageParam.classLoader,
-                "notifyTimeChanged",
-                "com.android.systemui.statusbar.policy.QSClockBellSound",
+                "updateSecondsClockHandler",
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
-                        try {
-                            val clockTextView = param.thisObject as TextView
-                            val context = clockTextView.context
-
-                            // 获取当前显示的文本（已经是时间/日期了）
-                            val originalText = clockTextView.text.toString()
-
-                            // 获取电池温度
-                            val batteryIntent = context.registerReceiver(
-                                null,
-                                android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
-                            )
-
-                            if (batteryIntent != null) {
-                                val tempRaw = batteryIntent.getIntExtra("temperature", 0)
-                                val tempCelsius = tempRaw / 10.0f
-                                val tempText = String.format(Locale.getDefault(), " %.1f°C", tempCelsius)
-
-                                // 如果还没有追加过温度，则追加
-                                if (!originalText.contains("°C")) {
-                                    clockTextView.text = "$originalText $tempText"
-                                }
-                            }
-                        } catch (t: Throwable) {
-                            logError("showBatteryTemperature callback error", t)
-                        }
+                        val mSecondsHandler = getObjectField(param.thisObject, "mSecondsHandler")
+                        if (mSecondsHandler != null) return
+                        val looper = Looper.myLooper() ?: return
+                        val handler = Handler(looper)
+                        setObjectField(param.thisObject, "mSecondsHandler", handler)
+                        val mSecondTick = getObjectField(param.thisObject, "mSecondTick") as Runnable
+                        handler.post(mSecondTick)
                     }
                 }
             )
-            log("showBatteryTemperature hooked")
+            log("setupSecondUpdate: enabled second update mechanism")
         } catch (t: Throwable) {
-            logError("Failed to hook showBatteryTemperature", t)
+            logError("setupSecondUpdate failed", t)
         }
+
+        // 设置等宽字体（数字对齐）
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorViewController",
+                loadPackageParam.classLoader,
+                "onViewAttached",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val clockTextView = getObjectField(param.thisObject, "view") as TextView
+                        clockTextView.fontFeatureSettings = "tnum"
+                    }
+                }
+            )
+        } catch (_: Throwable) {}
+    }
+
+    // 格式化时钟文本，替换变量
+    // 支持: {temp}, {lunar}, {rate}, {shichen}, {sec}, {date}
+    private fun formatClockText(format: String, context: Context): String {
+        // 使用唯一占位符替换变量，避免影响时间格式解析
+        val placeholders = mapOf(
+            "{temp}" to "\u0001TEMP\u0001",
+            "{lunar}" to "\u0002LUNAR\u0002",
+            "{rate}" to "\u0003RATE\u0003",
+            "{shichen}" to "\u0004SHICHEN\u0004",
+            "{sec}" to "\u0005SEC\u0005",
+            "{date}" to "\u0006DATE\u0006"
+        )
+        
+        // 1. 替换变量为占位符
+        var processedFormat = format
+        for ((variable, placeholder) in placeholders) {
+            processedFormat = processedFormat.replace(variable, placeholder)
+        }
+        
+        // 2. 尝试用 DateTimeFormatter 解析整个格式
+        var result: String
+        try {
+            val formatter = DateTimeFormatter.ofPattern(processedFormat)
+            result = formatter.format(LocalDateTime.now())
+        } catch (_: Throwable) {
+            // 如果失败，尝试提取时间部分单独格式化
+            val timeOnly = processedFormat
+                .replace("\u0001TEMP\u0001", "")
+                .replace("\u0002LUNAR\u0002", "")
+                .replace("\u0003RATE\u0003", "")
+                .replace("\u0004SHICHEN\u0004", "")
+                .replace("\u0005SEC\u0005", "")
+                .replace("\u0006DATE\u0006", "")
+                .trim()
+            
+            if (timeOnly.isNotEmpty()) {
+                try {
+                    val timeFormatter = DateTimeFormatter.ofPattern(timeOnly)
+                    val formattedTime = timeFormatter.format(LocalDateTime.now())
+                    result = processedFormat.replace(timeOnly, formattedTime)
+                } catch (_: Throwable) {
+                    // 时间格式无效，保留原始格式
+                    result = processedFormat
+                }
+            } else {
+                result = processedFormat
+            }
+        }
+        
+        // 3. 替换占位符为实际值
+        if (result.contains("\u0001TEMP\u0001")) {
+            result = result.replace("\u0001TEMP\u0001", getBatteryTempText(context) ?: "")
+        }
+        if (result.contains("\u0002LUNAR\u0002")) {
+            result = result.replace("\u0002LUNAR\u0002", getLunarDate())
+        }
+        if (result.contains("\u0003RATE\u0003")) {
+            result = result.replace("\u0003RATE\u0003", getRefreshRate(context))
+        }
+        if (result.contains("\u0004SHICHEN\u0004")) {
+            result = result.replace("\u0004SHICHEN\u0004", getChineseTimeHour())
+        }
+        if (result.contains("\u0005SEC\u0005")) {
+            result = result.replace("\u0005SEC\u0005", getSeconds())
+        }
+        if (result.contains("\u0006DATE\u0006")) {
+            result = result.replace("\u0006DATE\u0006", getSimpleDate())
+        }
+        
+        return result
+    }
+
+    // 获取电池温度
+    private fun getBatteryTempText(context: Context): String? {
+        return try {
+            val batteryIntent = context.registerReceiver(
+                null,
+                android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
+            )
+            
+            if (batteryIntent != null) {
+                val tempRaw = batteryIntent.getIntExtra("temperature", 0)
+                val tempCelsius = tempRaw / 10.0f
+                String.format(Locale.getDefault(), "%.1f°C", tempCelsius)
+            } else {
+                null
+            }
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun getDateStyleText(context: Context, style: Int): String? {
+        return when (style) {
+            0 -> getSimpleDate()           // 月/日 星期
+            1 -> getLunarDate()            // 农历日期
+            2 -> getBatteryTempText(context)  // 电池温度（复用缓存）
+            3 -> getRefreshRate(context)   // 屏幕刷新率
+            4 -> getChineseTimeHour()      // 中国时辰
+            5 -> getSeconds()              // 秒数
+            else -> null
+        }
+    }
+
+    private fun getSimpleDate(): String {
+        val calendar = Calendar.getInstance()
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val weekdays = arrayOf("", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+        val weekday = weekdays[calendar.get(Calendar.DAY_OF_WEEK)]
+        return "$month/$day $weekday"
+    }
+
+    private fun getLunarDate(): String {
+        return try {
+            TraditionalChineseCalendar.getMonthAndDay()
+        } catch (_: Throwable) {
+            getSimpleDate()
+        }
+    }
+
+    private fun getRefreshRate(context: Context): String {
+        val refreshRate = context.display?.refreshRate?.toInt() ?: -1
+        return "${refreshRate}Hz"
+    }
+
+    private fun getChineseTimeHour(): String {
+        val hour = LocalTime.now().hour
+        return when (hour) {
+            0, 23 -> "子时"
+            1, 2 -> "丑时"
+            3, 4 -> "寅时"
+            5, 6 -> "卯时"
+            7, 8 -> "辰时"
+            9, 10 -> "巳时"
+            11, 12 -> "午时"
+            13, 14 -> "未时"
+            15, 16 -> "申时"
+            17, 18 -> "酉时"
+            19, 20 -> "戌时"
+            21, 22 -> "亥时"
+            else -> "未知"
+        }
+    }
+
+    private fun getSeconds(): String {
+        return "${LocalTime.now().second}s"
     }
 
     fun hideSecureFolderStatusBarIcon(loadPackageParam: LoadPackageParam) {
