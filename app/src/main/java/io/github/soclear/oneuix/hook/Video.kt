@@ -65,7 +65,6 @@ object Video {
     }
 
 
-    private var bgSelected: Drawable? = null
     private var playSpeedSetter: Any? = null
     private var playSpeedStore: Any? = null
 
@@ -106,7 +105,7 @@ object Video {
                         hookConfig.playbackSvcUtilField,
                         hookConfig.playerInfoField
                     )
-                    initializeBackground(playSpeedLayout.context)
+                    val bgSelected = getSelectedBackground(playSpeedLayout.context)
 
                     speed3Button = SpeedButton(playSpeedLayout.context, "3.0", SPEED_3X)
                     speed4Button = SpeedButton(playSpeedLayout.context, "4.0", SPEED_4X)
@@ -117,6 +116,7 @@ object Video {
                         param.thisObject,
                         hookConfig.playSpeedField,
                         hookConfig.setPlaySpeedMethod,
+                        bgSelected,
                     )
                     setupButtonClickListener(
                         speed4Button,
@@ -124,10 +124,11 @@ object Video {
                         param.thisObject,
                         hookConfig.playSpeedField,
                         hookConfig.setPlaySpeedMethod,
+                        bgSelected,
                     )
 
                     val currentSpeed = getIntField(playSpeedStore, "t")
-                    updateButtonStates(currentSpeed, speed3Button, speed4Button)
+                    updateButtonStates(currentSpeed, speed3Button, speed4Button, bgSelected)
 
                     speedButtonLayout.addView(speed3Button.view)
                     speedButtonLayout.addView(speed4Button.view)
@@ -163,16 +164,14 @@ object Video {
         }
     }
 
-    private fun initializeBackground(context: Context) {
-        if (bgSelected == null) {
-            @SuppressLint("DiscouragedApi")
-            val bgSelectedId = context.resources.getIdentifier(
-                "play_speed_select",
-                "drawable",
-                Package.VIDEO
-            )
-            bgSelected = context.getDrawable(bgSelectedId)
-        }
+    private fun getSelectedBackground(context: Context): Drawable? {
+        @SuppressLint("DiscouragedApi")
+        val bgSelectedId = context.resources.getIdentifier(
+            "play_speed_select",
+            "drawable",
+            Package.VIDEO
+        )
+        return if (bgSelectedId != 0) context.getDrawable(bgSelectedId) else null
     }
 
     private fun setupButtonClickListener(
@@ -180,7 +179,8 @@ object Video {
         inactiveButton: SpeedButton?,
         popupObject: Any,
         playSpeedField: String,
-        setPlaySpeedMethod: String
+        setPlaySpeedMethod: String,
+        bgSelected: Drawable?,
     ) {
         activeButton?.view?.setOnClickListener {
             activeButton.setSelected(true, bgSelected)
@@ -199,7 +199,8 @@ object Video {
     private fun updateButtonStates(
         currentSpeed: Int,
         speed3Button: SpeedButton?,
-        speed4Button: SpeedButton?
+        speed4Button: SpeedButton?,
+        bgSelected: Drawable?,
     ) {
         speed3Button?.setSelected(currentSpeed == SPEED_3X, bgSelected)
         speed4Button?.setSelected(currentSpeed == SPEED_4X, bgSelected)
