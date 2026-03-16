@@ -16,23 +16,35 @@ private val json = Json {
 
 object PreferenceProvider {
     private const val PREFERENCE_FILE_NAME = "preference.json"
+    
+    private var cachedFile: File? = null
 
     val preference: Preference? = try {
-        json.decodeFromString<Preference>(getPreferenceFile().readText())
+        getPreferenceFile()?.readText()?.let { json.decodeFromString<Preference>(it) }
     } catch (_: Throwable) {
         null
     }
 
-    fun getPreferenceFile(): File {
-        val path = XSharedPreferences(BuildConfig.APPLICATION_ID).file.parent
-        val file = File(path, PREFERENCE_FILE_NAME)
+    fun getPreferenceFile(): File? {
+        // 返回缓存的文件
+        cachedFile?.let { if (it.exists()) return it }
+        
+        return try {
+            val parentPath = XSharedPreferences(BuildConfig.APPLICATION_ID).file?.parent
+            if (parentPath.isNullOrBlank()) return null
+            
+            val file = File(parentPath, PREFERENCE_FILE_NAME)
 
-        if (!file.exists()) {
-            file.writeText("{}")
-            @SuppressLint("SetWorldReadable")
-            file.setReadable(true, false)
+            if (!file.exists()) {
+                file.writeText("{}")
+                @SuppressLint("SetWorldReadable")
+                file.setReadable(true, false)
+            }
+            
+            cachedFile = file
+            file
+        } catch (_: Throwable) {
+            null
         }
-
-        return file
     }
 }
