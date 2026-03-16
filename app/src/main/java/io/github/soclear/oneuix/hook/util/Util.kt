@@ -93,11 +93,12 @@ fun addAssetPath(modulePath: String) {
                 if (context !is Application) return
                 try {
                     val moduleApk = File(modulePath)
-                    val parcelFileDescriptor = ParcelFileDescriptor.open(moduleApk, ParcelFileDescriptor.MODE_READ_ONLY)
-                    val resourcesProvider = ResourcesProvider.loadFromApk(parcelFileDescriptor)
-                    val resourcesLoader = ResourcesLoader()
-                    resourcesLoader.addProvider(resourcesProvider)
-                    context.resources.addLoaders(resourcesLoader)
+                    ParcelFileDescriptor.open(moduleApk, ParcelFileDescriptor.MODE_READ_ONLY)?.use { pfd ->
+                        val resourcesProvider = ResourcesProvider.loadFromApk(pfd)
+                        val resourcesLoader = ResourcesLoader()
+                        resourcesLoader.addProvider(resourcesProvider)
+                        context.resources.addLoaders(resourcesLoader)
+                    }
                 } catch (t: Throwable) {
                     logError("addAssetPath failed", t)
                 }
@@ -140,7 +141,8 @@ fun getSettings(namespace: String, key: String): String? {
     return try {
         val command = "settings get $namespace $key"
         val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-        val result = process.inputStream.bufferedReader().readText().trim()
+        val result = process.inputStream.bufferedReader().use { it.readText().trim() }
+        process.waitFor()
         if (result == "null" || result.isEmpty()) null else result
     } catch (t: Throwable) {
         log("Failed to get settings - ${t.message}")
