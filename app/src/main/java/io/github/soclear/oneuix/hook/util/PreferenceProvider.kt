@@ -7,11 +7,18 @@ import io.github.soclear.oneuix.BuildConfig
 import io.github.soclear.oneuix.data.Preference
 import java.io.File
 
+// 使用自定义 Json 配置，忽略未知字段以兼容旧版本数据
+private val json = Json {
+    ignoreUnknownKeys = true
+    isLenient = true
+    encodeDefaults = true
+}
+
 object PreferenceProvider {
     private const val PREFERENCE_FILE_NAME = "preference.json"
 
     val preference: Preference? = try {
-        Json.decodeFromString<Preference>(getPreferenceFile().readText())
+        json.decodeFromString<Preference>(getPreferenceFile().readText())
     } catch (_: Throwable) {
         null
     }
