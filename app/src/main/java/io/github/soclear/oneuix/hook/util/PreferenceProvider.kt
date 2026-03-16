@@ -12,6 +12,7 @@ private val json = Json {
     ignoreUnknownKeys = true
     isLenient = true
     encodeDefaults = true
+    coerceInputValues = true  // 强制使用默认值替代解析失败的值
 }
 
 object PreferenceProvider {
