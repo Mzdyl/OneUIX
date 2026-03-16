@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import de.robv.android.xposed.XC_MethodHook
+import java.lang.ref.WeakReference
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import de.robv.android.xposed.XposedBridge
@@ -514,8 +515,8 @@ object SystemUI {
                     val clockTextView = param.thisObject as TextView
                     val context = clockTextView.context
                     
-                    // 保存引用用于自定义定时器
-                    clockIndicatorView = clockTextView
+                    // 保存引用用于自定义定时器（使用 WeakReference 避免内存泄漏）
+                    clockIndicatorViewRef = WeakReference(clockTextView)
                     clockFormat = format
                     
                     // 启动自定义每秒更新（如果还没启动）
@@ -545,10 +546,10 @@ object SystemUI {
         }
     }
 
-    // 每秒更新相关变量
+    // 每秒更新相关变量（使用 WeakReference 避免内存泄漏）
     private var secondUpdateHandler: Handler? = null
     private var secondUpdateRunnable: Runnable? = null
-    private var clockIndicatorView: TextView? = null
+    private var clockIndicatorViewRef: WeakReference<TextView>? = null
     private var clockFormat: String = ""
 
     private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
@@ -600,7 +601,7 @@ object SystemUI {
         secondUpdateHandler = Handler(Looper.getMainLooper())
         secondUpdateRunnable = object : Runnable {
             override fun run() {
-                clockIndicatorView?.let { view ->
+                clockIndicatorViewRef?.get()?.let { view ->
                     try {
                         if (clockFormat.isNotEmpty()) {
                             val text = formatClockText(clockFormat, view.context)
