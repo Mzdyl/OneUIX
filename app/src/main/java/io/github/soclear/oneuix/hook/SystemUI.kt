@@ -514,6 +514,13 @@ object SystemUI {
                     val clockTextView = param.thisObject as TextView
                     val context = clockTextView.context
                     
+                    // 保存引用用于自定义定时器
+                    clockIndicatorView = clockTextView
+                    clockFormat = format
+                    
+                    // 启动自定义每秒更新（如果还没启动）
+                    ensureSecondUpdateRunning()
+                    
                     val text = formatClockText(format, context)
                     clockTextView.text = text
                     clockTextView.contentDescription = text
@@ -538,42 +545,13 @@ object SystemUI {
         }
     }
 
-    // 设置每秒更新机制
-    private var secondUpdateInitialized = false
-    private val updateRunnable = object : Runnable {
-        override fun run() {
-            // 通过发送时间变化广播触发更新
-            // 这个方法会被 notifyTimeChanged 捕获
-        }
-    }
+    // 每秒更新相关变量
+    private var secondUpdateHandler: Handler? = null
+    private var secondUpdateRunnable: Runnable? = null
+    private var clockIndicatorView: TextView? = null
+    private var clockFormat: String = ""
 
     private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
-        if (secondUpdateInitialized) return
-        secondUpdateInitialized = true
-
-        // 启用系统内置的秒更新机制
-        try {
-            findAndHookMethod(
-                "com.android.systemui.statusbar.policy.QSClockQuickStarHelper",
-                loadPackageParam.classLoader,
-                "updateSecondsClockHandler",
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        val mSecondsHandler = getObjectField(param.thisObject, "mSecondsHandler")
-                        if (mSecondsHandler != null) return
-                        val looper = Looper.myLooper() ?: return
-                        val handler = Handler(looper)
-                        setObjectField(param.thisObject, "mSecondsHandler", handler)
-                        val mSecondTick = getObjectField(param.thisObject, "mSecondTick") as Runnable
-                        handler.post(mSecondTick)
-                    }
-                }
-            )
-            log("setupSecondUpdate: enabled second update mechanism")
-        } catch (t: Throwable) {
-            logError("setupSecondUpdate failed", t)
-        }
-
         // 设置等宽字体（数字对齐）
         try {
             findAndHookMethod(
@@ -588,6 +566,54 @@ object SystemUI {
                 }
             )
         } catch (_: Throwable) {}
+
+        // Hook updateSecondsClockHandler 启动系统内置的秒更新
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.policy.QSClockQuickStarHelper",
+                loadPackageParam.classLoader,
+                "updateSecondsClockHandler",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val mSecondsHandler = getObjectField(param.thisObject, "mSecondsHandler")
+                        if (mSecondsHandler == null) {
+                            val looper = Looper.myLooper() ?: return
+                            val handler = Handler(looper)
+                            setObjectField(param.thisObject, "mSecondsHandler", handler)
+                            val mSecondTick = getObjectField(param.thisObject, "mSecondTick") as? Runnable ?: return
+                            handler.post(mSecondTick)
+                            log("setupSecondUpdate: started system second update")
+                        }
+                    }
+                }
+            )
+            log("setupSecondUpdate: hook installed")
+        } catch (t: Throwable) {
+            logError("setupSecondUpdate failed", t)
+        }
+    }
+
+    // 启动自定义每秒更新（在 callback 第一次被调用时启动）
+    private fun ensureSecondUpdateRunning() {
+        if (secondUpdateHandler != null) return
+        
+        secondUpdateHandler = Handler(Looper.getMainLooper())
+        secondUpdateRunnable = object : Runnable {
+            override fun run() {
+                clockIndicatorView?.let { view ->
+                    try {
+                        if (clockFormat.isNotEmpty()) {
+                            val text = formatClockText(clockFormat, view.context)
+                            view.text = text
+                            view.contentDescription = text
+                        }
+                    } catch (_: Throwable) {}
+                }
+                secondUpdateHandler?.postDelayed(this, 1000)
+            }
+        }
+        secondUpdateHandler?.post(secondUpdateRunnable!!)
+        log("ensureSecondUpdateRunning: started")
     }
 
     // 格式化时钟文本，替换变量
@@ -662,24 +688,83 @@ object SystemUI {
         return result
     }
 
-    // 获取电池温度
+    // 获取电池温度（带1秒缓存）
+    private var lastTempText: String? = null
+    private var lastTempTime: Long = 0
+    
     private fun getBatteryTempText(context: Context): String? {
+        val now = System.currentTimeMillis()
+        
+        // 1秒内返回缓存
+        if (lastTempText != null && (now - lastTempTime) < 1000) {
+            return lastTempText
+        }
+        
+        // 方法1：尝试从系统文件读取（更实时）
+        val sysTemp = readSysTemp()
+        if (sysTemp != null) {
+            lastTempText = sysTemp
+            lastTempTime = now
+            return sysTemp
+        }
+        
+        // 方法2：使用 BatteryManager 广播
         return try {
-            val batteryIntent = context.registerReceiver(
+            val appContext = context.applicationContext
+            val batteryIntent = appContext.registerReceiver(
                 null,
                 android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
             )
             
             if (batteryIntent != null) {
                 val tempRaw = batteryIntent.getIntExtra("temperature", 0)
-                val tempCelsius = tempRaw / 10.0f
-                String.format(Locale.getDefault(), "%.1f°C", tempCelsius)
+                if (tempRaw > 0) {
+                    val tempCelsius = tempRaw / 10.0f
+                    val tempText = String.format(Locale.getDefault(), "%.1f°C", tempCelsius)
+                    lastTempText = tempText
+                    lastTempTime = now
+                    tempText
+                } else {
+                    lastTempText
+                }
             } else {
-                null
+                lastTempText
             }
         } catch (_: Throwable) {
-            null
+            lastTempText
         }
+    }
+    
+    // 从系统文件读取温度（更实时）
+    private fun readSysTemp(): String? {
+        // 常见的电池温度文件路径
+        val tempPaths = listOf(
+            "/sys/class/power_supply/battery/temp",           // 通用
+//          "/sys/class/thermal/thermal_zone0/temp",          // CPU/电池温度
+//          "/sys/class/thermal/thermal_zone1/temp",
+        )
+        
+        for (path in tempPaths) {
+            try {
+                val file = java.io.File(path)
+                if (file.exists()) {
+                    val content = file.readText().trim()
+                    val tempRaw = content.toIntOrNull() ?: continue
+                    // 不同路径的单位可能不同，通常是毫摄氏度或十分之一摄氏度
+                    val tempCelsius = if (tempRaw > 1000) {
+                        tempRaw / 1000.0f  // 毫摄氏度
+                    } else if (tempRaw > 100) {
+                        tempRaw / 10.0f    // 十分之一摄氏度
+                    } else {
+                        tempRaw.toFloat()  // 摄氏度
+                    }
+                    if (tempCelsius in 0.0f..100.0f) {
+                        return String.format(Locale.getDefault(), "%.1f°C", tempCelsius)
+                    }
+                }
+            } catch (_: Throwable) {}
+        }
+        return null
     }
 
     private fun getDateStyleText(context: Context, style: Int): String? {
