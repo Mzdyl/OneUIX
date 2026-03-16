@@ -592,6 +592,21 @@ object SystemUI {
         } catch (t: Throwable) {
             logError("setupSecondUpdate failed", t)
         }
+
+        // Hook onViewDetached 停止定时器，避免内存泄漏
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorView",
+                loadPackageParam.classLoader,
+                "onViewDetached",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        stopSecondUpdate()
+                        clockIndicatorViewRef = null
+                    }
+                }
+            )
+        } catch (_: Throwable) {}
     }
 
     // 启动自定义每秒更新（在 callback 第一次被调用时启动）
@@ -615,6 +630,14 @@ object SystemUI {
         }
         secondUpdateHandler?.post(secondUpdateRunnable!!)
         log("ensureSecondUpdateRunning: started")
+    }
+    
+    // 停止定时器（View 销毁时调用）
+    private fun stopSecondUpdate() {
+        secondUpdateRunnable?.let { secondUpdateHandler?.removeCallbacks(it) }
+        secondUpdateHandler = null
+        secondUpdateRunnable = null
+        log("stopSecondUpdate: stopped")
     }
 
     // 格式化时钟文本，替换变量
