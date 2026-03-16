@@ -139,6 +139,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.SETTINGS -> {
+                if (preference.android.setBlockableNotificationChannel) {
+                    Android.setBlockableNotificationChannel()
+                }
+
                 if (preference.settings.showForcePeakRefreshRatePreference) {
                     Settings.showForcePeakRefreshRatePreference(lpparam)
                 }
@@ -179,6 +183,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.SYSTEMUI -> {
+                if (preference.android.setBlockableNotificationChannel) {
+                    Android.setBlockableNotificationChannel()
+                }
+
                 run {
                     val leftPaddingDp =
                         if (preference.systemUI.statusBar.modifyStatusBarLeftPadding) {

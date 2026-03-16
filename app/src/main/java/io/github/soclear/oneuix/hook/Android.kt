@@ -16,25 +16,45 @@ import io.github.soclear.oneuix.data.Package
 object Android {
     fun setBlockableNotificationChannel() {
         try {
-            hookAllConstructors(NotificationChannel::class.java, object : XC_MethodHook() {
+            val notificationChannelClass = NotificationChannel::class.java
+
+            hookAllConstructors(notificationChannelClass, object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     setBooleanField(param.thisObject, "mBlockableSystem", true)
+                    setBooleanField(param.thisObject, "mImportanceLockedByOEM", false)
                     setBooleanField(param.thisObject, "mImportanceLockedDefaultApp", false)
                 }
             })
 
             findAndHookMethod(
-                NotificationChannel::class.java,
+                notificationChannelClass,
                 "setBlockable",
                 Boolean::class.javaPrimitiveType,
-                DO_NOTHING
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        param.args[0] = true
+                    }
+                }
+            )
+
+            val unlockHook = object : XC_MethodHook() {
+                override fun beforeHookedMethod(param: MethodHookParam) {
+                    param.args[0] = false
+                }
+            }
+
+            findAndHookMethod(
+                notificationChannelClass,
+                "setImportanceLockedByOEM",
+                Boolean::class.javaPrimitiveType,
+                unlockHook
             )
 
             findAndHookMethod(
-                NotificationChannel::class.java,
+                notificationChannelClass,
                 "setImportanceLockedByCriticalDeviceFunction",
                 Boolean::class.javaPrimitiveType,
-                DO_NOTHING
+                unlockHook
             )
         } catch (t: Throwable) {
             XposedBridge.log(t)
