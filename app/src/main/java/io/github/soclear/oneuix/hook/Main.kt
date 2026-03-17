@@ -54,6 +54,17 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.android.enableGoogleSearch) {
                     Android.enableGoogleSearch(lpparam)
                 }
+
+                // AOD 自动模式超时 - Hook 系统框架
+                if (preference.aod.customizeAutoModeTimeout) {
+                    Aod.setAutoModeTimeout(lpparam, preference.aod.autoModeTimeoutSeconds)
+                }
+            }
+
+            Package.AOD -> {
+                if (preference.aod.customizeAutoModeTimeout) {
+                    Aod.setAutoModeTimeout(lpparam, preference.aod.autoModeTimeoutSeconds)
+                }
             }
 
             Package.BROWSER -> {

@@ -7,6 +7,7 @@ enum class Category(val packageName: String) {
     Android(Package.ANDROID),
     SystemUI(Package.SYSTEMUI),
     Settings(Package.SETTINGS),
+    Aod(Package.AOD),
     Call(Package.DIALER),
     Camera(Package.CAMERA),
     Gallery(Package.GALLERY),

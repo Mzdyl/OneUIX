@@ -7,6 +7,7 @@ data class Preference(
     val android: Android = Android(),
     val systemUI: SystemUI = SystemUI(),
     val settings: Settings = Settings(),
+    val aod: Aod = Aod(),
     val call: Call = Call(),
     val camera: Camera = Camera(),
     val gallery: Gallery = Gallery(),
@@ -198,6 +199,12 @@ data class Preference(
     @Serializable
     data class SPen(
         val useGoogleTranslate: Boolean = false,
+    )
+
+    @Serializable
+    data class Aod(
+        val customizeAutoModeTimeout: Boolean = false,
+        val autoModeTimeoutSeconds: Int = 30,  // 秒，范围 10-300
     )
 
     @Serializable

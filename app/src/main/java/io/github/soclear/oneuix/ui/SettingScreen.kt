@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.ui.category.Category
+import io.github.soclear.oneuix.ui.category.DetailPaneAod
 import io.github.soclear.oneuix.ui.category.DetailPaneAndroid
 import io.github.soclear.oneuix.ui.category.DetailPaneBrowser
 import io.github.soclear.oneuix.ui.category.DetailPaneCalendar
@@ -43,6 +44,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
 import io.github.soclear.oneuix.ui.category.DetailPaneVideo
 import io.github.soclear.oneuix.ui.category.DetailPaneWeather
 import io.github.soclear.oneuix.ui.category.ListPaneCategory
+import io.github.soclear.oneuix.ui.category.onAodEvent
 import io.github.soclear.oneuix.ui.category.onAndroidEvent
 import io.github.soclear.oneuix.ui.category.onBrowserEvent
 import io.github.soclear.oneuix.ui.category.onCalendarEvent
@@ -105,6 +107,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.Settings -> DetailPaneSettings(
                             uiState = preference.settings,
                             onEvent = viewModel::onSettingsEvent
+                        )
+
+                        Category.Aod -> DetailPaneAod(
+                            uiState = preference.aod,
+                            onEvent = viewModel::onAodEvent
                         )
 
                         Category.Call -> DetailPaneCall(

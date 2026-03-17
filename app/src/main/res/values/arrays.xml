@@ -5,6 +5,7 @@
         <item>android</item>
         <item>com.android.settings</item>
         <item>com.android.systemui</item>
+        <item>com.samsung.android.app.aodservice</item>
         <item>com.samsung.android.app.notes</item>
         <item>com.samsung.android.app.telephonyui</item>
         <item>com.samsung.android.calendar</item>
