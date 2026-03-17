@@ -1,5 +1,6 @@
 package io.github.soclear.oneuix.hook
 
+import android.content.Context
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -9,13 +10,12 @@ import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
-import de.robv.android.xposed.XposedHelpers.findClass
+import de.robv.android.xposed.XposedHelpers.findClassIfExists
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.XposedHelpers.setObjectField
 import de.robv.android.xposed.XposedHelpers.setStaticObjectField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
-import kotlin.math.roundToInt
 
 object Browser {
     fun showMorePlaybackSpeeds(lpparam: LoadPackageParam) {
@@ -23,10 +23,30 @@ object Browser {
             return
         }
         try {
-            val playbackRateViewClass = findClass(
+            try {
+                // Restore visibility of playback speed feature
+                findAndHookMethod(
+                    "com.sec.android.app.sbrowser.common.device.setting_preference.SettingPreference",
+                    lpparam.classLoader,
+                    "getPlaybackRateViewVisibility",
+                    XC_MethodReplacement.returnConstant(true)
+                )
+
+                findAndHookMethod(
+                    $$"com.sec.android.app.sbrowser.media.common.MediaFeatureGlobalConfigUtils$Companion",
+                    lpparam.classLoader,
+                    "isPlaybackSpeedEnabled",
+                    Context::class.java,
+                    XC_MethodReplacement.returnConstant(true)
+                )
+            } catch (t: Throwable) {
+                XposedBridge.log(t)
+            }
+
+            val playbackRateViewClass = findClassIfExists(
                 "${Package.BROWSER}.media.player.fullscreen.view.MPFullScreenPlaybackRateView",
                 lpparam.classLoader
-            )
+            ) ?: return
             val sPlaybackRates = doubleArrayOf(
                 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0
             )
@@ -54,8 +74,8 @@ object Browser {
                         val radioGroup = getObjectField(
                             param.thisObject,
                             "mPlaybackSpeedRadioGroup"
-                        ) as RadioGroup
-                        val radioButton = radioGroup.getChildAt(0) as RadioButton
+                        ) as? RadioGroup ?: return
+                        val radioButton = radioGroup.getChildAt(0) as? RadioButton ?: return
                         radioGroup.addView(createRadioButton("3.0", radioButton))
                         radioGroup.addView(createRadioButton("4.0", radioButton))
                     }
@@ -81,11 +101,11 @@ object Browser {
                         val view = getObjectField(
                             param.thisObject,
                             "mPlaybackRateView"
-                        ) as LinearLayout
+                        ) as? View ?: return
 
                         val density = view.resources.displayMetrics.density
                         view.layoutParams = view.layoutParams.apply {
-                            width = (380 * density).roundToInt()
+                            width = (380 * density).toInt()
                         }
                     }
                 }
@@ -100,11 +120,15 @@ object Browser {
                         try {
                             val mController = getObjectField(param.thisObject, "mController")
                             val speed = callMethod(mController, "getPlaybackRate") as Double
-                            val index = sPlaybackRates.indexOfFirst { it == speed }
+                            var index = sPlaybackRates.indexOfFirst { it == speed }
+                            // Default to 1.0x
+                            if (index == -1) index = 3
+
                             val radioGroup = getObjectField(
                                 param.thisObject, "mPlaybackSpeedRadioGroup"
-                            ) as RadioGroup
-                            val radioButton = radioGroup.getChildAt(index) as RadioButton
+                            ) as? RadioGroup ?: return null
+                            val radioButton = radioGroup.getChildAt(index) as? RadioButton ?: return null
+
                             callMethod(mController, "setPlaybackRate", speed)
                             setObjectField(param.thisObject, "mCurrentSpeed", radioButton)
                             radioButton.isChecked = true
