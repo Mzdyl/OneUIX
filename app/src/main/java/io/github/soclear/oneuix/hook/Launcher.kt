@@ -27,6 +27,9 @@ import kotlin.math.roundToInt
 
 
 object Launcher {
+    // 静态常量，避免每次调用都创建新 Regex 对象
+    private val whitespaceRegex = Regex("\\s+")
+
     fun showMemoryUsageInRecents(loadPackageParam: LoadPackageParam) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
             showMemoryUsageInRecentsTargetSdk36(loadPackageParam)
@@ -85,7 +88,7 @@ object Launcher {
             val swapTotal by lazy {
                 File("/proc/meminfo").readLines()
                     .first { it.startsWith("SwapTotal:") }
-                    .split(Regex("\\s+"))[1].toLong() * 1024
+                    .split(whitespaceRegex)[1].toLong() * 1024
             }
 
             override fun afterHookedMethod(param: MethodHookParam) {
@@ -106,7 +109,7 @@ object Launcher {
                 val leftText = formatMemory(memoryInfo.availMem, memoryInfo.totalMem)
                 val swapFree = File("/proc/meminfo").readLines()
                     .first { it.startsWith("SwapFree:") }
-                    .split(Regex("\\s+"))[1].toLong() * 1024
+                    .split(whitespaceRegex)[1].toLong() * 1024
                 val rightText = formatMemory(swapFree, swapTotal)
                 return "$leftText   $rightText"
             }
@@ -293,7 +296,7 @@ object Launcher {
             val swapTotal by lazy {
                 File("/proc/meminfo").readLines()
                     .first { it.startsWith("SwapTotal:") }
-                    .split(Regex("\\s+"))[1].toLong() * 1024
+                    .split(whitespaceRegex)[1].toLong() * 1024
             }
 
             override fun afterHookedMethod(param: MethodHookParam) {
@@ -315,7 +318,7 @@ object Launcher {
                 val leftText = formatMemory(memoryInfo.availMem, memoryInfo.totalMem)
                 val swapFree = File("/proc/meminfo").readLines()
                     .first { it.startsWith("SwapFree:") }
-                    .split(Regex("\\s+"))[1].toLong() * 1024
+                    .split(whitespaceRegex)[1].toLong() * 1024
                 val rightText = formatMemory(swapFree, swapTotal)
                 return leftText to rightText
             }

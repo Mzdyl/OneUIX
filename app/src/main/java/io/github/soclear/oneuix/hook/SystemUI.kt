@@ -39,6 +39,7 @@ import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
 import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -553,6 +554,24 @@ object SystemUI {
     @Volatile
     private var clockFormat: String = ""
 
+    // 缓存 DateTimeFormatter（格式字符串 -> Formatter）
+    @Volatile
+    private var cachedTimeFormatter: DateTimeFormatter? = null
+    @Volatile
+    private var cachedTimeFormat: String = ""
+
+    // 缓存农历结果（按天缓存）
+    @Volatile
+    private var cachedLunarDate: String = ""
+    @Volatile
+    private var cachedLunarDateDay: Int = -1
+
+    // 缓存日期结果（按天缓存）
+    @Volatile
+    private var cachedSimpleDate: String = ""
+    @Volatile
+    private var cachedSimpleDateDay: Int = -1
+
     private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
         // 设置等宽字体（数字对齐）
         try {
@@ -619,7 +638,9 @@ object SystemUI {
             override fun run() {
                 clockIndicatorViewRef?.get()?.let { view ->
                     try {
-                        if (clockFormat.isNotEmpty()) {
+                        // 检查屏幕状态，熄屏时跳过更新以节省电量
+                        val powerManager = view.context.getSystemService(PowerManager::class.java)
+                        if (powerManager?.isInteractive == true && clockFormat.isNotEmpty()) {
                             val text = formatClockText(clockFormat, view.context)
                             view.text = text
                             view.contentDescription = text
@@ -641,76 +662,122 @@ object SystemUI {
         log("stopSecondUpdate: stopped")
     }
 
-    // 格式化时钟文本，替换变量
+    // 占位符映射表（静态常量，避免每次调用都创建新对象）
+    private val clockPlaceholders = mapOf(
+        "{temp}" to "\u0001TEMP\u0001",
+        "{lunar}" to "\u0002LUNAR\u0002",
+        "{rate}" to "\u0003RATE\u0003",
+        "{shichen}" to "\u0004SHICHEN\u0004",
+        "{sec}" to "\u0005SEC\u0005",
+        "{date}" to "\u0006DATE\u0006"
+    )
+
+    // 格式化时钟文本（优化版：缓存 DateTimeFormatter，减少字符串操作）
     // 支持: {temp}, {lunar}, {rate}, {shichen}, {sec}, {date}
     private fun formatClockText(format: String, context: Context): String {
-        // 使用唯一占位符替换变量，避免影响时间格式解析
-        val placeholders = mapOf(
-            "{temp}" to "\u0001TEMP\u0001",
-            "{lunar}" to "\u0002LUNAR\u0002",
-            "{rate}" to "\u0003RATE\u0003",
-            "{shichen}" to "\u0004SHICHEN\u0004",
-            "{sec}" to "\u0005SEC\u0005",
-            "{date}" to "\u0006DATE\u0006"
-        )
-        
         // 1. 替换变量为占位符
         var processedFormat = format
-        for ((variable, placeholder) in placeholders) {
+        for ((variable, placeholder) in clockPlaceholders) {
             processedFormat = processedFormat.replace(variable, placeholder)
         }
         
-        // 2. 尝试用 DateTimeFormatter 解析整个格式
-        var result: String
-        try {
-            val formatter = DateTimeFormatter.ofPattern(processedFormat)
-            result = formatter.format(LocalDateTime.now())
-        } catch (_: Throwable) {
-            // 如果失败，尝试提取时间部分单独格式化
-            val timeOnly = processedFormat
-                .replace("\u0001TEMP\u0001", "")
-                .replace("\u0002LUNAR\u0002", "")
-                .replace("\u0003RATE\u0003", "")
-                .replace("\u0004SHICHEN\u0004", "")
-                .replace("\u0005SEC\u0005", "")
-                .replace("\u0006DATE\u0006", "")
-                .trim()
-            
-            if (timeOnly.isNotEmpty()) {
-                try {
-                    val timeFormatter = DateTimeFormatter.ofPattern(timeOnly)
-                    val formattedTime = timeFormatter.format(LocalDateTime.now())
-                    result = processedFormat.replace(timeOnly, formattedTime)
-                } catch (_: Throwable) {
-                    // 时间格式无效，保留原始格式
-                    result = processedFormat
+        // 2. 提取时间格式部分（移除所有占位符）
+        val timeFormat = processedFormat
+            .replace("\u0001TEMP\u0001", "")
+            .replace("\u0002LUNAR\u0002", "")
+            .replace("\u0003RATE\u0003", "")
+            .replace("\u0004SHICHEN\u0004", "")
+            .replace("\u0005SEC\u0005", "")
+            .replace("\u0006DATE\u0006", "")
+            .trim()
+        
+        // 3. 格式化时间部分（使用缓存的 DateTimeFormatter）
+        val now = LocalDateTime.now()
+        var result = processedFormat
+        if (timeFormat.isNotEmpty()) {
+            try {
+                // 使用缓存的 Formatter
+                val formatter = if (cachedTimeFormat == timeFormat) {
+                    cachedTimeFormatter
+                } else {
+                    val newFormatter = DateTimeFormatter.ofPattern(timeFormat)
+                    cachedTimeFormatter = newFormatter
+                    cachedTimeFormat = timeFormat
+                    newFormatter
                 }
-            } else {
-                result = processedFormat
+                val formattedTime = formatter?.format(now) ?: timeFormat
+                result = result.replace(timeFormat, formattedTime)
+            } catch (_: Throwable) {
+                // 格式无效，保持原样
             }
         }
         
-        // 3. 替换占位符为实际值
-        if (result.contains("\u0001TEMP\u0001")) {
-            result = result.replace("\u0001TEMP\u0001", getBatteryTempText(context) ?: "")
-        }
-        if (result.contains("\u0002LUNAR\u0002")) {
-            result = result.replace("\u0002LUNAR\u0002", getLunarDate())
-        }
-        if (result.contains("\u0003RATE\u0003")) {
-            result = result.replace("\u0003RATE\u0003", getRefreshRate(context))
-        }
-        if (result.contains("\u0004SHICHEN\u0004")) {
-            result = result.replace("\u0004SHICHEN\u0004", getChineseTimeHour())
-        }
-        if (result.contains("\u0005SEC\u0005")) {
-            result = result.replace("\u0005SEC\u0005", getSeconds())
-        }
-        if (result.contains("\u0006DATE\u0006")) {
-            result = result.replace("\u0006DATE\u0006", getSimpleDate())
+        // 4. 替换占位符为实际值（使用 StringBuilder 优化）
+        val sb = StringBuilder(result)
+        
+        // 温度
+        val tempIdx = sb.indexOf("\u0001TEMP\u0001")
+        if (tempIdx >= 0) {
+            val temp = getBatteryTempText(context) ?: ""
+            sb.replace(tempIdx, tempIdx + 7, temp)
         }
         
-        return result
+        // 农历
+        val lunarIdx = sb.indexOf("\u0002LUNAR\u0002")
+        if (lunarIdx >= 0) {
+            val lunar = getLunarDateCached()
+            sb.replace(lunarIdx, lunarIdx + 7, lunar)
+        }
+        
+        // 刷新率
+        val rateIdx = sb.indexOf("\u0003RATE\u0003")
+        if (rateIdx >= 0) {
+            val rate = getRefreshRate(context)
+            sb.replace(rateIdx, rateIdx + 7, rate)
+        }
+        
+        // 时辰
+        val shichenIdx = sb.indexOf("\u0004SHICHEN\u0004")
+        if (shichenIdx >= 0) {
+            val shichen = getChineseTimeHour()
+            sb.replace(shichenIdx, shichenIdx + 9, shichen)
+        }
+        
+        // 秒
+        val secIdx = sb.indexOf("\u0005SEC\u0005")
+        if (secIdx >= 0) {
+            val sec = getSeconds()
+            sb.replace(secIdx, secIdx + 6, sec)
+        }
+        
+        // 日期
+        val dateIdx = sb.indexOf("\u0006DATE\u0006")
+        if (dateIdx >= 0) {
+            val date = getSimpleDateCached()
+            sb.replace(dateIdx, dateIdx + 7, date)
+        }
+        
+        return sb.toString()
+    }
+    
+    // 缓存农历结果（每天只计算一次）
+    private fun getLunarDateCached(): String {
+        val today = LocalDate.now().dayOfYear
+        if (cachedLunarDateDay != today) {
+            cachedLunarDate = getLunarDate()
+            cachedLunarDateDay = today
+        }
+        return cachedLunarDate
+    }
+    
+    // 缓存日期结果（每天只计算一次）
+    private fun getSimpleDateCached(): String {
+        val today = LocalDate.now().dayOfYear
+        if (cachedSimpleDateDay != today) {
+            cachedSimpleDate = getSimpleDate()
+            cachedSimpleDateDay = today
+        }
+        return cachedSimpleDate
     }
 
     // 获取电池温度（带1秒缓存，使用 @Volatile 保证线程安全）
@@ -761,17 +828,17 @@ object SystemUI {
             lastTempText
         }
     }
-    
+
+    // 电池温度文件路径列表（静态常量）
+    private val tempFilePaths = listOf(
+        "/sys/class/power_supply/battery/temp",           // 通用
+//      "/sys/class/thermal/thermal_zone0/temp",          // CPU/电池温度
+//      "/sys/class/thermal/thermal_zone1/temp",
+    )
+
     // 从系统文件读取温度（更实时）
     private fun readSysTemp(): String? {
-        // 常见的电池温度文件路径
-        val tempPaths = listOf(
-            "/sys/class/power_supply/battery/temp",           // 通用
-//          "/sys/class/thermal/thermal_zone0/temp",          // CPU/电池温度
-//          "/sys/class/thermal/thermal_zone1/temp",
-        )
-        
-        for (path in tempPaths) {
+        for (path in tempFilePaths) {
             try {
                 val file = java.io.File(path)
                 if (file.exists()) {
