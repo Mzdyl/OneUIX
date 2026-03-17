@@ -1,6 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,15 +92,13 @@ fun DetailPaneOther(
             checked = uiState.setThemeTrialNeverExpired,
             onCheckedChange = { onEvent(OtherEvent.SetThemeTrialNeverExpired(it)) }
         )
-        if (isCHC) {
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.search),
-                title = stringResource(id = R.string.customizeBrowserSearchEngine_title),
-                summary = stringResource(id = R.string.customizeBrowserSearchEngine_summary),
-                checked = uiState.customizeBrowserSearchEngine,
-                onCheckedChange = { onEvent(OtherEvent.CustomizeBrowserSearchEngine(it)) }
-            )
-        }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.language_us),
+            title = stringResource(id = R.string.spoofBrowserCountryCodeToUS_title),
+            summary = stringResource(id = R.string.spoofBrowserCountryCodeToUS_summary),
+            checked = uiState.spoofBrowserCountryCodeToUS,
+            onCheckedChange = { onEvent(OtherEvent.SpoofBrowserCountryCodeToUS(it)) }
+        )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.branding_watermark),
             title = stringResource(id = R.string.noAIWatermark_title),
@@ -118,16 +115,6 @@ fun DetailPaneOther(
     }
 }
 
-private val isCHC by lazy {
-    try {
-        @SuppressLint("PrivateApi")
-        val systemPropertiesClass = Class.forName("android.os.SystemProperties")
-        val getMethod = systemPropertiesClass.getMethod("get", String::class.java)
-        getMethod(null, "ro.csc.sales_code") == "CHC"
-    } catch (_: Throwable) {
-        false
-    }
-}
 
 sealed interface OtherEvent {
     @JvmInline
@@ -161,7 +148,7 @@ sealed interface OtherEvent {
     value class SetThemeTrialNeverExpired(val value: Boolean) : OtherEvent
 
     @JvmInline
-    value class CustomizeBrowserSearchEngine(val value: Boolean) : OtherEvent
+    value class SpoofBrowserCountryCodeToUS(val value: Boolean) : OtherEvent
 
     @JvmInline
     value class NoAIWatermark(val value: Boolean) : OtherEvent
@@ -233,9 +220,9 @@ fun SettingViewModel.onOtherEvent(event: OtherEvent) {
                 )
             )
 
-            is OtherEvent.CustomizeBrowserSearchEngine -> preference.copy(
+            is OtherEvent.SpoofBrowserCountryCodeToUS -> preference.copy(
                 other = preference.other.copy(
-                    customizeBrowserSearchEngine = event.value
+                    spoofBrowserCountryCodeToUS = event.value
                 )
             )
 

@@ -77,8 +77,8 @@
     <string name="enableChineseHolidayDisplay_title">Show Chinese holidays in Calendar</string>
     <string name="supportBlockMessage_title">Support message blocking</string>
     <string name="setThemeTrialNeverExpired_title">Never expire theme and icon trials</string>
-    <string name="customizeBrowserSearchEngine_title">Customize browser search engine</string>
-    <string name="customizeBrowserSearchEngine_summary">Mainland China ROM exclusive, supports Google and Bing</string>
+    <string name="spoofBrowserCountryCodeToUS_title">Spoof Browser Region to US</string>
+    <string name="spoofBrowserCountryCodeToUS_summary">Customize search engines and Ad blockers</string>
     <string name="showGeocodedLocationInRecentCall_title">Show caller location in recent calls</string>
     <string name="isOpStyleCHN_title">Mainland China style call log</string>
     <string name="supportAutoPowerOnOff_title">Support Auto power on/off</string>

@@ -77,8 +77,8 @@
     <string name="enableChineseHolidayDisplay_title">Afficher les jours fériés chinois dans le calendrier</string>
     <string name="supportBlockMessage_title">Prendre en charge le blocage des SMS</string>
     <string name="setThemeTrialNeverExpired_title">Les essais de thèmes et d\'icônes n\'expirent jamais</string>
-    <string name="customizeBrowserSearchEngine_title">Personnaliser le moteur de recherche du navigateur</string>
-    <string name="customizeBrowserSearchEngine_summary">Exclusif à la version chinoise, prend en charge Google et Bing</string>
+    <string name="spoofBrowserCountryCodeToUS_title">Simuler la région du navigateur (États-Unis)</string>
+    <string name="spoofBrowserCountryCodeToUS_summary">Personnaliser les moteurs de recherche et le bloqueur de publicités</string>
     <string name="showGeocodedLocationInRecentCall_title">Afficher la localisation des appels entrants</string>
     <string name="isOpStyleCHN_title">Historique des appels (Style Chine continentale)</string>
     <string name="supportAutoPowerOnOff_title">Prendre en charge l\'allumage/l\'extinction automatique</string>

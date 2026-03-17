@@ -119,7 +119,7 @@ data class Preference(
         val enableChineseHolidayDisplay: Boolean = false,
         val supportBlockMessage: Boolean = true,
         val setThemeTrialNeverExpired: Boolean = true,
-        val customizeBrowserSearchEngine: Boolean = false,
+        val spoofBrowserCountryCodeToUS: Boolean = false,
         val noAIWatermark: Boolean = true,
         val bypassHealthMonitorCountryCheck: Boolean = false,
     )
