@@ -149,7 +149,8 @@ data class Preference(
 
     @Serializable
     data class Browser(
-        val customizeBrowserSearchEngine: Boolean = false,
+        val showMorePlaybackSpeeds: Boolean = false,
+        val spoofBrowserCountryCodeToUS: Boolean = false,
     )
 
     @Serializable

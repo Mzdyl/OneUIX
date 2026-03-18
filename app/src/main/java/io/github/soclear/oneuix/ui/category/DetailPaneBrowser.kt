@@ -1,6 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -26,40 +25,43 @@ fun DetailPaneBrowser(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        if (isCHC) {
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.search),
-                title = stringResource(id = R.string.customizeBrowserSearchEngine_title),
-                summary = stringResource(id = R.string.customizeBrowserSearchEngine_summary),
-                checked = uiState.customizeBrowserSearchEngine,
-                onCheckedChange = { onEvent(BrowserEvent.CustomizeBrowserSearchEngine(it)) }
-            )
-        }
-    }
-}
-
-private val isCHC by lazy {
-    try {
-        @SuppressLint("PrivateApi")
-        val systemPropertiesClass = Class.forName("android.os.SystemProperties")
-        val getMethod = systemPropertiesClass.getMethod("get", String::class.java)
-        getMethod(null, "ro.csc.sales_code") == "CHC"
-    } catch (_: Throwable) {
-        false
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.fast_forward),
+            title = stringResource(id = R.string.showMorePlaybackSpeeds_title),
+            summary = stringResource(id = R.string.showMorePlaybackSpeeds_summary),
+            checked = uiState.showMorePlaybackSpeeds,
+            onCheckedChange = { onEvent(BrowserEvent.ShowMorePlaybackSpeeds(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.language_us),
+            title = stringResource(id = R.string.spoofBrowserCountryCodeToUS_title),
+            summary = stringResource(id = R.string.spoofBrowserCountryCodeToUS_summary),
+            checked = uiState.spoofBrowserCountryCodeToUS,
+            onCheckedChange = { onEvent(BrowserEvent.SpoofBrowserCountryCodeToUS(it)) }
+        )
     }
 }
 
 sealed interface BrowserEvent {
     @JvmInline
-    value class CustomizeBrowserSearchEngine(val value: Boolean) : BrowserEvent
+    value class ShowMorePlaybackSpeeds(val value: Boolean) : BrowserEvent
+
+    @JvmInline
+    value class SpoofBrowserCountryCodeToUS(val value: Boolean) : BrowserEvent
 }
 
 fun SettingViewModel.onBrowserEvent(event: BrowserEvent) {
     updateData { preference ->
         when (event) {
-            is BrowserEvent.CustomizeBrowserSearchEngine -> preference.copy(
+            is BrowserEvent.ShowMorePlaybackSpeeds -> preference.copy(
                 browser = preference.browser.copy(
-                    customizeBrowserSearchEngine = event.value
+                    showMorePlaybackSpeeds = event.value
+                )
+            )
+
+            is BrowserEvent.SpoofBrowserCountryCodeToUS -> preference.copy(
+                browser = preference.browser.copy(
+                    spoofBrowserCountryCodeToUS = event.value
                 )
             )
         }

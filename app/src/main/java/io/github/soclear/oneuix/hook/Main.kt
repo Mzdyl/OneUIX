@@ -57,7 +57,11 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.BROWSER -> {
-                if (preference.browser.customizeBrowserSearchEngine) {
+                if (preference.browser.showMorePlaybackSpeeds) {
+                    Browser.showMorePlaybackSpeeds(lpparam)
+                }
+
+                if (preference.browser.spoofBrowserCountryCodeToUS) {
                     Browser.setCountryIsoCode(lpparam, "US")
                 }
             }
