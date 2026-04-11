@@ -26,7 +26,7 @@ fun DetailPaneSPen(
             .verticalScroll(rememberScrollState())
     ) {
         SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.globe),
+            icon = ImageVector.vectorResource(id = R.drawable.spen),
             title = stringResource(id = R.string.useGoogleTranslate_title),
             summary = stringResource(id = R.string.useGoogleTranslate_summary),
             checked = uiState.useGoogleTranslate,
