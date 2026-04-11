@@ -1,11 +1,11 @@
 name: Android Release
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: [ main, Self]
 
 jobs:
-  build:
+  build-release:
     permissions:
       contents: write
 
@@ -40,17 +40,60 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Release APKs
+      # 构建 Release APK
+      - name: Build Release APK
         run: ./gradlew assembleRelease
 
-      - name: Rename APK
-        run: | 
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/OneUIX_${{ github.ref_name }}.apk
+      - name: Rename Release APK
+        run: |
+          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/OneUIX_${{ github.ref_name }}_release.apk
 
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v2
+#     - name: Upload Release Assets
+#       uses: softprops/action-gh-release@v2
+#       with:
+#         files: |
+#           app/build/outputs/apk/release/OneUIX_*.apk
+#       env:
+#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 上传 Release APK
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v7
         with:
-          files: |
-            app/build/outputs/apk/release/OneUIX_*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: release-apk
+          path: app/build/outputs/apk/release/OneUIX_${{ github.ref_name }}_release.apk
+          retention-days: 90
+          archive: false
+
+  build-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 构建 Debug APK
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Rename Debug APK
+        run: |
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/OneUIX_${{ github.ref_name }}_debug.apk
+
+      # 上传 Debug APK
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/OneUIX_${{ github.ref_name }}_debug.apk
+          retention-days: 90
+          archive: false
+          
