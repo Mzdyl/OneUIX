@@ -42,11 +42,11 @@ jobs:
 
       # 构建 Release APK
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleOriginalRelease
 
       - name: Rename Release APK
         run: |
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/OneUIX_${{ github.ref_name }}_release.apk
+          mv app/build/outputs/apk/original/release/app-original-release.apk app/build/outputs/apk/original/release/OneUIX_${{ github.ref_name }}_original_release.apk
 
 #     - name: Upload Release Assets
 #       uses: softprops/action-gh-release@v2
@@ -82,18 +82,99 @@ jobs:
 
       # 构建 Debug APK
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleOriginalDebug
 
       - name: Rename Debug APK
         run: |
-          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/OneUIX_${{ github.ref_name }}_debug.apk
+          mv app/build/outputs/apk/original/debug/app-original-debug.apk app/build/outputs/apk/original/debug/OneUIX_${{ github.ref_name }}_original_debug.apk
 
       # 上传 Debug APK
       - name: Upload Debug APK
         uses: actions/upload-artifact@v7
         with:
-          name: debug-apk
-          path: app/build/outputs/apk/debug/OneUIX_${{ github.ref_name }}_debug.apk
+          name: original-debug-apk
+          path: app/build/outputs/apk/original/debug/OneUIX_${{ github.ref_name }}_original_debug.apk
+          retention-days: 90
+          archive: false
+
+  build-coexist-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      # 解码并保存 Keystore 文件
+      - name: Decode Keystore
+        run: |
+          echo ${{ secrets.KEYSTORE_BASE64 }} | base64 -d > app/release.keystore
+
+      # 设置签名环境变量
+      - name: Set up keystore properties
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "storeFile=release.keystore" > keystore.properties
+          echo "storePassword=$KEYSTORE_PASSWORD" >> keystore.properties
+          echo "keyAlias=$KEY_ALIAS" >> keystore.properties
+          echo "keyPassword=$KEY_PASSWORD" >> keystore.properties
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 构建共存版 Release APK
+      - name: Build Coexist Release APK
+        run: ./gradlew assembleCoexistRelease
+
+      - name: Rename Coexist Release APK
+        run: |
+          mv app/build/outputs/apk/coexist/release/app-coexist-release.apk app/build/outputs/apk/coexist/release/OneUIX_${{ github.ref_name }}_coexist_release.apk
+
+      # 上传 Coexist Release APK
+      - name: Upload Coexist Release APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: coexist-release-apk
+          path: app/build/outputs/apk/coexist/release/OneUIX_${{ github.ref_name }}_coexist_release.apk
+          retention-days: 90
+          archive: false
+
+  build-coexist-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 构建共存版 Debug APK
+      - name: Build Coexist Debug APK
+        run: ./gradlew assembleCoexistDebug
+
+      - name: Rename Coexist Debug APK
+        run: |
+          mv app/build/outputs/apk/coexist/debug/app-coexist-debug.apk app/build/outputs/apk/coexist/debug/OneUIX_${{ github.ref_name }}_coexist_debug.apk
+
+      # 上传 Coexist Debug APK
+      - name: Upload Coexist Debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: coexist-debug-apk
+          path: app/build/outputs/apk/coexist/debug/OneUIX_${{ github.ref_name }}_coexist_debug.apk
           retention-days: 90
           archive: false
           
