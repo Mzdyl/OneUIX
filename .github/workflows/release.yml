@@ -61,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-apk
-          path: app/build/outputs/apk/release/OneUIX_${{ github.ref_name }}_release.apk
+          path: app/build/outputs/apk/release/OneUIX_${{ github.ref_name }}_original_release.apk
           retention-days: 90
           archive: false
 
