@@ -41,6 +41,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneSettings
 import io.github.soclear.oneuix.ui.category.DetailPaneSystemUI
 import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
 import io.github.soclear.oneuix.ui.category.DetailPaneVideo
+import io.github.soclear.oneuix.ui.category.DetailPaneWatchPairing
 import io.github.soclear.oneuix.ui.category.DetailPaneWeather
 import io.github.soclear.oneuix.ui.category.ListPaneCategory
 import io.github.soclear.oneuix.ui.category.onAndroidEvent
@@ -62,6 +63,7 @@ import io.github.soclear.oneuix.ui.category.onSettingsEvent
 import io.github.soclear.oneuix.ui.category.onSystemUIEvent
 import io.github.soclear.oneuix.ui.category.onThemeCenterEvent
 import io.github.soclear.oneuix.ui.category.onVideoEvent
+import io.github.soclear.oneuix.ui.category.onWatchPairingEvent
 import io.github.soclear.oneuix.ui.category.onWeatherEvent
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -185,6 +187,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.SPen -> DetailPaneSPen(
                             uiState = preference.sPen,
                             onEvent = viewModel::onSPenEvent
+                        )
+
+                        Category.WatchPairing -> DetailPaneWatchPairing(
+                            uiState = preference.watchPairing,
+                            onEvent = viewModel::onWatchPairingEvent
                         )
 
                         Category.Other -> DetailPaneOther(

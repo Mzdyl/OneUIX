@@ -371,6 +371,22 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             Package.SPEN -> {
                 SPen.switchTranslateSource(lpparam, preference.sPen.useGoogleTranslate)
             }
+
+            Package.WATCH_MANAGER -> {
+                if (preference.watchPairing.bypassRegionCheck ||
+                    preference.watchPairing.connectionMode != 0 ||
+                    preference.watchPairing.forceChinaGmsCore ||
+                    preference.watchPairing.disableCscCheck
+                ) {
+                    WatchPairing.init(
+                        lpparam = lpparam,
+                        bypassRegionCheck = preference.watchPairing.bypassRegionCheck,
+                        connectionMode = preference.watchPairing.connectionMode,
+                        forceChinaGmsCore = preference.watchPairing.forceChinaGmsCore,
+                        disableCscCheck = preference.watchPairing.disableCscCheck
+                    )
+                }
+            }
         }
     }
 

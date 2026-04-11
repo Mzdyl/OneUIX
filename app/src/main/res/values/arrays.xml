@@ -7,6 +7,7 @@
         <item>com.android.systemui</item>
         <item>com.samsung.android.app.notes</item>
         <item>com.samsung.android.app.telephonyui</item>
+        <item>com.samsung.android.app.watchmanager</item>
         <item>com.samsung.android.calendar</item>
         <item>com.samsung.android.da.daagent</item>
         <item>com.samsung.android.dialer</item>
@@ -24,6 +25,5 @@
         <item>com.sec.android.daemonapp</item>
         <item>com.sec.android.gallery3d</item>
         <item>com.sec.android.mimage.photoretouching</item>
-
     </string-array>
 </resources>

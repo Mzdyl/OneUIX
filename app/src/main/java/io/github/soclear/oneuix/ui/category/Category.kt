@@ -23,5 +23,6 @@ enum class Category(val packageName: String) {
     HealthMonitor(Package.HEALTH_MONITOR),
     GalaxyStore(Package.STORE),
     SPen(Package.SPEN),
+    WatchPairing(Package.WATCH_MANAGER),
     Other(BuildConfig.APPLICATION_ID);
 }

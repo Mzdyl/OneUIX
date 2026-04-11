@@ -113,6 +113,21 @@
     <string name="enableSketch_title">Enable Sketch to Image</string>
     <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
     <string name="supportCallAndTextOnOtherDevices_title">Support call and text on other devices</string>
+    
+    <!-- Watch Pairing -->
+    <string name="watchPairing_label">Galaxy Wearable</string>
+    <string name="watchPairing_connectionMode_title">Connection Mode</string>
+    <string name="watchPairing_connectionMode_summary">Select connection method between watch and phone</string>
+    <string name="watchPairing_mode_auto">Auto Detect (Default)</string>
+    <string name="watchPairing_mode_wearos_cn">WearOS CN (China GMS)</string>
+    <string name="watchPairing_mode_wearos_global">WearOS Global (Global GMS)</string>
+    <string name="watchPairing_bypassRegionCheck_title">Bypass region check</string>
+    <string name="watchPairing_bypassRegionCheck_summary">Allow pairing between Chinese watch with global phone, or global watch with Chinese phone</string>
+    <string name="watchPairing_disableCscCheck_title">Disable CSC check</string>
+    <string name="watchPairing_disableCscCheck_summary">Spoof CSC code to bypass device region verification</string>
+    <string name="watchPairing_forceChinaGmsCore_title">Force install China GMS</string>
+    <string name="watchPairing_forceChinaGmsCore_summary">Force install China WearOS GMS component (com.google.android.wearable.app.cn)</string>
+    
     <string name="restartSystemUI_title">Restart System UI</string>
     <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
     <string name="useGoogleTranslate_title">Use Google Translate</string>

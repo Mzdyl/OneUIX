@@ -115,6 +115,21 @@
     <string name="useGoogleTranslate_title">使用谷歌翻译</string>
     <string name="useGoogleTranslate_summary">S Pen 翻译使用谷歌翻译（默认为百度翻译）</string>
     <string name="supportCallAndTextOnOtherDevices_title">支持在其他设备上通话和收发短信</string>
+    
+    <!-- 手表配对 -->
+    <string name="watchPairing_label">三星穿戴</string>
+    <string name="watchPairing_connectionMode_title">连接模式</string>
+    <string name="watchPairing_connectionMode_summary">选择手表与手机的连接方式</string>
+    <string name="watchPairing_mode_auto">自动检测（默认）</string>
+    <string name="watchPairing_mode_wearos_cn">WearOS CN（国行 GMS）</string>
+    <string name="watchPairing_mode_wearos_global">WearOS Global（外版 GMS）</string>
+    <string name="watchPairing_bypassRegionCheck_title">绕过区域限制</string>
+    <string name="watchPairing_bypassRegionCheck_summary">允许国行手表与外版手机配对，或外版手表与国行手机配对</string>
+    <string name="watchPairing_disableCscCheck_title">禁用 CSC 检查</string>
+    <string name="watchPairing_disableCscCheck_summary">伪造 CSC 代码以绕过设备区域验证</string>
+    <string name="watchPairing_forceChinaGmsCore_title">强制安装国行 GMS</string>
+    <string name="watchPairing_forceChinaGmsCore_summary">强制安装中国版 WearOS GMS 组件（com.google.android.wearable.app.cn）</string>
+    
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>
 

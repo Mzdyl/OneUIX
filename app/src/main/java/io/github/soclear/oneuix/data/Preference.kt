@@ -20,6 +20,7 @@ data class Preference(
     val launcher: Launcher = Launcher(),
     val dualApp: DualApp = DualApp(),
     val photoRetouching: PhotoRetouching = PhotoRetouching(),
+    val watchPairing: WatchPairing = WatchPairing(),
     val healthMonitor: HealthMonitor = HealthMonitor(),
     val galaxyStore: GalaxyStore = GalaxyStore(),
     val sPen: SPen = SPen(),
@@ -185,6 +186,14 @@ data class Preference(
     )
 
     @Serializable
+    data class WatchPairing(
+        val bypassRegionCheck: Boolean = false,           // 绕过区域限制
+        val connectionMode: Int = 0,                       // 0=自动，1=WearOS CN，2=WearOS Global
+        val forceChinaGmsCore: Boolean = false,            // 强制安装国行 GMS
+        val disableCscCheck: Boolean = false,              // 禁用 CSC 检查
+    )
+
+    @Serializable
     data class HealthMonitor(
         val bypassHealthMonitorCountryCheck: Boolean = false,
     )
@@ -206,4 +215,6 @@ data class Preference(
         // 保留给模块自身设置或未分类功能
         val placeholder: Boolean = false
     )
+
+
 }
