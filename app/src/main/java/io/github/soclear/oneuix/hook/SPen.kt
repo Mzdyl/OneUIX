@@ -47,7 +47,7 @@ object SPen {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     val key = param.args[0] as? String ?: return
                     if (key.contains("translate", ignoreCase = true) ||
-                        key.contains("trans", ignoreCase = true) ||
+                        key.contains("SPen_ConfigDefTranslatorSolution", ignoreCase = true) ||
                         key == "DefaultCscFeature_Spen_Translation" ||
                         key == "CscFeature_Spen_Translation"
                     ) {
