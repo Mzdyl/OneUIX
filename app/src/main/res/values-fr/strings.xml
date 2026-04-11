@@ -86,6 +86,8 @@
     <string name="noAIWatermark_title">Désactiver le filigrane IA de l\'éditeur de photos</string>
     <string name="bypassHealthMonitorCountryCheck_title">Contourner la vérification de pays Samsung Health Monitor</string>
     <string name="bypassHealthMonitorCountryCheck_summary">Utiliser Health Monitor dans les pays non pris en charge</string>
+    <string name="useSPenGoogleTranslate_title">Utiliser Google Traduction pour S Pen</string>
+    <string name="useSPenGoogleTranslate_summary">Basculer la source de traduction S Pen de Baidu à Google</string>
     <string name="supportCallAndTextOnOtherDevices_title">Prend en charge les Appels/SMS sur les autres appareils</string>
     <string name="supportCallAndTextOnOtherDevices_summary">Paramètres > Appareils connectés > Appels/SMS sur les autres appareils</string>
     <string name="setCustomCarrierName_title">Définir le nom de l\'opérateur personnalisé</string>
