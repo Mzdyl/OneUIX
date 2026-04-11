@@ -86,6 +86,8 @@
     <string name="noAIWatermark_title">禁用图片编辑器 AI 水印</string>
     <string name="bypassHealthMonitorCountryCheck_title">绕过 Samsung Health Monitor 国家检查</string>
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>
+    <string name="useSPenGoogleTranslate_title">S Pen 使用谷歌翻译</string>
+    <string name="useSPenGoogleTranslate_summary">将 S Pen 翻译源从百度切换为谷歌</string>
     <string name="supportCallAndTextOnOtherDevices_title">支持跨设备接打电话和收发短信</string>
     <string name="supportCallAndTextOnOtherDevices_summary">设置 -> 已连接的设备 -> 跨设备接打电话和收发短信</string>
     <string name="setCustomCarrierName_title">自定义运营商名称</string>
