@@ -186,9 +186,9 @@ object WatchPairing {
                 lpparam.classLoader,
                 "problemCheckAfterPairing",
                 "com.samsung.android.app.twatchmanager.connectionmanager.define.WearableDevice",
-                android.bluetooth.BluetoothDevice::class.java,
+                "android.bluetooth.BluetoothDevice",
                 Boolean::class.javaPrimitiveType,
-                androidx.fragment.app.FragmentActivity::class.java,
+                "androidx.fragment.app.FragmentActivity",
                 object : XC_MethodHook() {
                     @Override
                     override fun afterHookedMethod(param: MethodHookParam) {
