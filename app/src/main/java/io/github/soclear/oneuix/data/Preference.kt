@@ -50,6 +50,7 @@ data class Preference(
             val statusBarMaxNotificationIcons: Int = 4,
             val setCustomCarrierName: Boolean = false,
             val customCarrierName: String = "",
+            val hideLockscreenStatusBar: Boolean = false,
         )
 
         @Serializable

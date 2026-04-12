@@ -654,6 +654,26 @@ object SystemUI {
     }
 
 
+    fun hideLockscreenStatusBar(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.phone.KeyguardStatusBarView",
+                loadPackageParam.classLoader,
+                "setVisibility",
+                Int::class.javaPrimitiveType,
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        param.args[0] = View.GONE
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
+
     fun showTraditionalChineseDateOnQS(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI ||
             Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM

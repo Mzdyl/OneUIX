@@ -51,6 +51,7 @@
 - 双击状态栏锁屏
 - 修改状态栏最大通知图标数量
 - 自定义运营商名称
+- 隐藏锁屏界面的状态栏
 
 ##### 快捷设置
 
@@ -161,6 +162,7 @@
 - Double tap status bar to sleep
 - Modify maximum number of notification icons in status bar
 - Set custom carrier name
+- Hide status bar on lock screen
 
 ##### Quick Settings
 
