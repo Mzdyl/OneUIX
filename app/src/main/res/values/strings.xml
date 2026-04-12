@@ -91,5 +91,6 @@
     <string name="supportCallAndTextOnOtherDevices_title">Support call &amp; text on other devices</string>
     <string name="supportCallAndTextOnOtherDevices_summary">Settings -> Connected devices -> Call &amp; text on other devices</string>
     <string name="setCustomCarrierName_title">Set custom carrier name</string>
+    <string name="hideLockscreenStatusBar_title">Hide status bar on lock screen</string>
     <string name="rebootSystemUI">Reboot System UI (root)</string>
 </resources>

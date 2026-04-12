@@ -91,5 +91,6 @@
     <string name="supportCallAndTextOnOtherDevices_title">支持跨设备接打电话和收发短信</string>
     <string name="supportCallAndTextOnOtherDevices_summary">设置 -> 已连接的设备 -> 跨设备接打电话和收发短信</string>
     <string name="setCustomCarrierName_title">自定义运营商名称</string>
+    <string name="hideLockscreenStatusBar_title">隐藏锁屏界面的状态栏</string>
     <string name="rebootSystemUI">重启系统 UI (root)</string>
 </resources>

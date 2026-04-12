@@ -91,5 +91,6 @@
     <string name="supportCallAndTextOnOtherDevices_title">Вызовы и СМС на других устройствах</string>
     <string name="supportCallAndTextOnOtherDevices_summary">Настройки -> Подключенные устройства -> Вызовы и СМС на других устройствах</string>
     <string name="setCustomCarrierName_title">Собственное имя оператора</string>
+    <string name="hideLockscreenStatusBar_title">Скрыть строку состояния на экране блокировки</string>
     <string name="rebootSystemUI">Перезапуск System UI (Root)</string>
 </resources>
