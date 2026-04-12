@@ -122,6 +122,7 @@ data class Preference(
         val spoofBrowserCountryCodeToUS: Boolean = false,
         val noAIWatermark: Boolean = true,
         val bypassHealthMonitorCountryCheck: Boolean = false,
+        val useSPenGoogleTranslate: Boolean = false,
     )
 }
 

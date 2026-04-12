@@ -340,6 +340,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     Video.showMorePlaybackSpeeds(lpparam)
                 }
             }
+
+            "com.samsung.android.service.airviewdictionary" -> {
+                if (preference.other.useSPenGoogleTranslate) {
+                    SPen.switchTranslateSource(lpparam, useGoogle = true)
+                }
+            }
         }
     }
 

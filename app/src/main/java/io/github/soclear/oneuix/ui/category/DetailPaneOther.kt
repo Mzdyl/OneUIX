@@ -112,6 +112,13 @@ fun DetailPaneOther(
             checked = uiState.bypassHealthMonitorCountryCheck,
             onCheckedChange = { onEvent(OtherEvent.BypassHealthMonitorCountryCheck(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.spen),
+            title = stringResource(id = R.string.useSPenGoogleTranslate_title),
+            summary = stringResource(id = R.string.useSPenGoogleTranslate_summary),
+            checked = uiState.useSPenGoogleTranslate,
+            onCheckedChange = { onEvent(OtherEvent.UseSPenGoogleTranslate(it)) }
+        )
     }
 }
 
@@ -155,6 +162,9 @@ sealed interface OtherEvent {
 
     @JvmInline
     value class BypassHealthMonitorCountryCheck(val value: Boolean) : OtherEvent
+
+    @JvmInline
+    value class UseSPenGoogleTranslate(val value: Boolean) : OtherEvent
 }
 
 fun SettingViewModel.onOtherEvent(event: OtherEvent) {
@@ -235,6 +245,12 @@ fun SettingViewModel.onOtherEvent(event: OtherEvent) {
             is OtherEvent.BypassHealthMonitorCountryCheck -> preference.copy(
                 other = preference.other.copy(
                     bypassHealthMonitorCountryCheck = event.value
+                )
+            )
+
+            is OtherEvent.UseSPenGoogleTranslate -> preference.copy(
+                other = preference.other.copy(
+                    useSPenGoogleTranslate = event.value
                 )
             )
         }
