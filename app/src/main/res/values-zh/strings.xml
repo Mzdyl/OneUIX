@@ -30,6 +30,7 @@
     <string name="setBatteryIconWidthScale_title">设置电池图标宽度缩放</string>
     <string name="setBatteryIconHeightScale_title">设置电池图标高度缩放</string>
     <string name="setCustomCarrierName_title">设置自定义运营商名称</string>
+    <string name="hideLockscreenStatusBar_title">锁屏界面隐藏状态栏</string>
     <string name="setQsClockMonospaced_title">快捷设置时间设为等宽字体</string>
     <string name="showWiFiLinkSpeed_title">Wi-Fi 列表页显示当前连接速度</string>
     <string name="showWiFiLinkSpeed_summary">格式为 Tx,Rx ，单位为 Mbps</string>

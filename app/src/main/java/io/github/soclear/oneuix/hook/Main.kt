@@ -266,6 +266,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     SystemUI.setCustomCarrierName(lpparam, carrierName)
                 }
 
+                if (preference.systemUI.statusBar.hideLockscreenStatusBar) {
+                    SystemUI.hideLockscreenStatusBar(lpparam)
+                }
+
                 run {
                     val monospaced = preference.systemUI.qs.setQsClockMonospaced
                     val modifyTextSize = preference.systemUI.qs.modifyQSClockTextSize

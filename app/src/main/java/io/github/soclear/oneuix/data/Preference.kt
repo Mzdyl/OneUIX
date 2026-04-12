@@ -68,6 +68,7 @@ data class Preference(
             val batteryIconHeightScale: Float = 1f,
             val setCustomCarrierName: Boolean = false,
             val customCarrierName: String = "",
+            val hideLockscreenStatusBar: Boolean = false,
         )
 
         @Serializable

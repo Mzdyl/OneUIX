@@ -417,6 +417,15 @@ fun DetailPaneSystemUI(
                     }
                 }
             }
+
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.mobile_screensaver),
+                title = stringResource(id = R.string.hideLockscreenStatusBar_title),
+                checked = uiState.statusBar.hideLockscreenStatusBar,
+                onCheckedChange = {
+                    onEvent(SystemUIEvent.StatusBar.HideLockscreenStatusBar(it))
+                }
+            )
         }
 
         DividerText(R.string.qs)
@@ -679,6 +688,9 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class CustomCarrierName(val value: String) : StatusBar
+
+        @JvmInline
+        value class HideLockscreenStatusBar(val value: Boolean) : StatusBar
     }
 
     sealed interface QS : SystemUIEvent {
@@ -937,6 +949,16 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             customCarrierName = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.HideLockscreenStatusBar -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            hideLockscreenStatusBar = event.value
                         )
                     )
                 )

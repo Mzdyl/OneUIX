@@ -30,6 +30,7 @@
     <string name="setBatteryIconWidthScale_title">Set battery icon width scale</string>
     <string name="setBatteryIconHeightScale_title">Set battery icon height scale</string>
     <string name="setCustomCarrierName_title">Set custom carrier name</string>
+    <string name="hideLockscreenStatusBar_title">Hide status bar on lock screen</string>
     <string name="setQsClockMonospaced_title">Set Quick Settings clock to monospaced font</string>
     <string name="showWiFiLinkSpeed_title">Show current link speed in Wi-Fi list</string>
     <string name="showWiFiLinkSpeed_summary">Format is Tx, Rx in Mbps</string>
