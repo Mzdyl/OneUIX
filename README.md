@@ -115,6 +115,7 @@
 - 自定义浏览器搜索引擎（国行专属）
 - 禁用图片编辑器 AI 水印
 - 绕过 Samsung Health Monitor 国家检查
+- S Pen 使用谷歌翻译
 
 ### 📦 安装要求
 
@@ -127,8 +128,6 @@
 
 欢迎提交 Pull Request 或开 Issue 讨论新功能与 Bug 修复！
 由于 One UI 的更新可能会导致 Hook 失效，如果你发现了失效的 Hook 点，非常欢迎提交 PR 修复。
-
-> 因个人原因，我将会在4月开始活跃开发新功能和修复bug
 
 ---
 
@@ -226,6 +225,7 @@
 - Customize browser search engine (Mainland China ROM exclusive)
 - Disable Photo Editor AI watermark
 - Bypass Samsung Health Monitor country check
+- Use Google Translate for S Pen
 
 ### 📦 Installation Requirements
 
@@ -238,8 +238,6 @@
 
 Feel free to submit Pull Requests or open Issues to discuss new features and bug fixes!
 Since One UI updates may cause hooks to fail, if you find any invalid hook points, you are highly encouraged to submit a PR to fix them.
-
-> Due to personal reasons, I will actively start developing new features and fixing bugs starting in April.
 
 ---
 
