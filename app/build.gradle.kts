@@ -89,6 +89,8 @@ dependencies {
     implementation(libs.androidx.material3)
 
     compileOnly(libs.xposed.api)
+    compileOnly(project(":stub"))
+    
     implementation(libs.dexkit)
     implementation(libs.adaptive)
     implementation(libs.adaptive.layout)
