@@ -23,6 +23,8 @@ import java.util.EnumMap
 
 object Camera {
     private const val HOOK_CONFIG_FILE_NAME = "HookConfig.json"
+    private const val WATERMARK_HOOK_CONFIG_FILE_NAME = "WatermarkHookConfig.json"
+
     fun setBooleanFeature(
         loadPackageParam: LoadPackageParam,
         supportAllMenu: Boolean = true,
@@ -142,6 +144,86 @@ object Camera {
         SUPPORT_FRONT_LOG_VIDEO,
         SUPPORT_MOTION_PHOTO_CAPTURE_MODE,
         SUPPORT_MOTION_PHOTO_BEFORE_AND_AFTER_AS_DEFAULT_CAPTURE_MODE,
+    }
+
+    fun supportFrameWatermark(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.CAMERA) {
+            return
+        }
+        afterAttach {
+            val file = File(filesDir, WATERMARK_HOOK_CONFIG_FILE_NAME)
+            val hookConfig = getHookConfig(file) {
+                getWatermarkHookConfigFromDexKit()
+            }
+            if (hookConfig != null) {
+                setFrameWatermark(hookConfig)
+            }
+        }
+    }
+
+    private fun Context.setFrameWatermark(hookConfig: WatermarkHookConfig) {
+        try {
+            val clazz = XposedHelpers.findClass(hookConfig.className, classLoader)
+            val enableFeatures = setOf(
+                "SUPPORT_FRAME_WATERMARK",
+                "SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS",
+            )
+
+            val mapFields = clazz.declaredFields
+                .filter { it.type.name.contains("Map") || it.type.name.contains("HashMap") }
+                .onEach { it.isAccessible = true }
+
+            val callback = object : XC_MethodHook() {
+                fun setFeatureInMap(map: MutableMap<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    val mutableMap = map as MutableMap<Any?, Boolean>
+                    for (key in mutableMap.keys) {
+                        if (key?.toString() in enableFeatures) {
+                            mutableMap[key] = true
+                        }
+                    }
+                }
+
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    mapFields.forEach { field ->
+                        (field.get(param.thisObject) as? MutableMap<*, *>)
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.let { setFeatureInMap(it) }
+                    }
+                }
+            }
+
+            clazz.declaredMethods
+                .filter { it.returnType == Void.TYPE && it.parameterTypes.isEmpty() }
+                .forEach { method ->
+                    hookMethod(method, callback)
+                }
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
+    @Serializable
+    private data class WatermarkHookConfig(
+        override val versionCode: Long,
+        val className: String,
+    ) : HookConfig
+
+    private fun Context.getWatermarkHookConfigFromDexKit(): WatermarkHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val excludes = listOf(
+                "androidx", "android.support", "camera.samsung.smartscan",
+                "co.polarr", "dagger.android", "vizinsight.atl", "kotlin"
+            )
+
+            return bridge.findClass {
+                excludePackages(excludes)
+                matcher { usingStrings("initializeBooleanFeatureMap") }
+            }.firstOrNull()?.let {
+                WatermarkHookConfig(longVersionCode, it.name)
+            }
+        }
     }
 
     private fun Context.getHookConfigFromDexKit(): CameraHookConfig? {

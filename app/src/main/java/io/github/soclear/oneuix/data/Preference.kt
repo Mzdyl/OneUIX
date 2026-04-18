@@ -106,6 +106,7 @@ data class Preference(
     data class Camera(
         val supportAllCameraMenu: Boolean = true,
         val disableCameraTemperatureCheck: Boolean = false,
+        val supportFrameWatermark: Boolean = false,
     )
 
     @Serializable

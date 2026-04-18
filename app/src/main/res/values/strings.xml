@@ -44,6 +44,8 @@
     <string name="supportAllCameraMenu_title">Show all camera menus</string>
     <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log</string>
     <string name="disableCameraTemperatureCheck_title">Disable camera temperature check</string>
+    <string name="supportFrameWatermark_title">Enable camera frame watermark</string>
+    <string name="supportFrameWatermark_summary">Add device frame overlay watermark to photos</string>
     <string name="disableScreenshotCaptureSound_title">Disable screenshot sound</string>
     <string name="showPackageInfo_title">Show package info on App Info page</string>
     <string name="showPackageInfo_summary">Long press or double tap to copy</string>
