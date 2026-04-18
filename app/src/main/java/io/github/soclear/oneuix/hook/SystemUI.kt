@@ -1049,8 +1049,6 @@ object SystemUI {
             XposedBridge.log(t)
         }
     }
-
-
     fun showTraditionalChineseDateOnQS(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI ||
             Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM

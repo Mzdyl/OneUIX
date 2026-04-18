@@ -278,7 +278,7 @@ object Camera {
 
             return CameraHookConfig(
                 versionCode = longVersionCode,
-                deviceFeatureClass = deviceFeatureClassData.toDexType().serialize(),
+                deviceFeatureClass = deviceFeatureClassData.toDexClass().serialize(),
                 initializeBooleanFeatureMapMethod = initializeBooleanFeatureMapMethodData.toDexMethod()
                     .serialize(),
                 booleanFeatureMapField = booleanFeatureMapFieldData?.toDexField()?.serialize(),

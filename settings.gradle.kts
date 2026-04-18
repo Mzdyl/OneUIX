@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "One UI X"
 include(":app")
+include(":stub")

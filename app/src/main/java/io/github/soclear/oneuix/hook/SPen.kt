@@ -95,7 +95,7 @@ object SPen {
         // 翻译源相关的 CSC 特性键
         return when {
             key.contains("translate", ignoreCase = true) ||
-            key.contains("trans", ignoreCase = true) ||
+            key.contains("SPen_ConfigDefTranslatorSolution", ignoreCase = true) ||
             key == "DefaultCscFeature_Spen_Translation" ||
             key == "CscFeature_Spen_Translation" -> {
                 if (useGoogle) "GOOGLE" else "BAIDU"

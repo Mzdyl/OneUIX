@@ -10,13 +10,13 @@ plugins {
 android {
     namespace = "io.github.soclear.oneuix"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "io.github.soclear.oneuix"
         minSdk = 33
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 3
         versionName = "1.1.0"
 
@@ -72,8 +72,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
     }
     buildFeatures {
         compose = true
@@ -106,6 +106,8 @@ dependencies {
     implementation(libs.androidx.material3)
 
     compileOnly(libs.xposed.api)
+    compileOnly(project(":stub"))
+
     implementation(libs.dexkit)
     implementation(libs.adaptive)
     implementation(libs.adaptive.layout)

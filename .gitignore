@@ -13,3 +13,4 @@ keystore.properties
 *.keystore
 *.jks
 DEVELOPMENT.md
+.github/SELF_MERGE_GUIDE.md
