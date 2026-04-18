@@ -44,6 +44,8 @@
     <string name="supportAllCameraMenu_title">Показать все меню камеры</string>
     <string name="supportAllCameraMenu_summary">Звук затвора, Auto HDR, Log</string>
     <string name="disableCameraTemperatureCheck_title">Отключить проверку температуры камеры</string>
+    <string name="supportFrameWatermark_title">Включить рамку-водяной знак камеры</string>
+    <string name="supportFrameWatermark_summary">Добавить на фото водяной знак с рамкой устройства</string>
     <string name="disableScreenshotCaptureSound_title">Отключить звук скриншота</string>
     <string name="showPackageInfo_title">Имя пакета в окне «О приложении»</string>
     <string name="showPackageInfo_summary">Удерживайте или коснитесь дважды для копирования</string>
