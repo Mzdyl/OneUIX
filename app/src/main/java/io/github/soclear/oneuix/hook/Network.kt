@@ -19,6 +19,7 @@ import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.XposedHelpers.getSurroundingThis
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscBoolean
 import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
 import java.net.NetworkInterface
@@ -32,23 +33,13 @@ object Network {
         ) {
             return
         }
-        try {
-            findAndHookMethod(
-                "com.samsung.android.feature.SemCscFeature",
-                loadPackageParam.classLoader,
-                "getBoolean",
-                String::class.java,
-                Boolean::class.java,
-                object : XC_MethodHook() {
-                    override fun beforeHookedMethod(param: MethodHookParam) {
-                        if (param.args[0] == "CscFeature_Common_SupportZProjectFunctionInGlobal") {
-                            param.result = true
-                        }
-                    }
-                }
-            )
-        } catch (t: Throwable) {
-            logError("supportRealTimeNetworkSpeed failed", t)
+
+        overrideCscBoolean(loadPackageParam, "supportRealTimeNetworkSpeed") { key, _ ->
+            when (key) {
+                "CscFeature_Common_SupportZProjectFunctionInGlobal",
+                "CscFeature_Setting_SupportRealTimeNetworkSpeed" -> true
+                else -> null
+            }
         }
     }
 

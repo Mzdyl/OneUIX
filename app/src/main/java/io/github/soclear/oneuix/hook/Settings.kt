@@ -12,6 +12,7 @@ import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideFloatingBoolean
 import io.github.soclear.oneuix.hook.util.logError
 
 
@@ -104,19 +105,13 @@ object Settings {
     fun supportAutoPowerOnOff(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SETTINGS) return
 
-        findAndHookMethod(
-            "com.samsung.android.feature.SemFloatingFeature",
-            loadPackageParam.classLoader,
-            "getBoolean",
-            String::class.java,
-            object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    if (param.args[0] == "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_AUTO_POWER_ON_OFF") {
-                        param.result = true
-                    }
-                }
+        overrideFloatingBoolean(loadPackageParam, "supportAutoPowerOnOff") { key, _ ->
+            if (key == "SEC_FLOATING_FEATURE_SETTINGS_SUPPORT_AUTO_POWER_ON_OFF") {
+                true
+            } else {
+                null
             }
-        )
+        }
 
         findAndHookMethod(
             "com.samsung.android.settings.general.AutoPowerOnOffPreferenceController",

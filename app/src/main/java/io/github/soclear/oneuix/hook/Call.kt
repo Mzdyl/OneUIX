@@ -10,6 +10,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import kotlinx.serialization.Serializable
 import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.HookConfig
+import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscString
 import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.getHookConfig
 import io.github.soclear.oneuix.hook.util.logError
@@ -30,33 +31,12 @@ object Call {
             loadPackageParam.packageName != Package.DIALER
         ) return
 
-        val callback = object : XC_MethodHook() {
-            override fun beforeHookedMethod(param: MethodHookParam) {
-                if (param.args[0] == "CscFeature_VoiceCall_ConfigRecording") {
-                    param.result = "RecordingAllowed" + if (preferRecordingButton) "" else "ByMenu"
-                }
+        overrideCscString(loadPackageParam, "supportVoiceCallRecording") { key, _ ->
+            if (key == "CscFeature_VoiceCall_ConfigRecording") {
+                "RecordingAllowed" + if (preferRecordingButton) "" else "ByMenu"
+            } else {
+                null
             }
-        }
-
-        try {
-            findAndHookMethod(
-                "com.samsung.android.feature.SemCscFeature",
-                loadPackageParam.classLoader,
-                "getString",
-                String::class.java,
-                String::class.java,
-                callback
-            )
-
-            findAndHookMethod(
-                "com.samsung.android.feature.SemCscFeature",
-                loadPackageParam.classLoader,
-                "getString",
-                String::class.java,
-                callback
-            )
-        } catch (t: Throwable) {
-            logError("supportVoiceCallRecording failed", t)
         }
     }
 

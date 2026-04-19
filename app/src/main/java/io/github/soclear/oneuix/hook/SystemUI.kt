@@ -36,6 +36,8 @@ import de.robv.android.xposed.XposedHelpers.setObjectField
 import de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResourcesParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscBoolean
+import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscString
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
 import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
@@ -1260,33 +1262,20 @@ object SystemUI {
     fun aodLockSupportLunar(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
 
-        val callback = object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
-                if (param.args[0] == "CscFeature_Calendar_EnableLocalHolidayDisplay") {
-                    param.result = "CHINA"
-                }
+        overrideCscString(loadPackageParam, "aodLockSupportLunar") { key, _ ->
+            if (key == "CscFeature_Calendar_EnableLocalHolidayDisplay") {
+                "CHINA"
+            } else {
+                null
             }
         }
 
-        try {
-            findAndHookMethod(
-                "com.samsung.android.feature.SemCscFeature",
-                loadPackageParam.classLoader,
-                "getString",
-                String::class.java,
-                String::class.java,
-                callback
-            )
-
-            findAndHookMethod(
-                "com.samsung.android.feature.SemCscFeature",
-                loadPackageParam.classLoader,
-                "getString",
-                String::class.java,
-                callback
-            )
-        } catch (t: Throwable) {
-            logError("aodLockSupportLunar failed", t)
+        overrideCscBoolean(loadPackageParam, "aodLockSupportLunar") { key, _ ->
+            if (key == "CscFeature_Calendar_EnableLunar") {
+                true
+            } else {
+                null
+            }
         }
     }
 

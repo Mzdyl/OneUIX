@@ -1,11 +1,11 @@
 package io.github.soclear.oneuix.hook
 
-import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscString
 import io.github.soclear.oneuix.hook.util.log
 
 object SPen {
@@ -48,44 +48,10 @@ object SPen {
             log("SPen: Failed to hook Validation - ${t.message}")
         }
 
-        // Hook SemCscFeature.getString
-        try {
-            val cscFeatureClass = findClass(
-                "com.samsung.android.feature.SemCscFeature",
-                classLoader
-            )
-
-            // Hook getString(String) - 单参数版本
-            findAndHookMethod(
-                cscFeatureClass,
-                "getString",
-                String::class.java,
-                object : XC_MethodHook() {
-                    override fun beforeHookedMethod(param: MethodHookParam) {
-                        val key = param.args[0] as? String ?: return
-                        param.result = getTranslateSourceValue(key, useGoogle)
-                    }
-                }
-            )
-
-            // Hook getString(String, String) - 双参数版本
-            findAndHookMethod(
-                cscFeatureClass,
-                "getString",
-                String::class.java,
-                String::class.java,
-                object : XC_MethodHook() {
-                    override fun beforeHookedMethod(param: MethodHookParam) {
-                        val key = param.args[0] as? String ?: return
-                        param.result = getTranslateSourceValue(key, useGoogle)
-                    }
-                }
-            )
-
-            log("SPen: Hooked SemCscFeature.getString -> ${if (useGoogle) "Google" else "Baidu"}")
-        } catch (t: Throwable) {
-            log("SPen: Failed to hook SemCscFeature - ${t.message}")
+        overrideCscString(loadPackageParam, "switchTranslateSource") { key, _ ->
+            getTranslateSourceValue(key, useGoogle)
         }
+        log("SPen: Hooked SemCscFeature.getString -> ${if (useGoogle) "Google" else "Baidu"}")
     }
 
     /**
