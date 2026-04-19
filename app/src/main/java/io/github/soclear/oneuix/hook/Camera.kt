@@ -170,15 +170,15 @@ object Camera {
             )
 
             val mapFields = clazz.declaredFields
-                .filter { it.type.name.contains("Map") || it.type.name.contains("HashMap") }
+                .filter { Map::class.java.isAssignableFrom(it.type) }
                 .onEach { it.isAccessible = true }
 
             val callback = object : XC_MethodHook() {
                 fun setFeatureInMap(map: MutableMap<*, *>) {
                     @Suppress("UNCHECKED_CAST")
-                    val mutableMap = map as MutableMap<Any?, Boolean>
-                    for (key in mutableMap.keys) {
-                        if (key?.toString() in enableFeatures) {
+                    val mutableMap = map as MutableMap<Any?, Any?>
+                    for ((key, value) in mutableMap) {
+                        if (key?.toString() in enableFeatures && value is Boolean) {
                             mutableMap[key] = true
                         }
                     }
@@ -193,11 +193,11 @@ object Camera {
                 }
             }
 
-            clazz.declaredMethods
-                .filter { it.returnType == Void.TYPE && it.parameterTypes.isEmpty() }
-                .forEach { method ->
-                    hookMethod(method, callback)
-                }
+            hookMethod(
+                DexMethod(hookConfig.initializeFeatureMapMethod)
+                    .getMethodInstance(classLoader),
+                callback
+            )
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }
@@ -207,6 +207,7 @@ object Camera {
     private data class WatermarkHookConfig(
         override val versionCode: Long,
         val className: String,
+        val initializeFeatureMapMethod: String,
     ) : HookConfig
 
     private fun Context.getWatermarkHookConfigFromDexKit(): WatermarkHookConfig? {
@@ -216,13 +217,27 @@ object Camera {
                 "androidx", "android.support", "camera.samsung.smartscan",
                 "co.polarr", "dagger.android", "vizinsight.atl", "kotlin"
             )
+            val usingString = "initializeBooleanFeatureMap"
 
-            return bridge.findClass {
+            val deviceFeatureClassData = bridge.findClass {
                 excludePackages(excludes)
-                matcher { usingStrings("initializeBooleanFeatureMap") }
-            }.firstOrNull()?.let {
-                WatermarkHookConfig(longVersionCode, it.name)
-            }
+                matcher { usingStrings(usingString) }
+            }.singleOrNull() ?: return null
+
+            val initializeFeatureMapMethodData = deviceFeatureClassData.findMethod {
+                matcher {
+                    returnType = "void"
+                    paramCount = 0
+                    usingStrings(usingString)
+                }
+            }.singleOrNull() ?: return null
+
+            return WatermarkHookConfig(
+                versionCode = longVersionCode,
+                className = deviceFeatureClassData.name,
+                initializeFeatureMapMethod = initializeFeatureMapMethodData.toDexMethod()
+                    .serialize(),
+            )
         }
     }
 
