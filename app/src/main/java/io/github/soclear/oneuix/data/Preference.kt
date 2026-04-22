@@ -126,6 +126,10 @@ data class Preference(
         val bypassHealthMonitorCountryCheck: Boolean = false,
         val useSPenGoogleTranslate: Boolean = false,
     )
+
+    companion object {
+        const val FILE_NAME = "preference.json"
+    }
 }
 
 val IgnoreUnknownKeysJson = Json {

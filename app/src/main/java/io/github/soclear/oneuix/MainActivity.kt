@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.datastore.dataStoreFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.ui.ModuleDisabledScreen
 import io.github.soclear.oneuix.ui.SettingScreen
 import io.github.soclear.oneuix.ui.SettingViewModel
@@ -39,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3AdaptiveApi::class)
     private fun setScreen() {
-        if (setWorldReadable()) {
+        if (preferenceFile.name == Preference.FILE_NAME) {
             setSettingScreen()
         } else {
             setModuleDisabledScreen()
