@@ -23,6 +23,8 @@ import java.util.EnumMap
 
 object Camera {
     private const val HOOK_CONFIG_FILE_NAME = "HookConfig.json"
+    private const val WATERMARK_HOOK_CONFIG_FILE_NAME = "WatermarkHookConfig.json"
+
     fun setBooleanFeature(
         loadPackageParam: LoadPackageParam,
         supportAllMenu: Boolean = true,
@@ -142,6 +144,101 @@ object Camera {
         SUPPORT_FRONT_LOG_VIDEO,
         SUPPORT_MOTION_PHOTO_CAPTURE_MODE,
         SUPPORT_MOTION_PHOTO_BEFORE_AND_AFTER_AS_DEFAULT_CAPTURE_MODE,
+    }
+
+    fun supportFrameWatermark(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.CAMERA) {
+            return
+        }
+        afterAttach {
+            val file = File(filesDir, WATERMARK_HOOK_CONFIG_FILE_NAME)
+            val hookConfig = getHookConfig(file) {
+                getWatermarkHookConfigFromDexKit()
+            }
+            if (hookConfig != null) {
+                setFrameWatermark(hookConfig)
+            }
+        }
+    }
+
+    private fun Context.setFrameWatermark(hookConfig: WatermarkHookConfig) {
+        try {
+            val clazz = XposedHelpers.findClass(hookConfig.className, classLoader)
+            val enableFeatures = setOf(
+                "SUPPORT_FRAME_WATERMARK",
+                "SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS",
+            )
+
+            val mapFields = clazz.declaredFields
+                .filter { Map::class.java.isAssignableFrom(it.type) }
+                .onEach { it.isAccessible = true }
+
+            val callback = object : XC_MethodHook() {
+                fun setFeatureInMap(map: MutableMap<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    val mutableMap = map as MutableMap<Any?, Any?>
+                    for ((key, value) in mutableMap) {
+                        if (key?.toString() in enableFeatures && value is Boolean) {
+                            mutableMap[key] = true
+                        }
+                    }
+                }
+
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    mapFields.forEach { field ->
+                        (field.get(param.thisObject) as? MutableMap<*, *>)
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.let { setFeatureInMap(it) }
+                    }
+                }
+            }
+
+            hookMethod(
+                DexMethod(hookConfig.initializeFeatureMapMethod)
+                    .getMethodInstance(classLoader),
+                callback
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
+    @Serializable
+    private data class WatermarkHookConfig(
+        override val versionCode: Long,
+        val className: String,
+        val initializeFeatureMapMethod: String,
+    ) : HookConfig
+
+    private fun Context.getWatermarkHookConfigFromDexKit(): WatermarkHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val excludes = listOf(
+                "androidx", "android.support", "camera.samsung.smartscan",
+                "co.polarr", "dagger.android", "vizinsight.atl", "kotlin"
+            )
+            val usingString = "initializeBooleanFeatureMap"
+
+            val deviceFeatureClassData = bridge.findClass {
+                excludePackages(excludes)
+                matcher { usingStrings(usingString) }
+            }.singleOrNull() ?: return null
+
+            val initializeFeatureMapMethodData = deviceFeatureClassData.findMethod {
+                matcher {
+                    returnType = "void"
+                    paramCount = 0
+                    usingStrings(usingString)
+                }
+            }.singleOrNull() ?: return null
+
+            return WatermarkHookConfig(
+                versionCode = longVersionCode,
+                className = deviceFeatureClassData.name,
+                initializeFeatureMapMethod = initializeFeatureMapMethodData.toDexMethod()
+                    .serialize(),
+            )
+        }
     }
 
     private fun Context.getHookConfigFromDexKit(): CameraHookConfig? {
