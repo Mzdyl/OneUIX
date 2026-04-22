@@ -31,6 +31,7 @@
     <string name="hideQsBarSecurityFooter_summary">Например: «Ваши личные приложения подключены к интернету через VPN»</string>
     <string name="hideQsBarSmartViewAndModes_title">Скрыть Smart View и Режимы в панели быстрых настроек</string>
     <string name="hideDeviceControlQsTile_title">Скрыть «Управление устройством» в быстрых настройках</string>
+    <string name="hideSmartViewQsTile_title">Скрыть Smart View в быстрых настройках</string>
     <string name="alwaysExpandQsTileChunk_title">Всегда разворачивать блок плиток быстрых настроек</string>
     <string name="alwaysShowTimeDateOnQs_title">Всегда показывать время и дату в панели быстрых настроек</string>
     <string name="setStatusBarMaxNotificationIcons_title">Макс. число значков уведомлений в строке состояния</string>

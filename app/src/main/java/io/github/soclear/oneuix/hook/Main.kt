@@ -262,6 +262,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     SystemUI.hideDeviceControlQsTile(lpparam)
                 }
 
+                if (preference.systemUI.qs.hideSmartViewQsTile) {
+                    SystemUI.hideSmartViewQsTile(lpparam)
+                }
+
                 if (preference.systemUI.qs.turnOn5gQsTile) {
                     Network.turnOn5gQsTile(lpparam)
                 }

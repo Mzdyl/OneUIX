@@ -445,6 +445,14 @@ fun DetailPaneSystemUI(
                 }
             )
             SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
+                title = stringResource(id = R.string.hideSmartViewQsTile_title),
+                checked = uiState.qs.hideSmartViewQsTile,
+                onCheckedChange = {
+                    onEvent(SystemUIEvent.QS.HideSmartViewQsTile(it))
+                }
+            )
+            SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.five_g),
                 title = stringResource(id = R.string.turnOn5gQsTile_title),
                 summary = stringResource(id = R.string.turnOn5gQsTile_summary),
@@ -687,6 +695,9 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class HideDeviceControlQsTile(val value: Boolean) : QS
+
+        @JvmInline
+        value class HideSmartViewQsTile(val value: Boolean) : QS
 
         @JvmInline
         value class TurnOn5gQsTile(val value: Boolean) : QS
@@ -983,6 +994,16 @@ private fun SettingViewModel.onQSEvent(event: SystemUIEvent.QS) {
                     systemUI = preference.systemUI.copy(
                         qs = preference.systemUI.qs.copy(
                             hideDeviceControlQsTile = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.QS.HideSmartViewQsTile -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        qs = preference.systemUI.qs.copy(
+                            hideSmartViewQsTile = event.value
                         )
                     )
                 )
