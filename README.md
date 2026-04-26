@@ -97,7 +97,7 @@
 
 #### 相机
 
-- 显示相机的所有菜单
+- 显示相机的所有菜单（快门音、自动 HDR、Log、边框叠加水印）
 - 禁用相机过热检查
 
 #### 其他
@@ -112,7 +112,7 @@
 - 日历中显示中国节假日
 - 支持拦截短信
 - 主题和图标试用永不过期
-- 自定义浏览器搜索引擎（国行专属）
+- 伪装浏览器国家/地区代码为美国
 - 禁用图片编辑器 AI 水印
 - 绕过 Samsung Health Monitor 国家检查
 - S Pen 使用谷歌翻译
@@ -207,7 +207,7 @@
 
 #### Camera
 
-- Show all camera menus
+- Show all camera menus (Shutter sound, Auto HDR, Log, Frame watermark)
 - Disable camera temperature check
 
 #### Other
@@ -222,7 +222,7 @@
 - Show Chinese holidays in Calendar
 - Support message blocking
 - Never expire theme and icon trials
-- Customize browser search engine (Mainland China ROM exclusive)
+- Spoof Browser Region to US
 - Disable Photo Editor AI watermark
 - Bypass Samsung Health Monitor country check
 - Use Google Translate for S Pen
