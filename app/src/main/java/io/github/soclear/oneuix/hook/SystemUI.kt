@@ -308,11 +308,18 @@ object SystemUI {
         if (QsBar.SmartViewAndModes in qsBarSet) {
             try {
                 findAndHookMethod(
-                    "com.android.systemui.qs.bar.SmartViewLargeTileBar",
+                    "com.android.systemui.qs.bar.BarItemImpl",
                     loadPackageParam.classLoader,
                     "showBar",
                     Boolean::class.javaPrimitiveType,
-                    callback
+                    object : XC_MethodHook() {
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            val tag = getObjectField(param.thisObject, "TAG")
+                            if (tag == "SmartViewLargeTileBar") {
+                                param.args[0] = false
+                            }
+                        }
+                    }
                 )
             } catch (t: Throwable) {
                 XposedBridge.log(t)
