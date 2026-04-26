@@ -62,10 +62,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     supportAllMenu = preference.camera.supportAllCameraMenu,
                     disableTemperatureCheck = preference.camera.disableCameraTemperatureCheck
                 )
-
-                if (preference.camera.supportFrameWatermark) {
-                    Camera.supportFrameWatermark(lpparam)
-                }
             }
 
             Package.DIALER -> {

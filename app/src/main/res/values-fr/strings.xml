@@ -43,10 +43,8 @@
     <string name="blockGalaxyStoreAds_title">Bloquer les publicités du Galaxy Store</string>
     <string name="blockGalaxyStoreAds_summary">Bloque les pubs au démarrage, les recommandations et les pop-ups de limite d\'âge</string>
     <string name="supportAllCameraMenu_title">Afficher tous les menus de l\'appareil photo</string>
-    <string name="supportAllCameraMenu_summary">Son de l\'obturateur, Auto HDR, Log</string>
+    <string name="supportAllCameraMenu_summary">Son de l\'obturateur, Auto HDR, Log, Filigrane avec cadre</string>
     <string name="disableCameraTemperatureCheck_title">Désactiver la vérification de surchauffe de l\'appareil photo</string>
-    <string name="supportFrameWatermark_title">Activer le filigrane avec cadre photo</string>
-    <string name="supportFrameWatermark_summary">Ajouter un filigrane avec cadre de l\'appareil sur les photos</string>
     <string name="disableScreenshotCaptureSound_title">Désactiver le son des captures d\'écran</string>
     <string name="showPackageInfo_title">Afficher les infos du paquet sur la page infos de l\'application</string>
     <string name="showPackageInfo_summary">Appui long ou double-clic pour copier</string>

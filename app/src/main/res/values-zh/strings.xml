@@ -43,10 +43,8 @@
     <string name="blockGalaxyStoreAds_title">去除应用商店的广告</string>
     <string name="blockGalaxyStoreAds_summary">去除开屏广告、推荐广告和推荐弹窗，去除安装年龄限制弹窗</string>
     <string name="supportAllCameraMenu_title">显示相机的所有菜单</string>
-    <string name="supportAllCameraMenu_summary">快门音、自动 HDR、Log</string>
+    <string name="supportAllCameraMenu_summary">快门音、自动 HDR、Log、边框叠加水印</string>
     <string name="disableCameraTemperatureCheck_title">禁用相机过热检查</string>
-    <string name="supportFrameWatermark_title">启用边框叠加水印</string>
-    <string name="supportFrameWatermark_summary">为照片添加设备边框叠加水印</string>
     <string name="disableScreenshotCaptureSound_title">禁用截图声音</string>
     <string name="showPackageInfo_title">应用程序信息页面显示包信息</string>
     <string name="showPackageInfo_summary">长按或双击可复制</string>

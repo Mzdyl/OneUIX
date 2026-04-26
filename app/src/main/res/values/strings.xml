@@ -43,10 +43,8 @@
     <string name="blockGalaxyStoreAds_title">Remove ads in Galaxy Store</string>
     <string name="blockGalaxyStoreAds_summary">Remove splash screen ads, recommended ads/pop-ups, and installation age restriction pop-ups</string>
     <string name="supportAllCameraMenu_title">Show all camera menus</string>
-    <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log</string>
+    <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log, Frame watermark</string>
     <string name="disableCameraTemperatureCheck_title">Disable camera temperature check</string>
-    <string name="supportFrameWatermark_title">Enable camera frame watermark</string>
-    <string name="supportFrameWatermark_summary">Add device frame overlay watermark to photos</string>
     <string name="disableScreenshotCaptureSound_title">Disable screenshot sound</string>
     <string name="showPackageInfo_title">Show package info on App Info page</string>
     <string name="showPackageInfo_summary">Long press or double tap to copy</string>

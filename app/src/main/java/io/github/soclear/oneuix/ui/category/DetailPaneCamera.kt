@@ -38,13 +38,6 @@ fun DetailPaneCamera(
             checked = uiState.disableCameraTemperatureCheck,
             onCheckedChange = { onEvent(CameraEvent.DisableCameraTemperatureCheck(it)) }
         )
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.camera),
-            title = stringResource(id = R.string.supportFrameWatermark_title),
-            summary = stringResource(id = R.string.supportFrameWatermark_summary),
-            checked = uiState.supportFrameWatermark,
-            onCheckedChange = { onEvent(CameraEvent.SupportFrameWatermark(it)) }
-        )
     }
 }
 
@@ -54,9 +47,6 @@ sealed interface CameraEvent {
 
     @JvmInline
     value class DisableCameraTemperatureCheck(val value: Boolean) : CameraEvent
-
-    @JvmInline
-    value class SupportFrameWatermark(val value: Boolean) : CameraEvent
 }
 
 fun SettingViewModel.onCameraEvent(event: CameraEvent) {
@@ -74,14 +64,6 @@ fun SettingViewModel.onCameraEvent(event: CameraEvent) {
                 preference.copy(
                     camera = preference.camera.copy(
                         disableCameraTemperatureCheck = event.value
-                    )
-                )
-            }
-
-            is CameraEvent.SupportFrameWatermark -> {
-                preference.copy(
-                    camera = preference.camera.copy(
-                        supportFrameWatermark = event.value
                     )
                 )
             }
