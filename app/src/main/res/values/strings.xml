@@ -50,7 +50,7 @@
     <string name="showPackageInfo_summary">Long press or double tap to copy</string>
     <string name="makeAllUserAppsAvailable_title">Make all user apps available for app cloning</string>
     <string name="supportAllGallerySettings_title">Show all Gallery settings</string>
-    <string name="supportAllGallerySettings_summary">Super HDR, Audio eraser, Auto create stories, Identify contents in images, Trash, Convert HEIF images when sharing, Convert HDR10+ videos when sharing</string>
+    <string name="supportAllGallerySettings_summary">Audio eraser, Auto create stories, Identify contents in images, Trash, Convert HEIF images when sharing, Convert HDR10+ videos when sharing</string>
     <string name="setBlockableNotificationChannel_title">Allow disabling system notification categories</string>
     <string name="setBlockableNotificationChannel_summary">Used to disable USB, charging, low battery, and other system notifications</string>
     <string name="supportAnyFont_title">Support any font</string>

@@ -50,7 +50,7 @@
     <string name="showPackageInfo_summary">Appui long ou double-clic pour copier</string>
     <string name="makeAllUserAppsAvailable_title">Messagerie double (Dual Messenger) pour toutes les applications</string>
     <string name="supportAllGallerySettings_title">Afficher tous les paramètres de la Galerie</string>
-    <string name="supportAllGallerySettings_summary">Super HDR, Gomme audio, Création auto d\'histoires, Reconnaissance d\'images, Corbeille, Convertir HEIF/HDR10+ lors du partage</string>
+    <string name="supportAllGallerySettings_summary">Gomme audio, Création auto d\'histoires, Reconnaissance d\'images, Corbeille, Convertir HEIF/HDR10+ lors du partage</string>
     <string name="setBlockableNotificationChannel_title">Autoriser la désactivation des catégories de notification système</string>
     <string name="setBlockableNotificationChannel_summary">Permet de désactiver les notifications USB, En charge, Batterie faible, etc.</string>
     <string name="supportAnyFont_title">Prendre en charge n\'importe quelle police</string>
