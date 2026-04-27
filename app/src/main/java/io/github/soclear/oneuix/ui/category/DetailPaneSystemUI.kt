@@ -427,6 +427,14 @@ fun DetailPaneSystemUI(
                 }
             )
         }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.mobile_screensaver),
+            title = stringResource(id = R.string.hideLockscreenStatusBar_title),
+            checked = uiState.statusBar.hideLockscreenStatusBar,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.StatusBar.HideLockscreenStatusBar(it))
+            }
+        )
 
         DividerText(R.string.qs)
         SwitchItem(
@@ -444,6 +452,14 @@ fun DetailPaneSystemUI(
                 checked = uiState.qs.hideDeviceControlQsTile,
                 onCheckedChange = {
                     onEvent(SystemUIEvent.QS.HideDeviceControlQsTile(it))
+                }
+            )
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
+                title = stringResource(id = R.string.hideSmartViewQsTile_title),
+                checked = uiState.qs.hideSmartViewQsTile,
+                onCheckedChange = {
+                    onEvent(SystemUIEvent.QS.HideSmartViewQsTile(it))
                 }
             )
             SwitchItem(
@@ -701,6 +717,9 @@ sealed interface SystemUIEvent {
         value class HideDeviceControlQsTile(val value: Boolean) : QS
 
         @JvmInline
+        value class HideSmartViewQsTile(val value: Boolean) : QS
+
+        @JvmInline
         value class TurnOn5gQsTile(val value: Boolean) : QS
 
         @JvmInline
@@ -802,6 +821,57 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     )
                 )
             }
+
+            is SystemUIEvent.StatusBar.SetBatteryIconWidthScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setBatteryIconWidthScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.BatteryIconWidthScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            batteryIconWidthScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.HideLockscreenStatusBar -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            hideLockscreenStatusBar = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.SetBatteryIconHeightScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setBatteryIconHeightScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.BatteryIconHeightScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            batteryIconHeightScale = event.value
+                        )
+                    )
+                )
+            }
+
 
             is SystemUIEvent.StatusBar.HideBatteryPercentageSign -> {
                 preference.copy(
@@ -985,6 +1055,16 @@ private fun SettingViewModel.onQSEvent(event: SystemUIEvent.QS) {
                     systemUI = preference.systemUI.copy(
                         qs = preference.systemUI.qs.copy(
                             hideDeviceControlQsTile = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.QS.HideSmartViewQsTile -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        qs = preference.systemUI.qs.copy(
+                            hideSmartViewQsTile = event.value
                         )
                     )
                 )

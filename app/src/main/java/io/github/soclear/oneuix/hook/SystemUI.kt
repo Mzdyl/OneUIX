@@ -177,6 +177,29 @@ object SystemUI {
         }
     }
 
+    fun hideSmartViewQsTile(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI ||
+            Build.VERSION.SDK_INT != Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+        ) return
+        try {
+            findAndHookMethod(
+                "com.android.systemui.qs.QSTileHost",
+                loadPackageParam.classLoader,
+                "createTile",
+                String::class.java,
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        if (param.args[0] == "custom(com.samsung.android.smartmirroring/.tile.SmartMirroringTile)") {
+                            param.result = null
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
 
     // related classes: BarFactory BarController  BarOrderInteractor
     fun hideQsBar(loadPackageParam: LoadPackageParam, qsBarSet: Set<QsBar>) {
@@ -293,11 +316,18 @@ object SystemUI {
         if (QsBar.SmartViewAndModes in qsBarSet) {
             try {
                 findAndHookMethod(
-                    "com.android.systemui.qs.bar.SmartViewLargeTileBar",
+                    "com.android.systemui.qs.bar.BarItemImpl",
                     loadPackageParam.classLoader,
                     "showBar",
                     Boolean::class.javaPrimitiveType,
-                    callback
+                    object : XC_MethodHook() {
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            val tag = getObjectField(param.thisObject, "TAG")
+                            if (tag == "SmartViewLargeTileBar") {
+                                param.args[0] = false
+                            }
+                        }
+                    }
                 )
             } catch (t: Throwable) {
                 logError("hideQsBar SmartViewAndModes failed", t)
@@ -1051,6 +1081,7 @@ object SystemUI {
             XposedBridge.log(t)
         }
     }
+
     fun showTraditionalChineseDateOnQS(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI ||
             Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM

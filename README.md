@@ -95,7 +95,7 @@
 
 #### 相机
 
-- 显示相机的所有菜单
+- 显示相机的所有菜单（快门音、自动 HDR、Log、边框叠加水印）
 - 禁用相机过热检查
 
 #### 其他
@@ -203,7 +203,7 @@
 
 #### Camera
 
-- Show all camera menus
+- Show all camera menus (Shutter sound, Auto HDR, Log, Frame watermark)
 - Disable camera temperature check
 
 #### Other

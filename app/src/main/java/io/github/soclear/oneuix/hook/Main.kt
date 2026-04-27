@@ -167,6 +167,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.SETTINGS -> {
+                if (preference.android.setBlockableNotificationChannel) {
+                    Android.setBlockableNotificationChannel()
+                }
+
                 if (preference.settings.showForcePeakRefreshRatePreference) {
                     Settings.showForcePeakRefreshRatePreference(lpparam)
                 }
@@ -210,6 +214,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             }
 
             Package.SYSTEMUI -> {
+                if (preference.android.setBlockableNotificationChannel) {
+                    Android.setBlockableNotificationChannel()
+                }
+
                 run {
                     val leftPaddingDp =
                         if (preference.systemUI.statusBar.modifyStatusBarLeftPadding) {
@@ -270,6 +278,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     SystemUI.hideLockscreenStatusBar(lpparam)
                 }
 
+                if (preference.systemUI.statusBar.hideLockscreenStatusBar) {
+                    SystemUI.hideLockscreenStatusBar(lpparam)
+                }
+
                 run {
                     val monospaced = preference.systemUI.qs.setQsClockMonospaced
                     val modifyTextSize = preference.systemUI.qs.modifyQSClockTextSize
@@ -279,6 +291,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
 
                 if (preference.systemUI.qs.hideDeviceControlQsTile) {
                     SystemUI.hideDeviceControlQsTile(lpparam)
+                }
+
+                if (preference.systemUI.qs.hideSmartViewQsTile) {
+                    SystemUI.hideSmartViewQsTile(lpparam)
                 }
 
                 if (preference.systemUI.qs.turnOn5gQsTile) {
@@ -391,6 +407,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                     )
                 }
             }
+
         }
     }
 

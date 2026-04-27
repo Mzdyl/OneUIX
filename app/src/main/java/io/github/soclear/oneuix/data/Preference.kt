@@ -75,6 +75,7 @@ data class Preference(
         data class QS(
             val setQsClockMonospaced: Boolean = false,
             val hideDeviceControlQsTile: Boolean = false,
+            val hideSmartViewQsTile: Boolean = false,
             val turnOn5gQsTile: Boolean = false,
             val hideQsBarMediaPlayer: Boolean = false,
             val hideQsBarNearbyDevicesAndDeviceControl: Boolean = false,

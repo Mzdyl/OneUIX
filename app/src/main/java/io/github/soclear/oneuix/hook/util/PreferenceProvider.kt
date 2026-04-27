@@ -20,6 +20,7 @@ object PreferenceProvider {
     
     private var cachedFile: File? = null
 
+
     val preference: Preference? = try {
         getPreferenceFile()?.readText()?.let { json.decodeFromString<Preference>(it) }
     } catch (_: Throwable) {

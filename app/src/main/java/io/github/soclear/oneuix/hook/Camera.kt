@@ -24,6 +24,7 @@ import java.util.EnumMap
 
 object Camera {
     private const val HOOK_CONFIG_FILE_NAME = "HookConfig.json"
+
     fun setBooleanFeature(
         loadPackageParam: LoadPackageParam,
         supportAllMenu: Boolean = true,
@@ -85,8 +86,17 @@ object Camera {
                     @Suppress("UNCHECKED_CAST")
                     val booleanFeatureMap = getBooleanFeatureMap(param) as MutableMap<Any, Boolean>
                     if (supportAllMenu) {
-                        for (myEnum in BooleanFeatureEnum.entries) {
-                            if (myEnum == BooleanFeatureEnum.SUPPORT_THERMISTOR_TEMPERATURE) continue
+                        val allMenuEnums = listOf(
+                            BooleanFeatureEnum.SUPPORT_SHUTTER_SOUND_MENU,
+                            BooleanFeatureEnum.SUPPORT_AUTO_HDR_MENU,
+                            BooleanFeatureEnum.SUPPORT_LOG_VIDEO,
+                            BooleanFeatureEnum.SUPPORT_FRONT_LOG_VIDEO,
+                            BooleanFeatureEnum.SUPPORT_MOTION_PHOTO_CAPTURE_MODE,
+                            BooleanFeatureEnum.SUPPORT_MOTION_PHOTO_BEFORE_AND_AFTER_AS_DEFAULT_CAPTURE_MODE,
+                            BooleanFeatureEnum.SUPPORT_FRAME_WATERMARK,
+                            BooleanFeatureEnum.SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS
+                        )
+                        for (myEnum in allMenuEnums) {
                             val enum = try {
                                 enumValueOfMethod(null, myEnum.name)
                             } catch (_: Throwable) {
@@ -97,9 +107,9 @@ object Camera {
                         }
                     }
                     if (disableTemperatureCheck) {
-                        val supportThermistorTemperatureEnum = enumValueOfMethod(
-                            null, BooleanFeatureEnum.SUPPORT_THERMISTOR_TEMPERATURE.name
-                        )
+                        val supportThermistorTemperatureEnum = try {
+                            enumValueOfMethod(null, BooleanFeatureEnum.SUPPORT_THERMISTOR_TEMPERATURE.name)
+                        } catch (_: Throwable) { null }
                         if (supportThermistorTemperatureEnum != null) {
                             booleanFeatureMap[supportThermistorTemperatureEnum] = false
                         }
@@ -143,6 +153,8 @@ object Camera {
         SUPPORT_FRONT_LOG_VIDEO,
         SUPPORT_MOTION_PHOTO_CAPTURE_MODE,
         SUPPORT_MOTION_PHOTO_BEFORE_AND_AFTER_AS_DEFAULT_CAPTURE_MODE,
+        SUPPORT_FRAME_WATERMARK,
+        SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS,
     }
 
     private const val WATERMARK_HOOK_CONFIG_FILE_NAME = "WatermarkHookConfig.json"
@@ -230,6 +242,8 @@ object Camera {
             }
         }
     }
+
+
 
     private fun Context.getHookConfigFromDexKit(): CameraHookConfig? {
         System.loadLibrary("dexkit")

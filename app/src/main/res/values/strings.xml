@@ -7,7 +7,7 @@
     <string name="statusBarLeftPaddingDp_title">Modify status bar left padding</string>
     <string name="statusBarRightPaddingDp_title">Modify status bar right padding</string>
     <string name="hideBatteryPercentageSign_title">Hide battery percentage sign in status bar</string>
-    <string name="hideBatteryPercentageSign_summary">Remove the % sign only, keep the numbers</string>
+    <string name="hideBatteryPercentageSign_summary" formatted="false">Remove the % sign only, keep the numbers</string>
     <string name="supportRealTimeNetworkSpeed_title">Support displaying real-time network speed</string>
     <string name="supportRealTimeNetworkSpeed_summary">Settings -> Notifications -> Advanced settings -> Show real-time network speed</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">Show separate upload/download speeds in status bar</string>
@@ -24,6 +24,7 @@
     <string name="hideQsBarSecurityFooter_summary">e.g., Your personal apps are connected to the internet via VPN</string>
     <string name="hideQsBarSmartViewAndModes_title">Hide Smart View and Modes bar in QS panel</string>
     <string name="hideDeviceControlQsTile_title">Hide Device Control in Quick Settings</string>
+    <string name="hideSmartViewQsTile_title">Hide Smart View in Quick Settings</string>
     <string name="alwaysExpandQsTileChunk_title">Always expand Quick Settings tile chunk</string>
     <string name="alwaysShowTimeDateOnQs_title">Always show time and date in QS panel</string>
     <string name="setStatusBarMaxNotificationIcons_title">Modify maximum number of notification icons in status bar</string>
@@ -51,7 +52,7 @@
     <string name="region_uk">United Kingdom</string>
     <string name="region_de">Germany</string>
     <string name="supportAllCameraMenu_title">Show all camera menus</string>
-    <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log</string>
+    <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log, Frame watermark</string>
     <string name="disableCameraTemperatureCheck_title">Disable camera temperature check</string>
     <string name="supportFrameWatermark_title">Enable camera frame watermark</string>
     <string name="supportFrameWatermark_summary">Add device frame overlay watermark to photos</string>
