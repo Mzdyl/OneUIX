@@ -134,9 +134,10 @@ object WatchPairing {
                 "makePackageListToDownload",
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
-                        val packages = param.result as? MutableSet<*> ?: return
-                        @Suppress("UNCHECKED_CAST")
-                        (packages as MutableSet<String>).add("com.google.android.wearable.app.cn")
+                        val packages = param.result as? Set<*> ?: return
+                        val newPackages = packages.toMutableSet()
+                        newPackages.add("com.google.android.wearable.app.cn")
+                        param.result = newPackages
                     }
                 }
             )
