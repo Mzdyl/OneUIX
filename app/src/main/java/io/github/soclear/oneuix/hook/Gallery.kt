@@ -18,8 +18,6 @@ object Gallery {
         )
         // 设置项见反编译后的 SettingSearchIndexablesProvider
         val featureList = listOf(
-            // 查看选项 -> 超级 HDR
-            "SUPPORT_PHOTO_HDR",
             // 故事 -> 自动创建故事
             "SUPPORT_AUTO_CREATE_STORY",
             // 识别图片中的内容
@@ -57,8 +55,6 @@ object Gallery {
             )
             val trashClass = getStaticObjectField(settingPreferenceClass, "Trash").javaClass
             findAndHookMethod(trashClass, "support", Context::class.java, returnTrue)
-            val photoHdr = getStaticObjectField(settingPreferenceClass, "PhotoHdr").javaClass
-            findAndHookMethod(photoHdr, "support", Context::class.java, returnTrue)
         } catch (_: Throwable) {
         }
     }

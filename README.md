@@ -122,6 +122,10 @@
 - 已获取 Root 权限 (Magisk / KernelSU / APatch)。
 - 已安装并激活 **LSPosed** 框架。
 
+### 备份
+
+`/data/misc/[UUID]/prefs/io.github.soclear.oneuix/preference.json`
+
 ### 🤝 参与贡献
 
 欢迎提交 Pull Request 或开 Issue 讨论新功能与 Bug 修复！
@@ -229,6 +233,10 @@
 - Android 13+ (API 33+).
 - Root access acquired (Magisk / KernelSU / APatch).
 - **LSPosed** framework installed and activated.
+
+### Backup
+
+`/data/misc/[UUID]/prefs/io.github.soclear.oneuix/preference.json`
 
 ### 🤝 Contributing
 

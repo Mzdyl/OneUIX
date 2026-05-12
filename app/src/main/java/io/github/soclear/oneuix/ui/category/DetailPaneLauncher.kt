@@ -34,12 +34,21 @@ fun DetailPaneLauncher(
                 onCheckedChange = { onEvent(LauncherEvent.ShowMemoryUsageInRecents(it)) }
             )
         }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.apps),
+            title = stringResource(id = R.string.hideAppsSearchBar_title),
+            checked = uiState.hideAppsSearchBar,
+            onCheckedChange = { onEvent(LauncherEvent.HideAppsSearchBar(it)) }
+        )
     }
 }
 
 sealed interface LauncherEvent {
     @JvmInline
     value class ShowMemoryUsageInRecents(val value: Boolean) : LauncherEvent
+
+    @JvmInline
+    value class HideAppsSearchBar(val value: Boolean) : LauncherEvent
 }
 
 fun SettingViewModel.onLauncherEvent(event: LauncherEvent) {
@@ -48,6 +57,12 @@ fun SettingViewModel.onLauncherEvent(event: LauncherEvent) {
             is LauncherEvent.ShowMemoryUsageInRecents -> preference.copy(
                 launcher = preference.launcher.copy(
                     showMemoryUsageInRecents = event.value
+                )
+            )
+
+            is LauncherEvent.HideAppsSearchBar -> preference.copy(
+                launcher = preference.launcher.copy(
+                    hideAppsSearchBar = event.value
                 )
             )
         }

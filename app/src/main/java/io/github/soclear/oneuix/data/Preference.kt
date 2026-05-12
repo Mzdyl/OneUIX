@@ -174,6 +174,7 @@ data class Preference(
     @Serializable
     data class Launcher(
         val showMemoryUsageInRecents: Boolean = false,
+        val hideAppsSearchBar: Boolean = false,
     )
 
     @Serializable

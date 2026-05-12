@@ -63,7 +63,7 @@
     <string name="showPackageInfo_summary">长按或双击可复制</string>
     <string name="makeAllUserAppsAvailable_title">应用分身支持所有用户应用</string>
     <string name="supportAllGallerySettings_title">显示相册的所有设置</string>
-    <string name="supportAllGallerySettings_summary">超级 HDR、音频橡皮擦、自动创建故事、识别图片中的内容、回收站、分享时转换 HEIF 图片、分享时转换 HDR10+ 视频</string>
+    <string name="supportAllGallerySettings_summary">音频橡皮擦、自动创建故事、识别图片中的内容、回收站、分享时转换 HEIF 图片、分享时转换 HDR10+ 视频</string>
     <string name="setBlockableNotificationChannel_title">可以禁用系统的通知类别</string>
     <string name="setBlockableNotificationChannel_summary">用来关闭 USB、充电中、电量低等通知</string>
     <string name="supportAnyFont_title">支持任意字体</string>
@@ -116,7 +116,9 @@
     <string name="enableSketch_summary">在国行设备上启用涂鸦生图功能</string>
     <string name="useGoogleTranslate_title">使用谷歌翻译</string>
     <string name="useGoogleTranslate_summary">S Pen 翻译使用谷歌翻译（默认为百度翻译）</string>
-    <string name="supportCallAndTextOnOtherDevices_title">支持在其他设备上通话和收发短信</string>
+    <string name="supportCallAndTextOnOtherDevices_title">支持跨设备接打电话和收发短信</string>
+    <string name="supportCallAndTextOnOtherDevices_summary">设置 -> 已连接的设备 -> 跨设备接打电话和收发短信</string>
+    <string name="hideAppsSearchBar_title">隐藏应用屏幕搜索栏</string>
     
     <!-- 手表配对 -->
     <string name="watchPairing_label">三星穿戴</string>

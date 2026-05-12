@@ -63,7 +63,7 @@
     <string name="showPackageInfo_summary">Long press or double tap to copy</string>
     <string name="makeAllUserAppsAvailable_title">Make all user apps available for app cloning</string>
     <string name="supportAllGallerySettings_title">Show all Gallery settings</string>
-    <string name="supportAllGallerySettings_summary">Super HDR, Audio eraser, Auto create stories, Identify contents in images, Trash, Convert HEIF images when sharing, Convert HDR10+ videos when sharing</string>
+    <string name="supportAllGallerySettings_summary">Audio eraser, Auto create stories, Identify contents in images, Trash, Convert HEIF images when sharing, Convert HDR10+ videos when sharing</string>
     <string name="setBlockableNotificationChannel_title">Allow disabling system notification categories</string>
     <string name="setBlockableNotificationChannel_summary">Used to disable USB, charging, low battery, and other system notifications</string>
     <string name="supportAnyFont_title">Support any font</string>
@@ -114,7 +114,9 @@
     <string name="enableGoogleSearch_summary">Enable Google Circle to Search on Chinese region devices</string>
     <string name="enableSketch_title">Enable Sketch to Image</string>
     <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
-    <string name="supportCallAndTextOnOtherDevices_title">Support call and text on other devices</string>
+    <string name="supportCallAndTextOnOtherDevices_title">Support call &amp; text on other devices</string>
+    <string name="supportCallAndTextOnOtherDevices_summary">Settings -> Connected devices -> Call &amp; text on other devices</string>
+    <string name="hideAppsSearchBar_title">Hide search bar on app screen</string>
     
     <!-- Watch Pairing -->
     <string name="watchPairing_label">Galaxy Wearable</string>

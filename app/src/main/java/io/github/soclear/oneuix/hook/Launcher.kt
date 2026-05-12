@@ -3,10 +3,12 @@ package io.github.soclear.oneuix.hook
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +17,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers.callMethod
+import de.robv.android.xposed.XposedHelpers.findAndHookConstructor
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
@@ -361,6 +364,30 @@ object Launcher {
             )
         } catch (t: Throwable) {
             logError("showMemoryUsageInRecentsTargetSdk35 updateTextViewCallback failed", t)
+        }
+    }
+
+    fun hideAppsSearchBar(loadPackageParam: LoadPackageParam) {
+        try {
+            findAndHookConstructor(
+                "com.honeyspace.ui.honeypots.appscreen.presentation.AppsSearchBar",
+                loadPackageParam.classLoader,
+                Context::class.java,
+                AttributeSet::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val searchBar = param.thisObject as View
+                        searchBar.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                            override fun onViewAttachedToWindow(v: View) {
+                                (v.parent as? ViewGroup)?.removeView(v)
+                            }
+                            override fun onViewDetachedFromWindow(v: View) {}
+                        })
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
         }
     }
 }
