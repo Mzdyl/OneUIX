@@ -387,7 +387,7 @@ object Launcher {
                 }
             )
         } catch (t: Throwable) {
-            XposedBridge.log(t)
+            logError("hideAppsSearchBar hook failed", t)
         }
     }
 }
