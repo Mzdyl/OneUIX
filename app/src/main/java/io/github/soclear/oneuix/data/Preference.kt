@@ -192,8 +192,7 @@ data class Preference(
     data class WatchPairing(
         val bypassRegionCheck: Boolean = false,           // 绕过区域限制
         val connectionMode: Int = 0,                       // 0=自动，1=WearOS CN，2=WearOS Global
-        val forceChinaGmsCore: Boolean = false,            // 强制安装国行 GMS
-        val disableCscCheck: Boolean = false,              // 禁用 CSC 检查
+        val forceChinaGmsCore: Boolean = false,            // 补充国行 WearOS GMS
     )
 
     @Serializable

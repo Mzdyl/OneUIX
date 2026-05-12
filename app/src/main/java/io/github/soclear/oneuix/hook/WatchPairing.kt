@@ -34,14 +34,13 @@ object WatchPairing {
         bypassRegionCheck: Boolean = false,
         connectionMode: Int = MODE_AUTO,
         forceChinaGmsCore: Boolean = false,
-        disableCscCheck: Boolean = false,
     ) {
         if (lpparam.packageName != Package.WATCH_MANAGER) return
 
         log("WatchPairing init: bypassRegionCheck=$bypassRegionCheck, connectionMode=$connectionMode")
 
         // Hook 1: 绕过区域检查 (BluetoothUuidUtil.checkDeviceRegion)
-        if (bypassRegionCheck || connectionMode != MODE_AUTO) {
+        if (bypassRegionCheck) {
             bypassRegionCheck(lpparam)
         }
 
@@ -51,22 +50,22 @@ object WatchPairing {
         }
 
         // Hook 3: 禁用 CSC 检查 (PlatformUtils.isSamsungChinaModel)
-        if (disableCscCheck) {
+        if (bypassRegionCheck) {
             disableCscCheck(lpparam)
         }
 
         // Hook 4: 配对问题检查绕过 (PairingProblemChecker.problemCheckAfterPairing)
-        if (bypassRegionCheck || connectionMode != MODE_AUTO) {
-            bypassPairingProblemCheck(lpparam, connectionMode)
+        if (bypassRegionCheck) {
+            bypassPairingProblemCheck(lpparam)
         }
 
-        // Hook 5: 强制安装国行 GMS
-        if (forceChinaGmsCore) {
+        // Hook 5: WearOS CN 模式下可选补充国行 GMS
+        if (connectionMode == MODE_WEAROS_CN && forceChinaGmsCore) {
             forceInstallChinaGmsCore(lpparam)
         }
 
         // Hook 6: CSC 获取伪造 (PlatformNetworkUtils.getCSC)
-        if (disableCscCheck) {
+        if (bypassRegionCheck) {
             spoofCscValue(lpparam)
         }
     }
@@ -173,7 +172,7 @@ object WatchPairing {
      * 目标：com.samsung.android.app.watchmanager.setupwizard.pairing.PairingProblemChecker.problemCheckAfterPairing
      * 作用：移除 WEAR_OS_NOT_SUPPORTED_PHONE 错误
      */
-    private fun bypassPairingProblemCheck(lpparam: LoadPackageParam, connectionMode: Int) {
+    private fun bypassPairingProblemCheck(lpparam: LoadPackageParam) {
         try {
             // 查找 Problem 枚举类
             val problemClass = XposedHelpers.findClass(
@@ -196,17 +195,14 @@ object WatchPairing {
                             val result = param.result ?: return
                             val resultName = result.toString()
 
-                            // 如果是区域不支持错误，根据连接模式决定是否绕过
+                            // 绕过区域不支持错误。是否启用由 bypassRegionCheck 开关统一控制。
                             if (resultName == "WEAR_OS_NOT_SUPPORTED_PHONE") {
-                                if (connectionMode != MODE_AUTO) {
-                                    // 获取 NO_PROBLEM 枚举值
-                                    val noProblemValue = XposedHelpers.getStaticObjectField(
-                                        problemClass,
-                                        "NO_PROBLEM"
-                                    )
-                                    param.result = noProblemValue
-                                    log("WatchPairing: Bypassed WEAR_OS_NOT_SUPPORTED_PHONE check")
-                                }
+                                val noProblemValue = XposedHelpers.getStaticObjectField(
+                                    problemClass,
+                                    "NO_PROBLEM"
+                                )
+                                param.result = noProblemValue
+                                log("WatchPairing: Bypassed WEAR_OS_NOT_SUPPORTED_PHONE check")
                             }
                         } catch (t: Throwable) {
                             logError("WatchPairing: bypassPairingProblemCheck failed", t)
@@ -288,7 +284,7 @@ object WatchPairing {
      */
     fun getConnectionModeDescription(mode: Int): String {
         return when (mode) {
-            MODE_AUTO -> "自动检测（默认）"
+            MODE_AUTO -> "不修改（默认）"
             MODE_WEAROS_CN -> "WearOS CN（国行 GMS）"
             MODE_WEAROS_GLOBAL -> "WearOS Global（外版 GMS）"
             else -> "未知模式"

@@ -15,6 +15,8 @@ import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import io.github.soclear.oneuix.ui.component.SelectItem
 
+private const val MODE_WEAROS_CN = 1
+
 @Composable
 fun DetailPaneWatchPairing(
     uiState: Preference.WatchPairing,
@@ -49,23 +51,16 @@ fun DetailPaneWatchPairing(
             onCheckedChange = { onEvent(WatchPairingEvent.SetBypassRegionCheck(it)) }
         )
 
-        // 禁用 CSC 检查
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.shield_off),
-            title = stringResource(id = R.string.watchPairing_disableCscCheck_title),
-            summary = stringResource(id = R.string.watchPairing_disableCscCheck_summary),
-            checked = uiState.disableCscCheck,
-            onCheckedChange = { onEvent(WatchPairingEvent.SetDisableCscCheck(it)) }
-        )
-
-        // 强制安装国行 GMS
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.google_play),
-            title = stringResource(id = R.string.watchPairing_forceChinaGmsCore_title),
-            summary = stringResource(id = R.string.watchPairing_forceChinaGmsCore_summary),
-            checked = uiState.forceChinaGmsCore,
-            onCheckedChange = { onEvent(WatchPairingEvent.SetForceChinaGmsCore(it)) }
-        )
+        if (uiState.connectionMode == MODE_WEAROS_CN) {
+            // WearOS CN 模式下可选补充国行 GMS
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.google_play),
+                title = stringResource(id = R.string.watchPairing_forceChinaGmsCore_title),
+                summary = stringResource(id = R.string.watchPairing_forceChinaGmsCore_summary),
+                checked = uiState.forceChinaGmsCore,
+                onCheckedChange = { onEvent(WatchPairingEvent.SetForceChinaGmsCore(it)) }
+            )
+        }
     }
 }
 
@@ -81,9 +76,6 @@ sealed interface WatchPairingEvent {
 
     @JvmInline
     value class SetForceChinaGmsCore(val value: Boolean) : WatchPairingEvent
-
-    @JvmInline
-    value class SetDisableCscCheck(val value: Boolean) : WatchPairingEvent
 }
 
 /**
@@ -99,17 +91,17 @@ fun SettingViewModel.onWatchPairingEvent(event: WatchPairingEvent) {
             )
             is WatchPairingEvent.SetConnectionMode -> preference.copy(
                 watchPairing = preference.watchPairing.copy(
-                    connectionMode = event.value
+                    connectionMode = event.value,
+                    forceChinaGmsCore = if (event.value == MODE_WEAROS_CN) {
+                        preference.watchPairing.forceChinaGmsCore
+                    } else {
+                        false
+                    }
                 )
             )
             is WatchPairingEvent.SetForceChinaGmsCore -> preference.copy(
                 watchPairing = preference.watchPairing.copy(
                     forceChinaGmsCore = event.value
-                )
-            )
-            is WatchPairingEvent.SetDisableCscCheck -> preference.copy(
-                watchPairing = preference.watchPairing.copy(
-                    disableCscCheck = event.value
                 )
             )
         }

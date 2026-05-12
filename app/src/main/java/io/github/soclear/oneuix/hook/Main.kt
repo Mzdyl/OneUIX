@@ -398,16 +398,13 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
 
             Package.WATCH_MANAGER -> {
                 if (preference.watchPairing.bypassRegionCheck ||
-                    preference.watchPairing.connectionMode != 0 ||
-                    preference.watchPairing.forceChinaGmsCore ||
-                    preference.watchPairing.disableCscCheck
+                    preference.watchPairing.connectionMode != 0
                 ) {
                     WatchPairing.init(
                         lpparam = lpparam,
                         bypassRegionCheck = preference.watchPairing.bypassRegionCheck,
                         connectionMode = preference.watchPairing.connectionMode,
-                        forceChinaGmsCore = preference.watchPairing.forceChinaGmsCore,
-                        disableCscCheck = preference.watchPairing.disableCscCheck
+                        forceChinaGmsCore = preference.watchPairing.forceChinaGmsCore
                     )
                 }
             }

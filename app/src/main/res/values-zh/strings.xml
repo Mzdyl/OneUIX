@@ -124,15 +124,13 @@
     <string name="watchPairing_label">三星穿戴</string>
     <string name="watchPairing_connectionMode_title">连接模式</string>
     <string name="watchPairing_connectionMode_summary">选择手表与手机的连接方式</string>
-    <string name="watchPairing_mode_auto">自动检测（默认）</string>
+    <string name="watchPairing_mode_auto">不修改（默认）</string>
     <string name="watchPairing_mode_wearos_cn">WearOS CN（国行 GMS）</string>
     <string name="watchPairing_mode_wearos_global">WearOS Global（外版 GMS）</string>
     <string name="watchPairing_bypassRegionCheck_title">绕过区域限制</string>
-    <string name="watchPairing_bypassRegionCheck_summary">允许国行手表与外版手机配对，或外版手表与国行手机配对</string>
-    <string name="watchPairing_disableCscCheck_title">禁用 CSC 检查</string>
-    <string name="watchPairing_disableCscCheck_summary">伪造 CSC 代码以绕过设备区域验证</string>
-    <string name="watchPairing_forceChinaGmsCore_title">强制安装国行 GMS</string>
-    <string name="watchPairing_forceChinaGmsCore_summary">强制安装中国版 WearOS GMS 组件（com.google.android.wearable.app.cn）</string>
+    <string name="watchPairing_bypassRegionCheck_summary">绕过区域、CSC 和不支持手机的配对检查</string>
+    <string name="watchPairing_forceChinaGmsCore_title">补充国行 WearOS GMS</string>
+    <string name="watchPairing_forceChinaGmsCore_summary">当 WearOS CN 未自动加入时，将 com.google.android.wearable.app.cn 加入下载列表</string>
     
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>
