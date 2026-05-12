@@ -95,4 +95,13 @@
     <string name="hideLockscreenStatusBar_title">Masquer la barre d\'état sur l\'écran de verrouillage</string>
     <string name="rebootSystemUI">Redémarrer l\'UI système (root)</string>
     <string name="hideAppsSearchBar_title">Masquer la barre de recherche sur l\'écran des applications</string>
+    <string name="watchPairing_connectionMode_title">Mode de connexion de la montre</string>
+    <string name="watchPairing_connectionMode_summary">Choisir la façon dont Galaxy Wearable gère le mode régional WearOS</string>
+    <string name="watchPairing_mode_none">Aucune modification (par défaut)</string>
+    <string name="watchPairing_mode_wearos_cn">WearOS CN (GMS Chine)</string>
+    <string name="watchPairing_mode_wearos_global">WearOS Global (GMS global)</string>
+    <string name="bypassWatchPairingRegionCheck_title">Contourner les vérifications régionales de l\'association</string>
+    <string name="bypassWatchPairingRegionCheck_summary">Contourner les vérifications de région, CSC et téléphone non pris en charge</string>
+    <string name="supplementChinaWearOsGms_title">Ajouter le GMS WearOS Chine</string>
+    <string name="supplementChinaWearOsGms_summary">Si WearOS CN ne l\'ajoute pas automatiquement, ajouter com.google.android.wearable.app.cn à la liste de téléchargement</string>
 </resources>

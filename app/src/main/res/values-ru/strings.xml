@@ -95,4 +95,13 @@
     <string name="hideLockscreenStatusBar_title">Скрыть строку состояния на экране блокировки</string>
     <string name="rebootSystemUI">Перезапуск System UI (Root)</string>
     <string name="hideAppsSearchBar_title">Скрыть строку поиска на экране приложений</string>
+    <string name="watchPairing_connectionMode_title">Режим подключения часов</string>
+    <string name="watchPairing_connectionMode_summary">Выберите, как Galaxy Wearable обрабатывает региональный режим WearOS</string>
+    <string name="watchPairing_mode_none">Без изменений (по умолчанию)</string>
+    <string name="watchPairing_mode_wearos_cn">WearOS CN (китайский GMS)</string>
+    <string name="watchPairing_mode_wearos_global">WearOS Global (глобальный GMS)</string>
+    <string name="bypassWatchPairingRegionCheck_title">Обход региональных проверок сопряжения часов</string>
+    <string name="bypassWatchPairingRegionCheck_summary">Обход проверок региона, CSC и неподдерживаемого телефона</string>
+    <string name="supplementChinaWearOsGms_title">Добавить China WearOS GMS</string>
+    <string name="supplementChinaWearOsGms_summary">Если WearOS CN не добавляет его автоматически, добавить com.google.android.wearable.app.cn в список загрузки</string>
 </resources>

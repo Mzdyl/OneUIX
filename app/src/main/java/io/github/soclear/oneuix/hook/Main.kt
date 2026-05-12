@@ -353,6 +353,19 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 }
             }
 
+            Package.WATCH_MANAGER -> {
+                if (preference.other.bypassWatchPairingRegionCheck ||
+                    preference.other.watchPairingConnectionMode != WatchPairing.MODE_NONE
+                ) {
+                    WatchPairing.init(
+                        lpparam = lpparam,
+                        bypassRegionCheck = preference.other.bypassWatchPairingRegionCheck,
+                        connectionMode = preference.other.watchPairingConnectionMode,
+                        supplementChinaWearOsGms = preference.other.supplementChinaWearOsGms
+                    )
+                }
+            }
+
             "com.samsung.android.service.airviewdictionary" -> {
                 if (preference.other.useSPenGoogleTranslate) {
                     SPen.switchTranslateSource(lpparam, useGoogle = true)

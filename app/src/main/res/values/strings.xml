@@ -95,4 +95,13 @@
     <string name="hideLockscreenStatusBar_title">Hide status bar on lock screen</string>
     <string name="rebootSystemUI">Reboot System UI (root)</string>
     <string name="hideAppsSearchBar_title">Hide search bar on app screen</string>
+    <string name="watchPairing_connectionMode_title">Watch connection mode</string>
+    <string name="watchPairing_connectionMode_summary">Choose how Galaxy Wearable handles WearOS region mode</string>
+    <string name="watchPairing_mode_none">No modification (Default)</string>
+    <string name="watchPairing_mode_wearos_cn">WearOS CN (China GMS)</string>
+    <string name="watchPairing_mode_wearos_global">WearOS Global (Global GMS)</string>
+    <string name="bypassWatchPairingRegionCheck_title">Bypass watch pairing region checks</string>
+    <string name="bypassWatchPairingRegionCheck_summary">Bypass region, CSC, and unsupported-phone pairing checks</string>
+    <string name="supplementChinaWearOsGms_title">Supplement China WearOS GMS</string>
+    <string name="supplementChinaWearOsGms_summary">If WearOS CN does not add it automatically, add com.google.android.wearable.app.cn to the download list</string>
 </resources>

@@ -13,7 +13,10 @@ import androidx.compose.ui.res.vectorResource
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.ui.SettingViewModel
+import io.github.soclear.oneuix.ui.component.SelectItem
 import io.github.soclear.oneuix.ui.component.SwitchItem
+
+private const val WATCH_PAIRING_MODE_CN = 1
 
 @Composable
 fun DetailPaneOther(
@@ -125,6 +128,34 @@ fun DetailPaneOther(
             checked = uiState.hideAppsSearchBar,
             onCheckedChange = { onEvent(OtherEvent.HideAppsSearchBar(it)) }
         )
+        SelectItem(
+            icon = ImageVector.vectorResource(id = R.drawable.watch_pairing),
+            title = stringResource(id = R.string.watchPairing_connectionMode_title),
+            summary = stringResource(id = R.string.watchPairing_connectionMode_summary),
+            entries = listOf(
+                stringResource(id = R.string.watchPairing_mode_none),
+                stringResource(id = R.string.watchPairing_mode_wearos_cn),
+                stringResource(id = R.string.watchPairing_mode_wearos_global)
+            ),
+            selectedIndex = uiState.watchPairingConnectionMode,
+            onSelectedIndexChange = { onEvent(OtherEvent.WatchPairingConnectionMode(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.lock_open),
+            title = stringResource(id = R.string.bypassWatchPairingRegionCheck_title),
+            summary = stringResource(id = R.string.bypassWatchPairingRegionCheck_summary),
+            checked = uiState.bypassWatchPairingRegionCheck,
+            onCheckedChange = { onEvent(OtherEvent.BypassWatchPairingRegionCheck(it)) }
+        )
+        if (uiState.watchPairingConnectionMode == WATCH_PAIRING_MODE_CN) {
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.google_play),
+                title = stringResource(id = R.string.supplementChinaWearOsGms_title),
+                summary = stringResource(id = R.string.supplementChinaWearOsGms_summary),
+                checked = uiState.supplementChinaWearOsGms,
+                onCheckedChange = { onEvent(OtherEvent.SupplementChinaWearOsGms(it)) }
+            )
+        }
     }
 }
 
@@ -174,6 +205,15 @@ sealed interface OtherEvent {
 
     @JvmInline
     value class HideAppsSearchBar(val value: Boolean) : OtherEvent
+
+    @JvmInline
+    value class BypassWatchPairingRegionCheck(val value: Boolean) : OtherEvent
+
+    @JvmInline
+    value class WatchPairingConnectionMode(val value: Int) : OtherEvent
+
+    @JvmInline
+    value class SupplementChinaWearOsGms(val value: Boolean) : OtherEvent
 }
 
 fun SettingViewModel.onOtherEvent(event: OtherEvent) {
@@ -266,6 +306,29 @@ fun SettingViewModel.onOtherEvent(event: OtherEvent) {
             is OtherEvent.HideAppsSearchBar -> preference.copy(
                 other = preference.other.copy(
                     hideAppsSearchBar = event.value
+                )
+            )
+
+            is OtherEvent.BypassWatchPairingRegionCheck -> preference.copy(
+                other = preference.other.copy(
+                    bypassWatchPairingRegionCheck = event.value
+                )
+            )
+
+            is OtherEvent.WatchPairingConnectionMode -> preference.copy(
+                other = preference.other.copy(
+                    watchPairingConnectionMode = event.value,
+                    supplementChinaWearOsGms = if (event.value == WATCH_PAIRING_MODE_CN) {
+                        preference.other.supplementChinaWearOsGms
+                    } else {
+                        false
+                    }
+                )
+            )
+
+            is OtherEvent.SupplementChinaWearOsGms -> preference.copy(
+                other = preference.other.copy(
+                    supplementChinaWearOsGms = event.value
                 )
             )
         }

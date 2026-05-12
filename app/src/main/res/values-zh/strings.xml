@@ -95,4 +95,13 @@
     <string name="hideLockscreenStatusBar_title">隐藏锁屏界面的状态栏</string>
     <string name="rebootSystemUI">重启系统 UI (root)</string>
     <string name="hideAppsSearchBar_title">隐藏应用屏幕搜索栏</string>
+    <string name="watchPairing_connectionMode_title">手表连接模式</string>
+    <string name="watchPairing_connectionMode_summary">选择 Galaxy Wearable 处理 WearOS 区域模式的方式</string>
+    <string name="watchPairing_mode_none">不修改（默认）</string>
+    <string name="watchPairing_mode_wearos_cn">WearOS CN（国行 GMS）</string>
+    <string name="watchPairing_mode_wearos_global">WearOS Global（外版 GMS）</string>
+    <string name="bypassWatchPairingRegionCheck_title">绕过手表配对区域检查</string>
+    <string name="bypassWatchPairingRegionCheck_summary">绕过区域、CSC 和不支持手机的配对检查</string>
+    <string name="supplementChinaWearOsGms_title">补充国行 WearOS GMS</string>
+    <string name="supplementChinaWearOsGms_summary">当 WearOS CN 未自动加入时，将 com.google.android.wearable.app.cn 加入下载列表</string>
 </resources>
