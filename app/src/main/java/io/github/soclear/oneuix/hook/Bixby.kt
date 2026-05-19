@@ -19,7 +19,7 @@ object Bixby {
     fun init(lpparam: LoadPackageParam, p: Preference.Bixby) {
         when (lpparam.packageName) {
             Package.BIXBY_AGENT  -> initBixbyAgent(lpparam, p)
-            Package.BIXBY_WAKEUP -> initBixbyWakeup(lpparam)
+            Package.BIXBY_WAKEUP -> initBixbyWakeup(lpparam, p)
         }
     }
 
@@ -30,8 +30,9 @@ object Bixby {
         if (p.wwvBypass)  hookWakeupWordValidator(lpparam)
     }
 
-    private fun initBixbyWakeup(lpparam: LoadPackageParam) {
+    private fun initBixbyWakeup(lpparam: LoadPackageParam, p: Preference.Bixby) {
         hookWakeupCustomPhrase(lpparam)
+        if (p.wwvBypass) hookWakeupWordTypeValidator(lpparam)
     }
 
     // ═══════ injectModel: 注入 Build.MODEL 到设备白名单缓存 ═══════
@@ -90,6 +91,28 @@ object Bixby {
                     override fun beforeHookedMethod(p: MethodHookParam) { p.result = 0 }
                 })
             }
+        }
+    }
+
+    // ═══════ wakeup: 绕过 KWV isVaildWordType 的 locale 限制 ═══════
+    // zhCN 等非韩语 locale 直接返回 false，导致 TEXT_CUSTOM 训练失败
+    // 三个 decoder 变体 (normal/bargein/acousticecho) 均有同名方法
+
+    private fun hookWakeupWordTypeValidator(lpparam: LoadPackageParam) {
+        for (cn in arrayOf(
+            "com.samsung.voicewakeup.kwv.normal.custom.WakeupKwvNormalCommon",
+            "com.samsung.voicewakeup.kwv.bargein.custom.WakeupKwvBargeinCommon",
+            "com.samsung.voicewakeup.kwv.acousticecho.custom.WakeupKwvAcousticEchoCommon")) {
+            try {
+                val cls = lpparam.classLoader.loadClass(cn)
+                for (m in cls.declaredMethods) {
+                    if (m.returnType != Boolean::class.javaPrimitiveType) continue
+                    if (!m.parameterTypes.contentEquals(arrayOf(String::class.java, Locale::class.java))) continue
+                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
+                        override fun beforeHookedMethod(p: MethodHookParam) { p.result = true }
+                    })
+                }
+            } catch (_: Throwable) {}
         }
     }
 
