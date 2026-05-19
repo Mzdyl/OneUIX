@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.ui.category.Category
 import io.github.soclear.oneuix.ui.category.DetailPaneAndroid
+import io.github.soclear.oneuix.ui.category.DetailPaneBixby
 import io.github.soclear.oneuix.ui.category.DetailPaneBrowser
 import io.github.soclear.oneuix.ui.category.DetailPaneCalendar
 import io.github.soclear.oneuix.ui.category.DetailPaneCall
@@ -45,6 +46,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneWatchPairing
 import io.github.soclear.oneuix.ui.category.DetailPaneWeather
 import io.github.soclear.oneuix.ui.category.ListPaneCategory
 import io.github.soclear.oneuix.ui.category.onAndroidEvent
+import io.github.soclear.oneuix.ui.category.onBixbyEvent
 import io.github.soclear.oneuix.ui.category.onBrowserEvent
 import io.github.soclear.oneuix.ui.category.onCalendarEvent
 import io.github.soclear.oneuix.ui.category.onCallEvent
@@ -192,6 +194,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.WatchPairing -> DetailPaneWatchPairing(
                             uiState = preference.watchPairing,
                             onEvent = viewModel::onWatchPairingEvent
+                        )
+
+                        Category.Bixby -> DetailPaneBixby(
+                            uiState = preference.bixby,
+                            onEvent = viewModel::onBixbyEvent
                         )
 
                         Category.Other -> DetailPaneOther(

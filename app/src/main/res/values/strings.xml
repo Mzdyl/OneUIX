@@ -98,6 +98,16 @@
     <string name="supportAutoPowerOnOff_title">Support Auto power on/off</string>
     <string name="supportAutoPowerOnOff_summary">Settings -> Reset -> Auto power on/off</string>
     <string name="showNotificationCategory_title">Show notification category settings</string>
+    <string name="bixby_enable_labs_title">Enable Bixby Labs</string>
+    <string name="bixby_enable_labs_summary">Show experimental features like custom wake-up phrase</string>
+    <string name="bixby_enable_custom_wakeup_title">Enable Custom Wake-up Phrase</string>
+    <string name="bixby_enable_custom_wakeup_summary">Allow creating custom wake-up phrase in Bixby settings</string>
+    <string name="bixby_force_custom_wakeup_support_title">Force Custom Wake-up Support</string>
+    <string name="bixby_force_custom_wakeup_support_summary">Override device floating feature to enable custom wake-up on unsupported devices</string>
+    <string name="bixby_enable_offline_title">Enable Offline Processing</string>
+    <string name="bixby_enable_offline_summary">Allow Bixby to work without internet connection</string>
+    <string name="bixby_talk_without_wakeup_title">Talk to Bixby Without Wake-up</string>
+    <string name="bixby_talk_without_wakeup_summary">Speak directly to Bixby without saying wake-up phrase</string>
     <string name="showNotificationCategory_summary">Enable hidden notification category options in Settings (requires root)</string>
     <string name="noAIWatermark_title">Disable Photo Editor AI watermark</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>

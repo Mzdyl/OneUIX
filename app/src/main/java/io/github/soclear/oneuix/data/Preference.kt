@@ -24,6 +24,7 @@ data class Preference(
     val healthMonitor: HealthMonitor = HealthMonitor(),
     val galaxyStore: GalaxyStore = GalaxyStore(),
     val sPen: SPen = SPen(),
+    val bixby: Bixby = Bixby(),
     val other: Other = Other(),
 ) {
     @Serializable
@@ -210,6 +211,12 @@ data class Preference(
     @Serializable
     data class SPen(
         val useGoogleTranslate: Boolean = false,
+    )
+
+    @Serializable
+    data class Bixby(
+        val enableOffline: Boolean = false,        // 解除离线+免唤醒设备限制
+        val enableCustomWakeup: Boolean = false,   // 解除自定义唤醒词 Labs 限制
     )
 
     @Serializable

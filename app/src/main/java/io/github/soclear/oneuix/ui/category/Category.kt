@@ -24,5 +24,6 @@ enum class Category(val packageName: String) {
     GalaxyStore(Package.STORE),
     SPen(Package.SPEN),
     WatchPairing(Package.WATCH_MANAGER),
+    Bixby(Package.BIXBY_AGENT),
     Other(BuildConfig.APPLICATION_ID);
 }
