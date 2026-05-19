@@ -412,8 +412,8 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
             // Bixby packages
             Package.BIXBY_AGENT,
             Package.BIXBY_WAKEUP -> {
-                if (preference.bixby.enableOffline ||
-                    preference.bixby.enableCustomWakeup) {
+                if (preference.bixby.injectModel ||
+                    preference.bixby.labsMgr) {
                     Bixby.init(lpparam, preference.bixby)
                 }
             }

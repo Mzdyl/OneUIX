@@ -7,36 +7,30 @@ import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.data.Package
+import java.io.File
 
-/**
- * Bixby 限制解除 Hook
- *
- * 1. injectModel — 注入 Build.MODEL 到白名单缓存 → 解除离线+免唤醒设备限制
- * 2. labsFeatureManager — 绕过 Labs 功能检查 → 解除自定义唤醒词限制
- * 3. prefScreen — 强制 Labs Switch 可见（XML isPreferenceVisible=false）
- */
 object Bixby {
+
+    private fun log(msg: String) { XposedBridge.log("[OneUIX-Bixby] $msg") }
 
     fun init(lpparam: LoadPackageParam, p: Preference.Bixby) {
         when (lpparam.packageName) {
-            Package.BIXBY_AGENT -> initBixbyAgent(lpparam, p)
+            Package.BIXBY_AGENT  -> initBixbyAgent(lpparam, p)
+            Package.BIXBY_WAKEUP -> initBixbyWakeup(lpparam)
         }
     }
 
     private fun initBixbyAgent(lpparam: LoadPackageParam, p: Preference.Bixby) {
-        XposedBridge.log("[Bixby] Init offline=${p.enableOffline} customWakeup=${p.enableCustomWakeup}")
-
-        if (p.enableOffline) {
-            try { hookInjectModel(lpparam); XposedBridge.log("[Bixby]   [+] injectModel") } catch (e: Throwable) { XposedBridge.log("[Bixby]   [-] injectModel: ${e.message}") }
-        }
-
-        if (p.enableCustomWakeup) {
-            try { hookLabsFeatureManager(lpparam); XposedBridge.log("[Bixby]   [+] labsFeatureManager") } catch (e: Throwable) { XposedBridge.log("[Bixby]   [-] labsFeatureManager: ${e.message}") }
-            try { hookPreferenceScreen(lpparam); XposedBridge.log("[Bixby]   [+] prefScreen") } catch (e: Throwable) { XposedBridge.log("[Bixby]   [-] prefScreen: ${e.message}") }
-        }
+        log("Init offline=${p.injectModel} customWakeup=${p.labsMgr}")
+        if (p.injectModel) hookInjectModel(lpparam)
+        if (p.labsMgr)    hookLabsFeatureManager(lpparam)
     }
 
-    // ═══════ 1. 注入设备型号到白名单缓存 ═══════
+    private fun initBixbyWakeup(lpparam: LoadPackageParam) {
+        hookWakeupCustomPhrase(lpparam)
+    }
+
+    // ═══════ injectModel: 注入 Build.MODEL 到设备白名单缓存 ═══════
 
     private fun hookInjectModel(lpparam: LoadPackageParam) {
         findAndHookMethod("android.app.SharedPreferencesImpl", lpparam.classLoader,
@@ -45,23 +39,19 @@ object Bixby {
                 override fun beforeHookedMethod(p: MethodHookParam) {
                     if (p.args[0] == "pref_key_on_device_config_cache") {
                         val orig = (p.result ?: p.args[1] ?: "") as String
-                        val model = Build.MODEL
-                        if (!orig.contains(model))
-                            p.result = if (orig.isEmpty()) model else "$orig,$model"
+                        if (!orig.contains(Build.MODEL))
+                            p.result = if (orig.isEmpty()) Build.MODEL else "$orig,${Build.MODEL}"
                     }
                 }
             })
     }
 
-    // ═══════ 2. 绕过 Labs 功能检查 ═══════
+    // ═══════ labsMgr: 绕过 LabsFeatureManager 所有限制 ═══════
 
     private fun hookLabsFeatureManager(lpparam: LoadPackageParam) {
         try {
-            val c = Class.forName(
-                "com.samsung.android.bixby.agent.common.util.datamanager.LabsFeatureManager",
-                true, lpparam.classLoader
-            )
-            for (name in arrayOf("isSupported", "isAvailable", "isEnabled")) {
+            val c = Class.forName("com.samsung.android.bixby.agent.common.util.datamanager.LabsFeatureManager", true, lpparam.classLoader)
+            for (name in arrayOf("isSupported", "isAvailable", "isEnabled", "isLabs")) {
                 findAndHookMethod(c, name, String::class.java, object : XC_MethodHook() {
                     override fun beforeHookedMethod(mp: MethodHookParam) {
                         if (mp.args[0] == "labs_custom_wakeup") mp.result = true
@@ -74,26 +64,54 @@ object Bixby {
         } catch (_: Throwable) {}
     }
 
-    // ═══════ 3. 强制 Labs Switch 可见 ═══════
+    // ═══════ wakeup: 修复自定义短语文本返回空的问题 ═══════
 
-    private fun hookPreferenceScreen(lpparam: LoadPackageParam) {
+    private fun hookWakeupCustomPhrase(lpparam: LoadPackageParam) {
+        // SP.getString → 数据源为空时从 XML 文件读取
+        findAndHookMethod("android.app.SharedPreferencesImpl", lpparam.classLoader,
+            "getString", String::class.java, String::class.java,
+            object : XC_MethodHook() {
+                override fun beforeHookedMethod(p: MethodHookParam) {
+                    if (p.args[0] == "myvoice_string_custom") {
+                        val orig = p.result ?: p.args[1] ?: ""
+                        if (orig.toString().isEmpty()) {
+                            val txt = readWakeupSP("myvoice_string_custom")
+                            if (txt.isNotEmpty()) p.result = txt
+                        }
+                    }
+                }
+            })
+        // MatrixCursor.addRow → ContentProvider locale 不匹配后丢弃文本
         try {
-            val x = Class.forName("androidx.preference.x", true, lpparam.classLoader)
-            val screenClass = Class.forName("androidx.preference.PreferenceScreen", true, lpparam.classLoader)
-            findAndHookMethod(x, "t", screenClass, object : XC_MethodHook() {
-                override fun afterHookedMethod(p: MethodHookParam) {
+            val c = lpparam.classLoader.loadClass("android.database.MatrixCursor")
+            findAndHookMethod(c, "addRow", arrayOfNulls<Any>(0).javaClass, object : XC_MethodHook() {
+                override fun beforeHookedMethod(p: MethodHookParam) {
+                    val row = p.args[0] as? Array<Any?> ?: return
                     try {
-                        val s = p.args[0]
-                        val ctx = p.thisObject.javaClass.superclass!!.getMethod("getContext").invoke(p.thisObject)
-                        val res = ctx.javaClass.getMethod("getResources").invoke(ctx)
-                        val key = res.javaClass.getMethod("getString", java.lang.Integer.TYPE).invoke(res, 0x7f1407e4) as String
-                        val fm = s.javaClass.methods.firstOrNull { it.parameterCount == 1 && it.parameterTypes[0] == CharSequence::class.java && it.returnType == Class.forName("androidx.preference.Preference", true, lpparam.classLoader) } ?: return
-                        val pref = fm.invoke(s, key) ?: return
-                        val vm = pref.javaClass.methods.firstOrNull { it.parameterCount == 1 && it.parameterTypes[0] == java.lang.Boolean.TYPE && it.returnType == Void.TYPE } ?: return
-                        vm.invoke(pref, true)
+                        val cols = p.thisObject.javaClass.getDeclaredField("columnNames").apply { isAccessible = true }.get(p.thisObject) as? Array<String> ?: return
+                        for (i in cols.indices) {
+                            if (cols[i] != "customKeyword") continue
+                            if (row[i] == null || row[i].toString().isEmpty()) {
+                                val txt = readWakeupSP("myvoice_string_custom")
+                                if (txt.isNotEmpty()) row[i] = txt
+                            }
+                        }
                     } catch (_: Throwable) {}
                 }
             })
         } catch (_: Throwable) {}
+    }
+
+    private fun readWakeupSP(key: String): String {
+        try {
+            val dir = File("/data/data/com.samsung.android.bixby.wakeup/shared_prefs")
+            if (!dir.exists() || !dir.isDirectory) return ""
+            for (f in dir.listFiles() ?: emptyArray()) {
+                if (!f.name.endsWith(".xml")) continue
+                val m = Regex("<string name=\"$key\">(.*?)</string>").find(f.readText())
+                if (m != null) return m.groupValues[1]
+            }
+        } catch (_: Throwable) {}
+        return ""
     }
 }

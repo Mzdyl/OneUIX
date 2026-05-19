@@ -20,37 +20,35 @@ fun DetailPaneBixby(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())
     ) {
         SwitchItem(
-            title = stringResource(id = R.string.bixby_enable_offline_title),
-            summary = stringResource(id = R.string.bixby_enable_offline_summary),
-            icon = ImageVector.vectorResource(id = R.drawable.wifi_link_speed),
-            checked = uiState.enableOffline,
-            onCheckedChange = { onEvent(BixbyEvent.EnableOffline(it)) },
+            title = stringResource(R.string.bixby_offline_title),
+            summary = stringResource(R.string.bixby_offline_summary),
+            icon = ImageVector.vectorResource(R.drawable.wifi_link_speed),
+            checked = uiState.injectModel,
+            onCheckedChange = { onEvent(BixbyEvent.InjectModel(it)) },
         )
         SwitchItem(
-            title = stringResource(id = R.string.bixby_enable_custom_wakeup_title),
-            summary = stringResource(id = R.string.bixby_enable_custom_wakeup_summary),
-            icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
-            checked = uiState.enableCustomWakeup,
-            onCheckedChange = { onEvent(BixbyEvent.EnableCustomWakeup(it)) },
+            title = stringResource(R.string.bixby_custom_wakeup_title),
+            summary = stringResource(R.string.bixby_custom_wakeup_summary),
+            icon = ImageVector.vectorResource(R.drawable.phone_forwarded),
+            checked = uiState.labsMgr,
+            onCheckedChange = { onEvent(BixbyEvent.LabsMgr(it)) },
         )
     }
 }
 
 sealed interface BixbyEvent {
-    @JvmInline value class EnableOffline(val value: Boolean) : BixbyEvent
-    @JvmInline value class EnableCustomWakeup(val value: Boolean) : BixbyEvent
+    @JvmInline value class InjectModel(val value: Boolean) : BixbyEvent
+    @JvmInline value class LabsMgr(val value: Boolean) : BixbyEvent
 }
 
 fun io.github.soclear.oneuix.ui.SettingViewModel.onBixbyEvent(event: BixbyEvent) {
-    updateData { preference ->
+    updateData { p ->
         when (event) {
-            is BixbyEvent.EnableOffline -> preference.copy(bixby = preference.bixby.copy(enableOffline = event.value))
-            is BixbyEvent.EnableCustomWakeup -> preference.copy(bixby = preference.bixby.copy(enableCustomWakeup = event.value))
+            is BixbyEvent.InjectModel -> p.copy(bixby = p.bixby.copy(injectModel = event.value))
+            is BixbyEvent.LabsMgr   -> p.copy(bixby = p.bixby.copy(labsMgr = event.value))
         }
     }
 }

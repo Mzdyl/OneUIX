@@ -214,9 +214,9 @@ data class Preference(
     )
 
     @Serializable
-    data class Bixby(
-        val enableOffline: Boolean = false,        // 解除离线+免唤醒设备限制
-        val enableCustomWakeup: Boolean = false,   // 解除自定义唤醒词 Labs 限制
+data class Bixby(
+        val injectModel: Boolean = false,           // 离线+免唤醒：注入设备型号到白名单
+        val labsMgr: Boolean = false,               // 自定义唤醒词：LabsFeatureManager 限制
     )
 
     @Serializable
