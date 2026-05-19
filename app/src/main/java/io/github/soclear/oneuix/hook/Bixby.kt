@@ -32,7 +32,10 @@ object Bixby {
 
     private fun initBixbyWakeup(lpparam: LoadPackageParam, p: Preference.Bixby) {
         hookWakeupCustomPhrase(lpparam)
-        if (p.wwvBypass) hookWakeupWordTypeValidator(lpparam)
+        if (p.wwvBypass) {
+            hookWakeupWordTypeValidator(lpparam)
+            hookKwdCjkFix(lpparam)
+        }
     }
 
     // ═══════ injectModel: 注入 Build.MODEL 到设备白名单缓存 ═══════
@@ -110,6 +113,43 @@ object Bixby {
                     if (!m.parameterTypes.contentEquals(arrayOf(String::class.java, Locale::class.java))) continue
                     XposedBridge.hookMethod(m, object : XC_MethodHook() {
                         override fun beforeHookedMethod(p: MethodHookParam) { p.result = true }
+                    })
+                }
+            } catch (_: Throwable) {}
+        }
+    }
+
+    // ═══════ wakeup: KWD 引擎强制匹配中文唤醒词 ═══════
+    // native KWD 引擎无法处理中文文本，verifyRun 始终返回 0
+    // 检测到 mKeyword 含 CJK 字符时强改结果为 1，实际唤醒由 KWV 音频匹配把关
+
+    private fun hookKwdCjkFix(lpparam: LoadPackageParam) {
+        for (kn in arrayOf(
+            "com.samsung.voicewakeup.kwd.normal.custom.WakeupKwdNormalCustom",
+            "com.samsung.voicewakeup.kwd.bargein.custom.WakeupKwdBargeinCustom",
+            "com.samsung.voicewakeup.kwd.acousticecho.custom.WakeupKwdAcousticEchoCustom")) {
+            try {
+                val cls = lpparam.classLoader.loadClass(kn)
+                var kwField: java.lang.reflect.Field? = null
+                try { kwField = cls.getDeclaredField("mKeyword"); kwField.isAccessible = true } catch (_: Throwable) {}
+
+                for (m in cls.declaredMethods) {
+                    if (m.returnType != Int::class.javaPrimitiveType) continue
+                    val pts = m.parameterTypes
+                    val isVr = (pts.size == 1 && pts[0].isArray && pts[0].componentType == Short::class.javaPrimitiveType)
+                        || (pts.size == 3 && pts[0].isArray && pts[0].componentType == Short::class.javaPrimitiveType
+                            && pts[1] == Int::class.javaPrimitiveType && pts[2] == Int::class.javaPrimitiveType)
+                    if (!isVr) continue
+
+                    val kwF = kwField
+                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
+                        override fun afterHookedMethod(p: MethodHookParam) {
+                            val ret = p.result as? Int ?: return
+                            if (ret != 0) return
+                            val kw = try { kwF?.get(p.thisObject) ?: "" } catch (_: Throwable) { "" }
+                            if ((kw as? String)?.any { it in '\u4E00'..'\u9FFF' } == true)
+                                p.result = 1
+                        }
                     })
                 }
             } catch (_: Throwable) {}
