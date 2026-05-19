@@ -217,6 +217,7 @@ data class Preference(
 data class Bixby(
         val injectModel: Boolean = false,           // 离线+免唤醒：注入设备型号到白名单
         val labsMgr: Boolean = false,               // 自定义唤醒词：LabsFeatureManager 限制
+        val wwvBypass: Boolean = false,             // 唤醒词文本验证：绕过竞品/违禁词限制
     )
 
     @Serializable

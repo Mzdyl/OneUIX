@@ -1,5 +1,6 @@
 package io.github.soclear.oneuix.hook
 
+import android.content.Context
 import android.os.Build
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
@@ -8,6 +9,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.data.Package
 import java.io.File
+import java.lang.reflect.Modifier
+import java.util.Locale
 
 object Bixby {
 
@@ -21,9 +24,10 @@ object Bixby {
     }
 
     private fun initBixbyAgent(lpparam: LoadPackageParam, p: Preference.Bixby) {
-        log("Init offline=${p.injectModel} customWakeup=${p.labsMgr}")
+        log("Init offline=${p.injectModel} customWakeup=${p.labsMgr} wwv=${p.wwvBypass}")
         if (p.injectModel) hookInjectModel(lpparam)
         if (p.labsMgr)    hookLabsFeatureManager(lpparam)
+        if (p.wwvBypass)  hookWakeupWordValidator(lpparam)
     }
 
     private fun initBixbyWakeup(lpparam: LoadPackageParam) {
@@ -62,6 +66,31 @@ object Bixby {
                 override fun beforeHookedMethod(p: MethodHookParam) { p.result = true }
             })
         } catch (_: Throwable) {}
+    }
+
+    // ═══════ wwvBypass: 绕过原生库唤醒词黑名单（竞品词/脏话/政治等） ═══════
+    // 签名匹配而非硬编码方法名，兼容不同 Bixby 版本
+
+    private fun hookWakeupWordValidator(lpparam: LoadPackageParam) {
+        val cls = lpparam.classLoader.loadClass("com.samsung.voicewakeup.wwv.WakeupWordValidator")
+        for (m in cls.declaredMethods) {
+            if (!Modifier.isPublic(m.modifiers)) continue
+            val pts = m.parameterTypes
+            // b(Locale, String, String, String) boolean → 绕过长度校验
+            if (m.returnType == Boolean::class.javaPrimitiveType &&
+                pts.contentEquals(arrayOf(Locale::class.java, String::class.java, String::class.java, String::class.java))) {
+                XposedBridge.hookMethod(m, object : XC_MethodHook() {
+                    override fun beforeHookedMethod(p: MethodHookParam) { p.result = true }
+                })
+            }
+            // d(Context, String, Locale, String) int → 绕过所有黑名单校验
+            if (m.returnType == Int::class.javaPrimitiveType &&
+                pts.contentEquals(arrayOf(Context::class.java, String::class.java, Locale::class.java, String::class.java))) {
+                XposedBridge.hookMethod(m, object : XC_MethodHook() {
+                    override fun beforeHookedMethod(p: MethodHookParam) { p.result = 0 }
+                })
+            }
+        }
     }
 
     // ═══════ wakeup: 修复自定义短语文本返回空的问题 ═══════

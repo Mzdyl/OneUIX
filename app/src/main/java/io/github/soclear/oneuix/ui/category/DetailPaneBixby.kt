@@ -36,12 +36,20 @@ fun DetailPaneBixby(
             checked = uiState.labsMgr,
             onCheckedChange = { onEvent(BixbyEvent.LabsMgr(it)) },
         )
+        SwitchItem(
+            title = stringResource(R.string.bixby_wwv_bypass_title),
+            summary = stringResource(R.string.bixby_wwv_bypass_summary),
+            icon = ImageVector.vectorResource(R.drawable.phone_forwarded),
+            checked = uiState.wwvBypass,
+            onCheckedChange = { onEvent(BixbyEvent.WwvBypass(it)) },
+        )
     }
 }
 
 sealed interface BixbyEvent {
     @JvmInline value class InjectModel(val value: Boolean) : BixbyEvent
     @JvmInline value class LabsMgr(val value: Boolean) : BixbyEvent
+    @JvmInline value class WwvBypass(val value: Boolean) : BixbyEvent
 }
 
 fun io.github.soclear.oneuix.ui.SettingViewModel.onBixbyEvent(event: BixbyEvent) {
@@ -49,6 +57,7 @@ fun io.github.soclear.oneuix.ui.SettingViewModel.onBixbyEvent(event: BixbyEvent)
         when (event) {
             is BixbyEvent.InjectModel -> p.copy(bixby = p.bixby.copy(injectModel = event.value))
             is BixbyEvent.LabsMgr   -> p.copy(bixby = p.bixby.copy(labsMgr = event.value))
+            is BixbyEvent.WwvBypass -> p.copy(bixby = p.bixby.copy(wwvBypass = event.value))
         }
     }
 }

@@ -102,6 +102,8 @@
     <string name="bixby_offline_summary">注入设备型号到白名单缓存，解锁离线处理和免唤醒对话</string>
     <string name="bixby_custom_wakeup_title">解除自定义唤醒词限制</string>
     <string name="bixby_custom_wakeup_summary">绕过 Labs 功能检查，允许创建和使用自定义唤醒词</string>
+    <string name="bixby_wwv_bypass_title">解除唤醒词文本限制</string>
+    <string name="bixby_wwv_bypass_summary">绕过原生库黑名单（竞品词/脏话/政治等），可使用任意词语作为唤醒词</string>
     <string name="showNotificationCategory_summary">Enable hidden notification category options in Settings (requires root)</string>
     <string name="noAIWatermark_title">Disable Photo Editor AI watermark</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
