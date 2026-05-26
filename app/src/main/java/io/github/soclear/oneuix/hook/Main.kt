@@ -1,16 +1,24 @@
 package io.github.soclear.oneuix.hook
 
+import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.IXposedHookInitPackageResources
 import de.robv.android.xposed.IXposedHookLoadPackage
+import de.robv.android.xposed.IXposedHookZygoteInit.StartupParam
 import de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResourcesParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.BuildConfig
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.systemui.powermenu.PowerMenu
 import io.github.soclear.oneuix.hook.util.PreferenceProvider
+import io.github.soclear.oneuix.hook.util.addAssetPath
 
 
 @Suppress("unused")
-class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
+class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHookZygoteInit {
+    override fun initZygote(startupParam: StartupParam) {
+        modulePath = startupParam.modulePath
+    }
+
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
         if (lpparam.packageName == BuildConfig.APPLICATION_ID) {
             Self.enableDataStoreFileSharing(lpparam)
@@ -140,6 +148,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.launcher.hideAppsSearchBar) {
                     Launcher.hideAppsSearchBar(lpparam)
                 }
+
+                if (preference.other.removeShortcutBadge) {
+                    Launcher.removeShortcutBadge(lpparam)
+                }
             }
 
             Package.MDEC_SERVICE -> {
@@ -233,6 +245,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                         } else null
                     SystemUI.setStatusBarPaddingDp(lpparam, leftPaddingDp, rightPaddingDp)
                 }
+
 
                 if (preference.systemUI.statusBar.supportRealTimeNetworkSpeed) {
                     Network.supportRealTimeNetworkSpeed(lpparam)
@@ -359,6 +372,14 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
                 if (preference.android.enableGoogleSearch) {
                     SystemUI.enableGoogleSearch(lpparam, true)
                 }
+
+                if (preference.systemUI.other.customPowerMenu) {
+                    addAssetPath(modulePath)
+                    PowerMenu.hookPowerMenuActions(
+                        lpparam,
+                        preference.systemUI.other.powerMenuActions,
+                    )
+                }
             }
 
             Package.TELEPHONYUI -> {
@@ -429,5 +450,9 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources {
         if (preference.systemUI.statusBar.hideBatteryPercentageSign) {
             SystemUI.hideBatteryPercentageSign(resparam)
         }
+    }
+
+    private companion object {
+        private lateinit var modulePath: String
     }
 }

@@ -55,6 +55,7 @@ data class Preference(
             val modifyStatusBarRightPadding: Boolean = false,
             val statusBarRightPaddingDp: Float = 0f,
             val hideBatteryPercentageSign: Boolean = false,
+            val hideBatteryIcon: Boolean = false,
             val supportRealTimeNetworkSpeed: Boolean = true,
             val showSeparateUpDownNetworkSpeeds: Boolean = false,
             val setStatusBarClockFormat: Boolean = false,
@@ -100,6 +101,9 @@ data class Preference(
         @Serializable
         data class Other(
             val disableScreenshotCaptureSound: Boolean = false,
+            val customPowerMenu: Boolean = false,
+            val powerMenuActions: List<PowerMenuAction> =
+                PowerMenuAction.defaultPreferences(),
         )
     }
 

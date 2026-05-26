@@ -56,6 +56,7 @@
 
 - 快捷设置时间设为等宽字体
 - 隐藏快捷设置的设备控制
+- 隐藏快捷设置的 Smart View
 - 开启快捷设置 5G 磁贴
 - 隐藏快捷设置面板的媒体播放器 Bar
 - 隐藏快捷设置面板的附近设备和设备控制 Bar
@@ -75,6 +76,7 @@
 
 ##### 其他
 
+- 自定义关机菜单按钮
 - 禁用截图声音
 
 #### 设置
@@ -114,6 +116,11 @@
 - 禁用图片编辑器 AI 水印
 - 绕过 Samsung Health Monitor 国家检查
 - S Pen 使用谷歌翻译
+- 隐藏应用屏幕搜索栏
+- 移除快捷方式图标右下角小角标
+- 手表连接模式（WearOS CN / WearOS Global）
+- 绕过手表配对区域检查
+- 补充国行 WearOS GMS
 
 ### 📦 安装要求
 
@@ -168,6 +175,7 @@
 
 - Set Quick Settings clock to monospaced font
 - Hide Device Control in Quick Settings
+- Hide Smart View in Quick Settings
 - Enable 5G Quick Settings tile
 - Hide Media Player bar in QS panel
 - Hide Nearby Devices and Device Control bar in QS panel
@@ -187,6 +195,7 @@
 
 ##### Other
 
+- Customize power menu actions
 - Disable screenshot sound
 
 #### Settings
@@ -226,6 +235,11 @@
 - Disable Photo Editor AI watermark
 - Bypass Samsung Health Monitor country check
 - Use Google Translate for S Pen
+- Hide search bar on app screen
+- Remove bottom-right shortcut badge
+- Watch connection mode (WearOS CN / WearOS Global)
+- Bypass watch pairing region checks
+- Supplement China WearOS GMS
 
 ### 📦 Installation Requirements
 

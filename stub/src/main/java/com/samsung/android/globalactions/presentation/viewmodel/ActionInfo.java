@@ -1,5 +1,6 @@
 package com.samsung.android.globalactions.presentation.viewmodel;
 
+@SuppressWarnings("unused")
 public class ActionInfo {
     private String mDescription;
     private int mIconResId;
@@ -51,8 +52,8 @@ public class ActionInfo {
         this.mDescription = s;
     }
 
-    public void setIcon(int v) {
-        this.mIconResId = v;
+    public void setIcon(int resId) {
+        this.mIconResId = resId;
     }
 
     public void setLabel(String s) {

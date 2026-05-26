@@ -14,3 +14,6 @@ keystore.properties
 *.jks
 DEVELOPMENT.md
 .github/SELF_MERGE_GUIDE.md
+
+# AI
+.trae

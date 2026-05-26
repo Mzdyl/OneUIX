@@ -8,6 +8,8 @@
     <string name="statusBarRightPaddingDp_title">修改状态栏右边距</string>
     <string name="hideBatteryPercentageSign_title">隐藏状态栏电池的百分号</string>
     <string name="hideBatteryPercentageSign_summary" formatted="false">仅去掉百分号，保留数字</string>
+    <string name="hideBatteryIcon_title">隐藏电池图标</string>
+    <string name="hideBatteryIcon_summary">隐藏电池图标，插入电源时显示充电图标。不影响电池百分比</string>
     <string name="supportRealTimeNetworkSpeed_title">支持显示实时网速</string>
     <string name="supportRealTimeNetworkSpeed_summary">设置->通知->高级设置->显示实时网速</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">状态栏显示上传下载网速</string>
@@ -59,6 +61,18 @@
     <string name="supportBodyBeauty_title">启用身体美化功能</string>
     <string name="supportBodyBeauty_summary">启用相机中的身材塑形和美化功能</string>
     <string name="disableScreenshotCaptureSound_title">禁用截图声音</string>
+    <string name="customPowerMenu_title">自定义关机菜单按钮</string>
+    <string name="powerMenuActionVisible_summary">已显示，位置 %1$d</string>
+    <string name="powerMenuActionHidden_summary">已隐藏</string>
+    <string name="moveUp">上移</string>
+    <string name="moveDown">下移</string>
+    <string name="powerMenuAction_power">关机</string>
+    <string name="powerMenuAction_dataMode">移动数据</string>
+    <string name="powerMenuAction_restart">重启</string>
+    <string name="powerMenuAction_safeMode">安全模式</string>
+    <string name="powerMenuAction_lockDownMode">锁定模式</string>
+    <string name="powerMenuAction_emergencyCall">紧急呼叫</string>
+    <string name="powerMenuAction_medicalInfo">医疗信息</string>
     <string name="showPackageInfo_title">应用程序信息页面显示包信息</string>
     <string name="showPackageInfo_summary">长按或双击可复制</string>
     <string name="makeAllUserAppsAvailable_title">应用分身支持所有用户应用</string>
@@ -119,6 +133,8 @@
     <string name="supportCallAndTextOnOtherDevices_title">支持跨设备接打电话和收发短信</string>
     <string name="supportCallAndTextOnOtherDevices_summary">设置 -> 已连接的设备 -> 跨设备接打电话和收发短信</string>
     <string name="hideAppsSearchBar_title">隐藏应用屏幕搜索栏</string>
+    <string name="removeShortcutBadge_title">移除快捷方式图标右下角小角标</string>
+    <string name="removeShortcutBadge_summary">去掉桌面快捷方式图标右下角的原 APP 小角标</string>
     
     <!-- 手表配对 -->
     <string name="watchPairing_label">三星穿戴</string>
@@ -134,6 +150,8 @@
     
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>
+    <string name="restartRecovery">重启到 Recovery</string>
+    <string name="restartDownload">重启到下载模式</string>
 
     <string name="module_disabled_tip">请在 LSPosed 中启用本模块</string>
     <string name="close">关闭</string>

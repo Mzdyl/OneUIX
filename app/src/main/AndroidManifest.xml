@@ -69,6 +69,10 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+        <receiver
+            android:name=".RebootReceiver"
+            android:exported="true"
+            android:permission="android.permission.STATUS_BAR_SERVICE" />
     </application>
 
 </manifest>

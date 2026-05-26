@@ -8,6 +8,8 @@
     <string name="statusBarRightPaddingDp_title">Modify status bar right padding</string>
     <string name="hideBatteryPercentageSign_title">Hide battery percentage sign in status bar</string>
     <string name="hideBatteryPercentageSign_summary" formatted="false">Remove the % sign only, keep the numbers</string>
+    <string name="hideBatteryIcon_title">Hide battery icon</string>
+    <string name="hideBatteryIcon_summary">Hides the battery icon while displaying the charging icon when plugged. Doesn\'t affect the battery percentage</string>
     <string name="supportRealTimeNetworkSpeed_title">Support displaying real-time network speed</string>
     <string name="supportRealTimeNetworkSpeed_summary">Settings -> Notifications -> Advanced settings -> Show real-time network speed</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">Show separate upload/download speeds in status bar</string>
@@ -59,6 +61,18 @@
     <string name="supportBodyBeauty_title">Enable body beauty feature</string>
     <string name="supportBodyBeauty_summary">Enable body shaping and beauty features in camera</string>
     <string name="disableScreenshotCaptureSound_title">Disable screenshot sound</string>
+    <string name="customPowerMenu_title">Customize power menu actions</string>
+    <string name="powerMenuActionVisible_summary">Visible, position %1$d</string>
+    <string name="powerMenuActionHidden_summary">Hidden</string>
+    <string name="moveUp">Up</string>
+    <string name="moveDown">Down</string>
+    <string name="powerMenuAction_power">Power off</string>
+    <string name="powerMenuAction_dataMode">Mobile data</string>
+    <string name="powerMenuAction_restart">Restart</string>
+    <string name="powerMenuAction_safeMode">Safe mode</string>
+    <string name="powerMenuAction_lockDownMode">Lockdown mode</string>
+    <string name="powerMenuAction_emergencyCall">Emergency call</string>
+    <string name="powerMenuAction_medicalInfo">Medical info</string>
     <string name="showPackageInfo_title">Show package info on App Info page</string>
     <string name="showPackageInfo_summary">Long press or double tap to copy</string>
     <string name="makeAllUserAppsAvailable_title">Make all user apps available for app cloning</string>
@@ -123,6 +137,8 @@
     <string name="supportCallAndTextOnOtherDevices_title">Support call &amp; text on other devices</string>
     <string name="supportCallAndTextOnOtherDevices_summary">Settings -> Connected devices -> Call &amp; text on other devices</string>
     <string name="hideAppsSearchBar_title">Hide search bar on app screen</string>
+    <string name="removeShortcutBadge_title">Remove bottom-right shortcut badge</string>
+    <string name="removeShortcutBadge_summary">Remove the original app badge from the bottom-right corner of home screen shortcuts</string>
     
     <!-- Watch Pairing -->
     <string name="watchPairing_label">Galaxy Wearable</string>
@@ -140,6 +156,8 @@
     <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
     <string name="useGoogleTranslate_title">Use Google Translate</string>
     <string name="useGoogleTranslate_summary">Use Google Translate for S Pen translation (default is Baidu Translate)</string>
+    <string name="restartRecovery">Reboot to recovery</string>
+    <string name="restartDownload">Reboot to download mode</string>
 
     <string name="module_disabled_tip">Please enable this module in LSPosed</string>
     <string name="close">Close</string>

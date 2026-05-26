@@ -16,6 +16,8 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XC_MethodReplacement
+import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookConstructor
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
@@ -364,6 +366,38 @@ object Launcher {
             )
         } catch (t: Throwable) {
             logError("showMemoryUsageInRecentsTargetSdk35 updateTextViewCallback failed", t)
+        }
+    }
+
+    fun removeShortcutBadge(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.LAUNCHER) return
+        try {
+            // 阻止工作资料（ WORK_APP ）/安全文件夹（ SECURE_FOLDER ）/即时应用（ INSTANT_APP ）/中国可卸载应用（ CHINA_REMOVABLE ）等角标
+            findAndHookMethod(
+                "com.honeyspace.ui.common.iconview.AppShortcutBadgeCreator",
+                loadPackageParam.classLoader,
+                "create",
+                Context::class.java,
+                "com.honeyspace.sdk.source.entity.ComponentKey",
+                XC_MethodReplacement.returnConstant(null)
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+
+        try {
+            // 阻止深度快捷方式右下角的小图标
+            findAndHookMethod(
+                "com.honeyspace.ui.common.iconview.DeepShortcutIconSupplier",
+                loadPackageParam.classLoader,
+                "drawSmallIcon",
+                android.graphics.Canvas::class.java,
+                android.content.pm.ShortcutInfo::class.java,
+                Boolean::class.javaPrimitiveType,
+                XC_MethodReplacement.DO_NOTHING
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
         }
     }
 
