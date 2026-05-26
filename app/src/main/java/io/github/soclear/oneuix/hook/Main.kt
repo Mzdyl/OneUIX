@@ -434,7 +434,8 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             Package.BIXBY_AGENT,
             Package.BIXBY_WAKEUP -> {
                 if (preference.bixby.injectModel ||
-                    preference.bixby.labsMgr) {
+                    preference.bixby.labsMgr ||
+                    preference.bixby.wwvBypass) {
                     Bixby.init(lpparam, preference.bixby)
                 }
             }
