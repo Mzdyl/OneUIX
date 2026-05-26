@@ -93,8 +93,6 @@ object Camera {
                             BooleanFeatureEnum.SUPPORT_FRONT_LOG_VIDEO,
                             BooleanFeatureEnum.SUPPORT_MOTION_PHOTO_CAPTURE_MODE,
                             BooleanFeatureEnum.SUPPORT_MOTION_PHOTO_BEFORE_AND_AFTER_AS_DEFAULT_CAPTURE_MODE,
-                            BooleanFeatureEnum.SUPPORT_FRAME_WATERMARK,
-                            BooleanFeatureEnum.SUPPORT_WATERMARK_FONT_SAMSUNG_SHARP_SANS
                         )
                         for (myEnum in allMenuEnums) {
                             val enum = try {
