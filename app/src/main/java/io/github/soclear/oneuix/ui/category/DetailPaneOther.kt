@@ -11,8 +11,6 @@ import androidx.compose.ui.Modifier
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.ui.SettingViewModel
 
-private const val WATCH_PAIRING_MODE_CN = 1
-
 @Composable
 fun DetailPaneOther(
     uiState: Preference.Other,

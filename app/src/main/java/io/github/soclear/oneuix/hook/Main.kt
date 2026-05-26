@@ -149,7 +149,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Launcher.hideAppsSearchBar(lpparam)
                 }
 
-                if (preference.other.removeShortcutBadge) {
+                if (preference.launcher.removeShortcutBadge) {
                     Launcher.removeShortcutBadge(lpparam)
                 }
             }
@@ -286,13 +286,13 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     SystemUI.setBatteryIconScale(lpparam, widthScale, heightScale)
                 }
 
+                if (preference.systemUI.statusBar.hideBatteryIcon) {
+                    HideBatteryIconHook.apply(lpparam)
+                }
+
                 if (preference.systemUI.statusBar.setCustomCarrierName) {
                     val carrierName = preference.systemUI.statusBar.customCarrierName
                     SystemUI.setCustomCarrierName(lpparam, carrierName)
-                }
-
-                if (preference.systemUI.statusBar.hideLockscreenStatusBar) {
-                    SystemUI.hideLockscreenStatusBar(lpparam)
                 }
 
                 if (preference.systemUI.statusBar.hideLockscreenStatusBar) {

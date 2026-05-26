@@ -40,6 +40,13 @@ fun DetailPaneLauncher(
             checked = uiState.hideAppsSearchBar,
             onCheckedChange = { onEvent(LauncherEvent.HideAppsSearchBar(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.position_bottom_right),
+            title = stringResource(id = R.string.removeShortcutBadge_title),
+            summary = stringResource(id = R.string.removeShortcutBadge_summary),
+            checked = uiState.removeShortcutBadge,
+            onCheckedChange = { onEvent(LauncherEvent.RemoveShortcutBadge(it)) }
+        )
     }
 }
 
@@ -49,6 +56,9 @@ sealed interface LauncherEvent {
 
     @JvmInline
     value class HideAppsSearchBar(val value: Boolean) : LauncherEvent
+
+    @JvmInline
+    value class RemoveShortcutBadge(val value: Boolean) : LauncherEvent
 }
 
 fun SettingViewModel.onLauncherEvent(event: LauncherEvent) {
@@ -63,6 +73,12 @@ fun SettingViewModel.onLauncherEvent(event: LauncherEvent) {
             is LauncherEvent.HideAppsSearchBar -> preference.copy(
                 launcher = preference.launcher.copy(
                     hideAppsSearchBar = event.value
+                )
+            )
+
+            is LauncherEvent.RemoveShortcutBadge -> preference.copy(
+                launcher = preference.launcher.copy(
+                    removeShortcutBadge = event.value
                 )
             )
         }

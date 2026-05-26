@@ -438,14 +438,6 @@ fun DetailPaneSystemUI(
                 }
             )
         }
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.mobile_screensaver),
-            title = stringResource(id = R.string.hideLockscreenStatusBar_title),
-            checked = uiState.statusBar.hideLockscreenStatusBar,
-            onCheckedChange = {
-                onEvent(SystemUIEvent.StatusBar.HideLockscreenStatusBar(it))
-            }
-        )
 
         DividerText(R.string.qs)
         SwitchItem(
@@ -1095,46 +1087,6 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                 )
             }
 
-            is SystemUIEvent.StatusBar.SetBatteryIconWidthScale -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            setBatteryIconWidthScale = event.value
-                        )
-                    )
-                )
-            }
-
-            is SystemUIEvent.StatusBar.BatteryIconWidthScale -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            batteryIconWidthScale = event.value
-                        )
-                    )
-                )
-            }
-
-            is SystemUIEvent.StatusBar.SetBatteryIconHeightScale -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            setBatteryIconHeightScale = event.value
-                        )
-                    )
-                )
-            }
-
-            is SystemUIEvent.StatusBar.BatteryIconHeightScale -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            batteryIconHeightScale = event.value
-                        )
-                    )
-                )
-            }
-
             is SystemUIEvent.StatusBar.SetCustomCarrierName -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(
@@ -1150,16 +1102,6 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             customCarrierName = event.value
-                        )
-                    )
-                )
-            }
-
-            is SystemUIEvent.StatusBar.HideLockscreenStatusBar -> {
-                preference.copy(
-                    systemUI = preference.systemUI.copy(
-                        statusBar = preference.systemUI.statusBar.copy(
-                            hideLockscreenStatusBar = event.value
                         )
                     )
                 )

@@ -180,6 +180,7 @@ data class Preference(
     data class Launcher(
         val showMemoryUsageInRecents: Boolean = false,
         val hideAppsSearchBar: Boolean = false,
+        val removeShortcutBadge: Boolean = false,
     )
 
     @Serializable
