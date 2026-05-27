@@ -155,6 +155,7 @@
     <string name="watchPairing_forceChinaGmsCore_title">补充国行 WearOS GMS</string>
     <string name="watchPairing_forceChinaGmsCore_summary">当 WearOS CN 未自动加入时，将 com.google.android.wearable.app.cn 加入下载列表</string>
     
+    <string name="restartSystemUI">重启系统界面</string>
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>
     <string name="restartRecovery">重启到 Recovery</string>

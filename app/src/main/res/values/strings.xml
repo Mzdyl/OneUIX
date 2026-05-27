@@ -159,6 +159,7 @@
     <string name="watchPairing_forceChinaGmsCore_title">Supplement China WearOS GMS</string>
     <string name="watchPairing_forceChinaGmsCore_summary">If WearOS CN does not add it automatically, add com.google.android.wearable.app.cn to the download list</string>
     
+    <string name="restartSystemUI">Restart System UI</string>
     <string name="restartSystemUI_title">Restart System UI</string>
     <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
     <string name="useGoogleTranslate_title">Use Google Translate</string>
