@@ -2,6 +2,7 @@ package io.github.soclear.oneuix.hook
 
 import android.content.Context
 import android.os.Build
+import android.os.SystemClock
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
@@ -9,6 +10,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.data.Package
 import java.io.File
+import java.lang.reflect.Array as ReflectArray
 import java.lang.reflect.Modifier
 import java.util.Locale
 
@@ -34,7 +36,7 @@ object Bixby {
         hookWakeupCustomPhrase(lpparam)
         if (p.wwvBypass) {
             hookWakeupWordTypeValidator(lpparam)
-            hookKwdCjkFix(lpparam)
+            hookKwdAsianTextFix(lpparam)
         }
     }
 
@@ -119,11 +121,11 @@ object Bixby {
         }
     }
 
-    // ═══════ wakeup: KWD 引擎强制匹配中文唤醒词 ═══════
-    // native KWD 引擎无法处理中文文本，verifyRun 始终返回 0
-    // 检测到 mKeyword 含 CJK 字符时强改结果为 1，实际唤醒由 KWV 音频匹配把关
+    // ═══════ wakeup: KWD 引擎强制匹配亚洲文字唤醒词 ═══════
+    // native KWD 引擎无法处理中文/韩文/日文文本，verifyRun 始终返回 0
+    // 检测到 mKeyword 含相关文字时强改结果为 1，实际唤醒由 KWV 音频匹配把关
 
-    private fun hookKwdCjkFix(lpparam: LoadPackageParam) {
+    private fun hookKwdAsianTextFix(lpparam: LoadPackageParam) {
         for (kn in arrayOf(
             "com.samsung.voicewakeup.kwd.normal.custom.WakeupKwdNormalCustom",
             "com.samsung.voicewakeup.kwd.bargein.custom.WakeupKwdBargeinCustom",
@@ -147,13 +149,19 @@ object Bixby {
                             val ret = p.result as? Int ?: return
                             if (ret != 0) return
                             val kw = try { kwF?.get(p.thisObject) ?: "" } catch (_: Throwable) { "" }
-                            if ((kw as? String)?.any { it in '\u4E00'..'\u9FFF' } == true)
+                            if ((kw as? String)?.any { it.isAsianWakeupCharacter() } == true)
                                 p.result = 1
                         }
                     })
                 }
             } catch (_: Throwable) {}
         }
+    }
+
+    private fun Char.isAsianWakeupCharacter(): Boolean {
+        return this in '\u4E00'..'\u9FFF' ||
+            this in '\uAC00'..'\uD7AF' ||
+            this in '\u3040'..'\u30FF'
     }
 
     // ═══════ wakeup: 修复自定义短语文本返回空的问题 ═══════
@@ -163,12 +171,14 @@ object Bixby {
         findAndHookMethod("android.app.SharedPreferencesImpl", lpparam.classLoader,
             "getString", String::class.java, String::class.java,
             object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    if (p.args[0] == "myvoice_string_custom") {
-                        val orig = p.result ?: p.args[1] ?: ""
-                        if (orig.toString().isEmpty()) {
-                            val txt = readWakeupSP("myvoice_string_custom")
+                override fun afterHookedMethod(p: MethodHookParam) {
+                    if (p.args[0] == CUSTOM_WAKEUP_TEXT_KEY) {
+                        val orig = p.result as? String
+                        if (orig.isNullOrEmpty()) {
+                            val txt = readWakeupText()
                             if (txt.isNotEmpty()) p.result = txt
+                        } else {
+                            updateWakeupTextCache(orig)
                         }
                     }
                 }
@@ -176,16 +186,27 @@ object Bixby {
         // MatrixCursor.addRow → ContentProvider locale 不匹配后丢弃文本
         try {
             val c = lpparam.classLoader.loadClass("android.database.MatrixCursor")
+            val columnNamesField = try {
+                c.getDeclaredField("columnNames").apply { isAccessible = true }
+            } catch (_: Throwable) {
+                null
+            }
             findAndHookMethod(c, "addRow", arrayOfNulls<Any>(0).javaClass, object : XC_MethodHook() {
                 override fun beforeHookedMethod(p: MethodHookParam) {
-                    val row = p.args[0] as? Array<Any?> ?: return
+                    val row = p.args[0] ?: return
+                    if (!row.javaClass.isArray) return
                     try {
-                        val cols = p.thisObject.javaClass.getDeclaredField("columnNames").apply { isAccessible = true }.get(p.thisObject) as? Array<String> ?: return
+                        val cols = columnNamesField?.get(p.thisObject) as? Array<*> ?: return
+                        val rowSize = ReflectArray.getLength(row)
                         for (i in cols.indices) {
+                            if (i >= rowSize) break
                             if (cols[i] != "customKeyword") continue
-                            if (row[i] == null || row[i].toString().isEmpty()) {
-                                val txt = readWakeupSP("myvoice_string_custom")
-                                if (txt.isNotEmpty()) row[i] = txt
+                            val value = ReflectArray.get(row, i)
+                            if (value == null || value.toString().isEmpty()) {
+                                val txt = readWakeupText()
+                                if (txt.isNotEmpty()) ReflectArray.set(row, i, txt)
+                            } else {
+                                updateWakeupTextCache(value.toString())
                             }
                         }
                     } catch (_: Throwable) {}
@@ -194,16 +215,49 @@ object Bixby {
         } catch (_: Throwable) {}
     }
 
-    private fun readWakeupSP(key: String): String {
-        try {
-            val dir = File("/data/data/com.samsung.android.bixby.wakeup/shared_prefs")
-            if (!dir.exists() || !dir.isDirectory) return ""
-            for (f in dir.listFiles() ?: emptyArray()) {
-                if (!f.name.endsWith(".xml")) continue
-                val m = Regex("<string name=\"$key\">(.*?)</string>").find(f.readText())
-                if (m != null) return m.groupValues[1]
+    private fun readWakeupText(): String {
+        val now = SystemClock.elapsedRealtime()
+        val cached = cachedWakeupText
+        if (cached != null && now - cachedWakeupTextTimeMillis < WAKEUP_TEXT_CACHE_TTL_MILLIS) {
+            return cached
+        }
+
+        val text = try {
+            val dir = File(BIXBY_WAKEUP_SHARED_PREFERENCES_PATH)
+            if (!dir.exists() || !dir.isDirectory) {
+                ""
+            } else {
+                var result = ""
+                for (f in dir.listFiles() ?: emptyArray()) {
+                    if (!f.name.endsWith(".xml")) continue
+                    val match = WAKEUP_TEXT_REGEX.find(f.readText())
+                    if (match != null) {
+                        result = match.groupValues[1]
+                        break
+                    }
+                }
+                result
             }
-        } catch (_: Throwable) {}
-        return ""
+        } catch (_: Throwable) {
+            ""
+        }
+
+        updateWakeupTextCache(text, now)
+        return text
     }
+
+    private fun updateWakeupTextCache(text: String, now: Long = SystemClock.elapsedRealtime()) {
+        cachedWakeupText = text
+        cachedWakeupTextTimeMillis = now
+    }
+
+    private const val CUSTOM_WAKEUP_TEXT_KEY = "myvoice_string_custom"
+    private const val WAKEUP_TEXT_CACHE_TTL_MILLIS = 5_000L
+    private const val BIXBY_WAKEUP_SHARED_PREFERENCES_PATH =
+        "/data/data/com.samsung.android.bixby.wakeup/shared_prefs"
+    private val WAKEUP_TEXT_REGEX = Regex("<string name=\"$CUSTOM_WAKEUP_TEXT_KEY\">(.*?)</string>")
+    @Volatile
+    private var cachedWakeupText: String? = null
+    @Volatile
+    private var cachedWakeupTextTimeMillis: Long = 0
 }
