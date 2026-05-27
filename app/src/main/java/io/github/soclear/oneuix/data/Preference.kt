@@ -235,5 +235,7 @@ data class Bixby(
         val placeholder: Boolean = false
     )
 
-
+    companion object {
+        const val FILE_NAME = "preference.json"
+    }
 }

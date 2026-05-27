@@ -16,8 +16,6 @@ private val json = Json {
 }
 
 object PreferenceProvider {
-    private const val PREFERENCE_FILE_NAME = "preference.json"
-    
     private var cachedFile: File? = null
 
 
@@ -35,7 +33,7 @@ object PreferenceProvider {
             val parentPath = XSharedPreferences(BuildConfig.APPLICATION_ID).file?.parent
             if (parentPath.isNullOrBlank()) return null
             
-            val file = File(parentPath, PREFERENCE_FILE_NAME)
+            val file = File(parentPath, Preference.FILE_NAME)
 
             if (!file.exists()) {
                 file.writeText("{}")

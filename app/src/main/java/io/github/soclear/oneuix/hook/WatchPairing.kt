@@ -231,16 +231,13 @@ object WatchPairing {
                     @Override
                     override fun afterHookedMethod(param: MethodHookParam) {
                         try {
-                            val result = param.result as? java.util.HashSet<*> ?: return
+                            val packages = param.result as? Set<*> ?: return
                             val chinaGmsPackage = "com.google.android.wearable.app.cn"
-
-                            // 强制添加国行 GMS 包名
-                            @Suppress("UNCHECKED_CAST")
-                            val mutableSet = result as java.util.HashSet<String>
-                            if (!mutableSet.contains(chinaGmsPackage)) {
-                                mutableSet.add(chinaGmsPackage)
+                            val newPackages = packages.toMutableSet()
+                            if (newPackages.add(chinaGmsPackage)) {
                                 log("WatchPairing: Forced adding China GMS Core package")
                             }
+                            param.result = newPackages
                         } catch (t: Throwable) {
                             logError("WatchPairing: forceInstallChinaGmsCore failed", t)
                         }

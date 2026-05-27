@@ -60,7 +60,7 @@
     <string name="region_uk">英国</string>
     <string name="region_de">德国</string>
     <string name="supportAllCameraMenu_title">显示相机的所有菜单</string>
-    <string name="supportAllCameraMenu_summary">快门音、自动 HDR、Log、边框叠加水印</string>
+    <string name="supportAllCameraMenu_summary">快门音、自动 HDR、Log、动态照片</string>
     <string name="disableCameraTemperatureCheck_title">禁用相机过热检查</string>
     <string name="supportFrameWatermark_title">启用边框叠加水印</string>
     <string name="supportFrameWatermark_summary">为照片添加设备边框叠加水印</string>

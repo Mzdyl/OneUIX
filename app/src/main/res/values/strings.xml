@@ -60,7 +60,7 @@
     <string name="region_uk">United Kingdom</string>
     <string name="region_de">Germany</string>
     <string name="supportAllCameraMenu_title">Show all camera menus</string>
-    <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log, Frame watermark</string>
+    <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log, Motion photo</string>
     <string name="disableCameraTemperatureCheck_title">Disable camera temperature check</string>
     <string name="supportFrameWatermark_title">Enable camera frame watermark</string>
     <string name="supportFrameWatermark_summary">Add device frame overlay watermark to photos</string>

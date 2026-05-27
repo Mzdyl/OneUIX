@@ -19,6 +19,8 @@ import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
 import java.lang.reflect.Field
+import java.util.Collections
+import java.util.WeakHashMap
 
 /**
  * eSIM 适配器 Hook 模块
@@ -32,21 +34,34 @@ object ESimAdapter {
     private const val PHYSICAL_ESIM_ADAPTER_SIM_2 = 1
     private const val PHYSICAL_ESIM_ADAPTER_BOTH = 2
 
-    private var physicalEsimAdapterContext: Context? = null
-    private val trackedMobileViewSlots = mutableMapOf<View, Int>()
-    private val hiddenMobileViews = mutableSetOf<View>()
+    private val trackedMobileViewSlots: MutableMap<View, Int> =
+        Collections.synchronizedMap(WeakHashMap())
+    private val hiddenMobileViews: MutableSet<View> =
+        Collections.synchronizedSet(Collections.newSetFromMap(WeakHashMap()))
     private val unavailableCarrierSlots = mutableSetOf<Int>()
     private val telephonyManagersBySubId = mutableMapOf<Int, TelephonyManager>()
-    private val unavailableCarrierTexts = mutableSetOf<String>()
+    private val unavailableCarrierTexts: MutableSet<String> =
+        Collections.synchronizedSet(mutableSetOf())
+    private var physicalEsimAdapterContext: Context? = null
+    @Volatile
     private var unavailableCarrierTextsLoaded = false
 
     private val unavailableCarrierTextResourceNames = listOf(
+        "emergency_calls_only",
+        "lockscreen_carrier_default",
+        "kg_emergency_calls_only",
+        "keyguard_emergency_calls_only",
+        "keyguard_carrier_default",
+        "status_bar_no_service",
+        "status_bar_network_name_no_service",
+        "mobile_network_no_service",
+        "no_service",
         "quick_settings_secondary_mobile_carrier_name_text",
-        "keyguard_missing_sim_message_short",
-        "mobile_network_no_service"
+        "keyguard_missing_sim_message_short"
     )
 
     private val unavailableCarrierTextFallbacks = setOf(
+        "emergency calls only",
         "no service",
         "no sim",
         "sim not provisioned",
