@@ -24,7 +24,7 @@ import kotlin.system.exitProcess
 
 
 class MainActivity : ComponentActivity() {
-    val preferenceFile by lazy { dataStoreFile("whatever") }
+    private val preferenceFile by lazy { dataStoreFile(Preference.DATASTORE_SENTINEL_NAME) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

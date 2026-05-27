@@ -49,4 +49,4 @@ object PreferenceSerializer : Serializer<Preference> {
     override val defaultValue: Preference  = Preference()
 }
 
-val Context.dataStore by dataStore("whatever", PreferenceSerializer)
+val Context.dataStore by dataStore(Preference.DATASTORE_SENTINEL_NAME, PreferenceSerializer)

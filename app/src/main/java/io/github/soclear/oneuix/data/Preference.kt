@@ -223,10 +223,10 @@ data class Preference(
     )
 
     @Serializable
-data class Bixby(
-        val injectModel: Boolean = false,           // 离线+免唤醒：注入设备型号到白名单
-        val labsMgr: Boolean = false,               // 自定义唤醒词：LabsFeatureManager 限制
-        val wwvBypass: Boolean = false,             // 唤醒词文本验证：绕过竞品/违禁词限制
+    data class Bixby(
+        val injectModel: Boolean = false,
+        val labsMgr: Boolean = false,
+        val wwvBypass: Boolean = false,
     )
 
     @Serializable
@@ -237,5 +237,6 @@ data class Bixby(
 
     companion object {
         const val FILE_NAME = "preference.json"
+        const val DATASTORE_SENTINEL_NAME = "whatever"
     }
 }

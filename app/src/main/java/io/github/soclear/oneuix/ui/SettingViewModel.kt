@@ -45,6 +45,11 @@ class SettingViewModel(application: Application) : ViewModel() {
     val categoryAppInfoList: StateFlow<List<CategoryAppInfo>> = flow {
         val packageManager = app.packageManager
         val categoryAppInfoList = Category.entries.mapNotNull { category ->
+            // Hide the empty placeholder category until it has visible settings.
+            if (category == Category.Other) {
+                return@mapNotNull null
+            }
+
             // 始终显示的分类
             if (category in alwaysShowCategories) {
                 val label = when (category) {
