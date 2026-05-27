@@ -71,6 +71,9 @@ data class Preference(
             val setCustomCarrierName: Boolean = false,
             val customCarrierName: String = "",
             val hideLockscreenStatusBar: Boolean = false,
+            val updateStatusBarClockEverySecond: Boolean = false,
+            val physicalEsimAdapterWorkaround: Boolean = false,
+            val physicalEsimAdapterSimSlot: Int = 1,
         )
 
         @Serializable
@@ -110,6 +113,7 @@ data class Preference(
     @Serializable
     data class Settings(
         val showForcePeakRefreshRatePreference: Boolean = true,
+        val supportOutdoorMode: Boolean = false,
         val showMoreBatteryInfo: Boolean = true,
         val showPackageInfo: Boolean = true,
         val showWiFiLinkSpeed: Boolean = false,

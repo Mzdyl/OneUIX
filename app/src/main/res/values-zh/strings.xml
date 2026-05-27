@@ -10,6 +10,12 @@
     <string name="hideBatteryPercentageSign_summary" formatted="false">仅去掉百分号，保留数字</string>
     <string name="hideBatteryIcon_title">隐藏电池图标</string>
     <string name="hideBatteryIcon_summary">隐藏电池图标，插入电源时显示充电图标。不影响电池百分比</string>
+    <string name="physicalEsimAdapterWorkaround_title">实体 eSIM 适配器兼容处理</string>
+    <string name="physicalEsimAdapterWorkaround_summary">当所选 SIM 卡无服务或仅可拨打紧急电话时隐藏其图标</string>
+    <string name="physicalEsimAdapterSimSlot_title">SIM 卡</string>
+    <string name="sim_slot_1">SIM 1</string>
+    <string name="sim_slot_2">SIM 2</string>
+    <string name="sim_slot_both">SIM 1 和 SIM 2</string>
     <string name="supportRealTimeNetworkSpeed_title">支持显示实时网速</string>
     <string name="supportRealTimeNetworkSpeed_summary">设置->通知->高级设置->显示实时网速</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">状态栏显示上传下载网速</string>
@@ -86,6 +92,7 @@
     <string name="preferRecordingButton_title">通话界面显示“录音”按钮而不是“添加通话”按钮</string>
     <string name="showMoreBatteryInfo_title">显示更多电池信息</string>
     <string name="showMoreBatteryInfo_summary">设置->关于手机->电池信息</string>
+    <string name="supportOutdoorMode_title">解锁户外模式</string>
     <string name="supportAppJumpBlock_title">支持应用跳转拦截</string>
     <string name="supportAppJumpBlock_summary">设置->安全与隐私->更多安全设置->应用跳转拦截</string>
     <string name="doubleTapStatusBarToSleep_title">双击状态栏锁屏</string>

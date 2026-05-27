@@ -191,6 +191,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Settings.showForcePeakRefreshRatePreference(lpparam)
                 }
 
+                if (preference.settings.supportOutdoorMode) {
+                    Settings.supportOutdoorMode(lpparam)
+                }
+
                 if (preference.settings.showMoreBatteryInfo) {
                     Settings.showMoreBatteryInfo(lpparam)
                 }
@@ -261,6 +265,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     SystemUI.setStatusBarClockStyle(lpparam, format)
                 }
 
+                if (preference.systemUI.statusBar.updateStatusBarClockEverySecond) {
+                    SystemUI.updateStatusBarClockEverySecond(lpparam)
+                }
+
                 if (preference.systemUI.statusBar.hideSecureFolderStatusBarIcon) {
                     SystemUI.hideSecureFolderStatusBarIcon(lpparam)
                 }
@@ -288,6 +296,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.systemUI.statusBar.hideBatteryIcon) {
                     HideBatteryIconHook.apply(lpparam)
+                }
+
+                if (preference.systemUI.statusBar.physicalEsimAdapterWorkaround) {
+                    ESimAdapter.apply(lpparam, preference.systemUI.statusBar.physicalEsimAdapterSimSlot)
                 }
 
                 if (preference.systemUI.statusBar.setCustomCarrierName) {
@@ -367,6 +379,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.systemUI.other.disableScreenshotCaptureSound) {
                     SystemUI.disableScreenshotCaptureSound(lpparam)
+                }
+
+                if (preference.settings.supportOutdoorMode) {
+                    SystemUI.supportOutdoorMode(lpparam)
                 }
 
                 if (preference.android.enableGoogleSearch) {

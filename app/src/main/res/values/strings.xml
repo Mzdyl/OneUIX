@@ -10,6 +10,12 @@
     <string name="hideBatteryPercentageSign_summary" formatted="false">Remove the % sign only, keep the numbers</string>
     <string name="hideBatteryIcon_title">Hide battery icon</string>
     <string name="hideBatteryIcon_summary">Hides the battery icon while displaying the charging icon when plugged. Doesn\'t affect the battery percentage</string>
+    <string name="physicalEsimAdapterWorkaround_title">Workaround for physical eSIM adapter</string>
+    <string name="physicalEsimAdapterWorkaround_summary">Hides the icon for the selected SIM card if there is no service or only emergency calls are available</string>
+    <string name="physicalEsimAdapterSimSlot_title">SIM card</string>
+    <string name="sim_slot_1">SIM 1</string>
+    <string name="sim_slot_2">SIM 2</string>
+    <string name="sim_slot_both">SIM 1 and SIM 2</string>
     <string name="supportRealTimeNetworkSpeed_title">Support displaying real-time network speed</string>
     <string name="supportRealTimeNetworkSpeed_summary">Settings -> Notifications -> Advanced settings -> Show real-time network speed</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">Show separate upload/download speeds in status bar</string>
@@ -86,6 +92,7 @@
     <string name="preferRecordingButton_title">Show \'Record\' button instead of \'Add call\' button on call screen</string>
     <string name="showMoreBatteryInfo_title">Show more battery info</string>
     <string name="showMoreBatteryInfo_summary">Settings -> About phone -> Battery information</string>
+    <string name="supportOutdoorMode_title">Unlock Outdoor mode</string>
     <string name="supportAppJumpBlock_title">Support app jump blocking</string>
     <string name="supportAppJumpBlock_summary">Settings -> Security and privacy -> More security settings -> App jump block</string>
     <string name="doubleTapStatusBarToSleep_title">Double tap status bar to sleep</string>
