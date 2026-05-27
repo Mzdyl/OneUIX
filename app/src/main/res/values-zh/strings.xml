@@ -120,6 +120,12 @@
     <string name="supportAutoPowerOnOff_summary">设置->重置->自动开/关机</string>
     <string name="showNotificationCategory_title">显示通知类别设置</string>
     <string name="showNotificationCategory_summary">在设置中启用隐藏的通知类别选项（需要 root 权限）</string>
+    <string name="bixby_offline_title">绕过离线处理和免手动唤醒设备限制</string>
+    <string name="bixby_offline_summary">将设备型号注入白名单缓存，解锁离线处理和免手动对话</string>
+    <string name="bixby_custom_wakeup_title">绕过自定义唤醒词限制</string>
+    <string name="bixby_custom_wakeup_summary">绕过 Labs 功能检查，允许创建和使用自定义唤醒词</string>
+    <string name="bixby_wwv_bypass_title">绕过唤醒词文本限制</string>
+    <string name="bixby_wwv_bypass_summary">绕过原生库黑名单，允许使用任意词语作为唤醒词</string>
     <string name="noAIWatermark_title">禁用图片编辑器 AI 水印</string>
     <string name="bypassHealthMonitorCountryCheck_title">绕过 Samsung Health Monitor 国家检查</string>
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>
