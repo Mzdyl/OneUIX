@@ -8,6 +8,7 @@ import de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResou
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.BuildConfig
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.systemui.StatusBarClock
 import io.github.soclear.oneuix.hook.systemui.powermenu.PowerMenu
 import io.github.soclear.oneuix.hook.util.PreferenceProvider
 import io.github.soclear.oneuix.hook.util.addAssetPath
@@ -259,14 +260,13 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Network.showSeparateUpDownNetworkSpeeds(lpparam)
                 }
 
-                // 状态栏时钟格式（支持变量: {temp}, {lunar}, {rate}, {shichen}, {sec}, {date}）
                 if (preference.systemUI.statusBar.setStatusBarClockFormat) {
                     val format = preference.systemUI.statusBar.statusBarClockFormat
-                    SystemUI.setStatusBarClockStyle(lpparam, format)
+                    StatusBarClock.setStatusBarClockStyle(lpparam, format)
                 }
 
                 if (preference.systemUI.statusBar.updateStatusBarClockEverySecond) {
-                    SystemUI.updateStatusBarClockEverySecond(lpparam)
+                    StatusBarClock.updateStatusBarClockEverySecond(lpparam)
                 }
 
                 if (preference.systemUI.statusBar.hideSecureFolderStatusBarIcon) {

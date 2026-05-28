@@ -17,3 +17,15 @@ DEVELOPMENT.md
 
 # AI
 .trae
+.cursor
+.claude
+.aider*
+.continue
+.cody
+.github/copilot-instructions.md
+
+# opencode 本地配置（可选，如果要共享配置则注释掉）
+# .opencode/
+AGENTS.md
+.opencode/skills/merge-upstream/SKILL.md
+.editorconfig
