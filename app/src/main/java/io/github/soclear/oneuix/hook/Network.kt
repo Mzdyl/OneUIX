@@ -179,7 +179,7 @@ object Network {
         }
         try {
             findAndHookMethod(
-                "$controllerString\$NetworkSpeedManager$1",
+                $$"$$controllerString$NetworkSpeedManager$1",
                 loadPackageParam.classLoader,
                 "handleMessage",
                 Message::class.java,

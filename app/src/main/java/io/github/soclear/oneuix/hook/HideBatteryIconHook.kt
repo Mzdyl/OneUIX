@@ -1,5 +1,6 @@
 package io.github.soclear.oneuix.hook
 
+import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -16,6 +17,7 @@ import io.github.soclear.oneuix.data.Package
 import java.lang.reflect.Field
 import java.util.Collections
 import java.util.WeakHashMap
+import androidx.core.view.isVisible
 
 internal object HideBatteryIconHook {
     private const val STATUS_BAR_CHARGING_ICON = "stat_sys_battery_charging"
@@ -81,7 +83,7 @@ internal object HideBatteryIconHook {
         try {
             hookAllMethods(
                 findClass(
-                    "com.android.systemui.battery.BatteryMeterViewController\$3",
+                    $$"com.android.systemui.battery.BatteryMeterViewController$3",
                     loadPackageParam.classLoader
                 ),
                 "onBatteryLevelChanged",
@@ -157,7 +159,7 @@ internal object HideBatteryIconHook {
 
     private fun resolveBatteryMeterView(instance: Any): Any? {
         if (instance is View) return instance
-        val controller = readFieldValue(instance, listOf("this\$0")) ?: return null
+        val controller = readFieldValue(instance, listOf($$"this$0")) ?: return null
         return readFieldValue(controller, listOf("mView"))
     }
 
@@ -187,6 +189,7 @@ internal object HideBatteryIconHook {
         appliedBatteryChargingIconIds[iconView] = drawableId
     }
 
+    @SuppressLint("DiscouragedApi")
     private fun resolveBatteryChargingIconId(iconView: ImageView): Int {
         if (batteryChargingIconId != UNRESOLVED_CHARGING_ICON_ID) return batteryChargingIconId
         val resources = iconView.resources
@@ -386,7 +389,7 @@ internal object HideBatteryIconHook {
     }
 
     private fun TextView.isVisibleWithText(): Boolean =
-        visibility == View.VISIBLE && text.isNotBlank()
+        isVisible && text.isNotBlank()
 
     private data class BatteryIconLayout(
         val width: Int,

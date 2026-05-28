@@ -40,6 +40,8 @@ import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscString
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
 import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -505,13 +507,87 @@ object SystemUI {
 
     fun supportOutdoorMode(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
+
+        fun outdoorModeRowTag() = "io.github.soclear.oneuix.outdoor_mode_row"
+
+        fun isOutdoorModeEnabled(context: Context): Boolean {
+            return (callStaticMethod(
+                android.provider.Settings.System::class.java,
+                "getIntForUser",
+                context.contentResolver,
+                "display_outdoor_mode",
+                0,
+                -2
+            ) as Int) != 0
+        }
+
+        fun setOutdoorModeEnabled(context: Context, enabled: Boolean) {
+            callStaticMethod(
+                android.provider.Settings.System::class.java,
+                "putIntForUser",
+                context.contentResolver,
+                "display_outdoor_mode",
+                if (enabled) 1 else 0,
+                -2
+            )
+        }
+
+        @SuppressLint("DiscouragedApi")
+        fun addOutdoorModeRow(
+            context: Context,
+            detailView: ViewGroup,
+            switchPreferenceClass: Class<*>
+        ) {
+            try {
+                val outdoorContainer = callStaticMethod(
+                    switchPreferenceClass,
+                    "inflateSwitch",
+                    context,
+                    detailView
+                ) as View
+                outdoorContainer.tag = outdoorModeRowTag()
+
+                val res = context.resources
+                val titleId = res.getIdentifier("sec_brightness_outdoor_mode_title", "string", Package.SYSTEMUI)
+                val summaryId = res.getIdentifier("sec_brightness_outdoor_mode_summary", "string", Package.SYSTEMUI)
+                val titleViewId = res.getIdentifier("title", "id", Package.SYSTEMUI)
+                val summaryViewId = res.getIdentifier("title_summary", "id", Package.SYSTEMUI)
+                val switchViewId = res.getIdentifier("title_switch", "id", Package.SYSTEMUI)
+                if (titleId == 0 || titleViewId == 0 || switchViewId == 0) return
+
+                outdoorContainer.findViewById<TextView>(titleViewId)?.text =
+                    res.getString(titleId)
+
+                outdoorContainer.findViewById<TextView>(summaryViewId)?.apply {
+                    text = if (summaryId != 0) res.getString(summaryId) else ""
+                    visibility = if (summaryId != 0) View.VISIBLE else View.GONE
+                }
+
+                val outdoorSwitch: CompoundButton? = outdoorContainer.findViewById(switchViewId)
+                outdoorSwitch?.isChecked = isOutdoorModeEnabled(context)
+                outdoorSwitch?.setOnCheckedChangeListener { _, isChecked ->
+                    setOutdoorModeEnabled(context, isChecked)
+                }
+                outdoorContainer.setOnClickListener {
+                    val switch = outdoorSwitch ?: return@setOnClickListener
+                    switch.isChecked = !switch.isChecked
+                }
+
+                // Keep the row directly below Samsung's Adaptive brightness row.
+                val index = minOf(2, detailView.childCount)
+                detailView.addView(outdoorContainer, index)
+            } catch (t: Throwable) {
+                XposedBridge.log(t)
+            }
+        }
+
         try {
             val switchPreferenceClass = findClass(
                 "com.android.systemui.qs.SecQSSwitchPreference",
                 loadPackageParam.classLoader
             )
             findAndHookMethod(
-                "com.android.systemui.settings.brightness.BrightnessDetail\$1",
+                $$"com.android.systemui.settings.brightness.BrightnessDetail$1",
                 loadPackageParam.classLoader,
                 "createDetailView",
                 Context::class.java,
@@ -603,6 +679,42 @@ object SystemUI {
         )
     }
 
+    fun setStatusBarClockFormat(loadPackageParam: LoadPackageParam, format: String) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        val dateTimeFormatter = try {
+            DateTimeFormatter.ofPattern(format)
+        } catch (_: Throwable) {
+            DateTimeFormatter.ofPattern("HH:mm")
+        }
+        setStatusBarClockText(loadPackageParam) {
+            dateTimeFormatter.format(LocalDateTime.now())
+        }
+    }
+
+    fun setStatusBarClockText(loadPackageParam: LoadPackageParam, block: () -> String) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        val callback = object : XC_MethodReplacement() {
+            override fun replaceHookedMethod(param: MethodHookParam): Any? {
+                val clockTextView = param.thisObject as TextView
+                val dateTime = block()
+                clockTextView.text = dateTime
+                clockTextView.contentDescription = dateTime
+                return null
+            }
+        }
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorView",
+                loadPackageParam.classLoader,
+                "notifyTimeChanged",
+                "com.android.systemui.statusbar.policy.QSClockBellSound",
+                callback
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
     fun hideSecureFolderStatusBarIcon(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
         val callback = object : XC_MethodHook() {
@@ -687,7 +799,7 @@ object SystemUI {
                 }
                 val currentTime = System.nanoTime()
                 val interval = currentTime - lastTapTime
-                if (interval >= 40_000_000L && interval <= 300_000_000L) {
+                if (interval in 40_000_000L..300_000_000L) {
                     lastTapTime = 0L
                     val view = param.thisObject as View
                     lockScreen(view.context)
@@ -830,7 +942,7 @@ object SystemUI {
                 callback
             )
             findAndHookMethod(
-                "com.android.systemui.qs.bar.VolumeToggleSeekBar\$VolumeSeekbarChangeListener",
+                $$"com.android.systemui.qs.bar.VolumeToggleSeekBar$VolumeSeekbarChangeListener",
                 loadPackageParam.classLoader,
                 "onProgressChanged",
                 SeekBar::class.java,

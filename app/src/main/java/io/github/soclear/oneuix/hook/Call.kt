@@ -116,7 +116,7 @@ object Call {
             baseCallLogClass.declaredFields.forEach { field ->
                 if (field.type == String::class.java && !Modifier.isStatic(field.modifiers)) {
                     field.isAccessible = true
-                    val token = "TOKEN_${field.getName()}"
+                    val token = "TOKEN_${field.name}"
 
                     // 将 token 注入到实例中
                     field.set(instance, token)
@@ -182,7 +182,7 @@ object Call {
             callLogViewItemClass.declaredFields.forEach { field ->
                 if (field.type == String::class.java && !Modifier.isStatic(field.modifiers)) {
                     field.isAccessible = true
-                    val token = "TOKEN_${field.getName()}"
+                    val token = "TOKEN_${field.name}"
 
                     // 将 token 注入到实例中
                     field.set(callLogViewItem, token)

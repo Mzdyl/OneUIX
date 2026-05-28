@@ -176,7 +176,7 @@ object WatchPairing {
         try {
             // 查找 Problem 枚举类
             val problemClass = XposedHelpers.findClass(
-                "com.samsung.android.app.watchmanager.setupwizard.pairing.PairingProblemChecker\$Problem",
+                $$"com.samsung.android.app.watchmanager.setupwizard.pairing.PairingProblemChecker$Problem",
                 lpparam.classLoader
             )
 

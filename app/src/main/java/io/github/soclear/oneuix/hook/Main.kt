@@ -8,6 +8,7 @@ import de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResou
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.BuildConfig
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.systemui.ESIM
 import io.github.soclear.oneuix.hook.systemui.StatusBarClock
 import io.github.soclear.oneuix.hook.systemui.powermenu.PowerMenu
 import io.github.soclear.oneuix.hook.util.PreferenceProvider
@@ -273,6 +274,13 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     SystemUI.hideSecureFolderStatusBarIcon(lpparam)
                 }
 
+                if (preference.systemUI.statusBar.physicalEsimAdapterWorkaround) {
+                    ESIM.workaroundPhysicalEsimAdapter(
+                        lpparam,
+                        preference.systemUI.statusBar.physicalEsimAdapterSimSlot
+                    )
+                }
+
                 if (preference.systemUI.statusBar.doubleTapStatusBarToSleep) {
                     SystemUI.doubleTapStatusBarToSleep(lpparam)
                 }
@@ -296,10 +304,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.systemUI.statusBar.hideBatteryIcon) {
                     HideBatteryIconHook.apply(lpparam)
-                }
-
-                if (preference.systemUI.statusBar.physicalEsimAdapterWorkaround) {
-                    ESimAdapter.apply(lpparam, preference.systemUI.statusBar.physicalEsimAdapterSimSlot)
                 }
 
                 if (preference.systemUI.statusBar.setCustomCarrierName) {

@@ -91,12 +91,12 @@ object TraditionalChineseCalendar {
      * 格式化农历日
      */
     private fun formatDay(day: Int): String {
-        return when {
+        return when (day) {
             // Invalid day
-            day <= 0 || day > 30 -> ""
-            day == 10 -> "初十"
-            day == 20 -> "二十"
-            day == 30 -> "三十"
+            !in 1..30 -> ""
+            10 -> "初十"
+            20 -> "二十"
+            30 -> "三十"
             else -> DAY_NAMES_PREFIX[(day - 1) / 10] + DAY_NAMES_SUFFIX[(day - 1) % 10]
         }
     }
@@ -108,7 +108,7 @@ object TraditionalChineseCalendar {
      */
     fun getMonthAndDay(gregorianDate: LocalDate = LocalDate.now()): String {
         val gregorianYear = gregorianDate.year
-        if (gregorianYear < MIN_YEAR || gregorianYear > MAX_YEAR) {
+        if (gregorianYear !in MIN_YEAR..MAX_YEAR) {
             return "日期超出支持范围 ($MIN_YEAR-$MAX_YEAR)"
         }
 

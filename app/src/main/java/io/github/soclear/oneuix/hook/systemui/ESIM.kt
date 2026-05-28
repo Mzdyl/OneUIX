@@ -1,12 +1,12 @@
-package io.github.soclear.oneuix.hook
+package io.github.soclear.oneuix.hook.systemui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Looper
 import android.telephony.ServiceState
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.view.View
-import android.view.ViewGroup
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedBridge.hookAllConstructors
@@ -21,19 +21,18 @@ import io.github.soclear.oneuix.data.Package
 import java.lang.reflect.Field
 import java.util.Collections
 import java.util.WeakHashMap
+import kotlin.collections.any
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.get
+import kotlin.collections.ifEmpty
+import kotlin.collections.set
 
-/**
- * eSIM 适配器 Hook 模块
- * 
- * 功能：解决物理 eSIM 适配器在某些设备上不显示的问题
- * 通过隐藏不可用的运营商 SIM 卡图标来实现
- */
-object ESimAdapter {
-
+@SuppressLint("StaticFieldLeak")
+object ESIM {
     private const val PHYSICAL_ESIM_ADAPTER_SIM_1 = 0
     private const val PHYSICAL_ESIM_ADAPTER_SIM_2 = 1
     private const val PHYSICAL_ESIM_ADAPTER_BOTH = 2
-
     private val trackedMobileViewSlots: MutableMap<View, Int> =
         Collections.synchronizedMap(WeakHashMap())
     private val hiddenMobileViews: MutableSet<View> =
@@ -43,6 +42,7 @@ object ESimAdapter {
     private val unavailableCarrierTexts: MutableSet<String> =
         Collections.synchronizedSet(mutableSetOf())
     private var physicalEsimAdapterContext: Context? = null
+
     @Volatile
     private var unavailableCarrierTextsLoaded = false
 
@@ -55,31 +55,17 @@ object ESimAdapter {
         "status_bar_no_service",
         "status_bar_network_name_no_service",
         "mobile_network_no_service",
-        "no_service",
-        "quick_settings_secondary_mobile_carrier_name_text",
-        "keyguard_missing_sim_message_short"
+        "no_service"
     )
 
     private val unavailableCarrierTextFallbacks = setOf(
         "emergency calls only",
-        "no service",
-        "no sim",
-        "sim not provisioned",
-        "no service.",
-        "no sim.",
-        "sim not provisioned."
+        "no service"
     )
 
-    private data class CarrierListField(
-        val field: Field,
-        val holder: Any,
-        val owner: Any,
-        val values: List<CharSequence?>
-    )
-
-    fun apply(loadPackageParam: LoadPackageParam, simSlotMode: Int) {
+    fun workaroundPhysicalEsimAdapter(loadPackageParam: LoadPackageParam, simSlotMode: Int) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
-        val selectedSlots = selectedSlots(simSlotMode)
+        val selectedSlots = selectedPhysicalEsimAdapterSlots(simSlotMode)
 
         try {
             findAndHookMethod(
@@ -94,7 +80,7 @@ object ESimAdapter {
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
                         val context = param.args[0] as? Context
-                        updateContext(context)
+                        updatePhysicalEsimAdapterContext(context)
                         updateUnavailableCarrierTexts(context)
                         val viewModel = param.args[3] ?: return
                         val slot = getMobileViewModelSlot(viewModel) ?: return
@@ -157,7 +143,7 @@ object ESimAdapter {
                 "com.android.systemui.statusbar.StatusBarMobileView",
                 loadPackageParam.classLoader,
                 "applyMobileState",
-                "com.android.systemui.statusbar.phone.StatusBarSignalPolicy\$MobileIconState",
+                $$"com.android.systemui.statusbar.phone.StatusBarSignalPolicy$MobileIconState",
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
                         val state = param.args[0] ?: return
@@ -190,7 +176,7 @@ object ESimAdapter {
                             .filterIsInstance<Context>()
                             .firstOrNull()
                             ?.let { context ->
-                                updateContext(context)
+                                updatePhysicalEsimAdapterContext(context)
                                 updateUnavailableCarrierTexts(context)
                             }
                     }
@@ -203,7 +189,7 @@ object ESimAdapter {
         try {
             findAndHookMethod(
                 "com.android.keyguard.CarrierTextManager", loadPackageParam.classLoader, "postToCallback",
-                "com.android.keyguard.CarrierTextManager\$CarrierTextCallbackInfo", object : XC_MethodHook() {
+                $$"com.android.keyguard.CarrierTextManager$CarrierTextCallbackInfo", object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam) {
                         sanitizeCarrierTextCallbackInfo(
                             info = param.args[0] ?: return,
@@ -235,13 +221,14 @@ object ESimAdapter {
         return null
     }
 
-    private fun selectedSlots(simSlotMode: Int): Set<Int> =
+    private fun selectedPhysicalEsimAdapterSlots(simSlotMode: Int): Set<Int> =
         when (simSlotMode) {
             PHYSICAL_ESIM_ADAPTER_SIM_1 -> setOf(PHYSICAL_ESIM_ADAPTER_SIM_1)
             PHYSICAL_ESIM_ADAPTER_BOTH -> setOf(
                 PHYSICAL_ESIM_ADAPTER_SIM_1,
                 PHYSICAL_ESIM_ADAPTER_SIM_2
             )
+
             else -> setOf(PHYSICAL_ESIM_ADAPTER_SIM_2)
         }
 
@@ -287,12 +274,15 @@ object ESimAdapter {
         }
     }
 
+
+    @SuppressLint("MissingPermission")
     private fun getUnavailableServiceState(context: Context?, subId: Int): Boolean? {
         val telephonyManager = getTelephonyManager(context, subId) ?: return null
         return runCatching {
             when (telephonyManager.serviceState?.state) {
                 ServiceState.STATE_OUT_OF_SERVICE,
                 ServiceState.STATE_EMERGENCY_ONLY -> true
+
                 null -> null
                 else -> false
             }
@@ -422,6 +412,7 @@ object ESimAdapter {
         return index.takeIf { it == PHYSICAL_ESIM_ADAPTER_SIM_1 || it == PHYSICAL_ESIM_ADAPTER_SIM_2 }
     }
 
+    @SuppressLint("DiscouragedApi")
     private fun updateUnavailableCarrierTexts(context: Context?) {
         if (unavailableCarrierTextsLoaded) return
         context ?: return
@@ -462,6 +453,7 @@ object ESimAdapter {
                 char.isWhitespace() -> {
                     if (normalized.isNotEmpty()) pendingSpace = true
                 }
+
                 else -> {
                     if (pendingSpace) {
                         normalized.append(' ')
@@ -482,7 +474,7 @@ object ESimAdapter {
             else -> false
         }
 
-    private fun updateContext(context: Context?) {
+    private fun updatePhysicalEsimAdapterContext(context: Context?) {
         context ?: return
         physicalEsimAdapterContext = context.applicationContext ?: context
     }
@@ -521,6 +513,13 @@ object ESimAdapter {
 
         return carrierText.substring(separatorStart, secondIndex)
     }
+
+    private data class CarrierListField(
+        val field: Field,
+        val holder: Any,
+        val owner: Any,
+        val values: List<CharSequence?>
+    )
 
     private fun readCarrierListField(info: Any): CarrierListField? {
         val field = findField(

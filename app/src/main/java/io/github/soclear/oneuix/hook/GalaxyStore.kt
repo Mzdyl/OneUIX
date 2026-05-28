@@ -284,7 +284,7 @@ object GalaxyStore {
             "com.sec.android.app.samsungapps.slotpage.GalaxyAppsMainActivity",
             classLoader,
             "onAdAvailable",
-            "com.sec.android.app.samsungapps.curate.ad.AdInventoryManager\$PLATFORM",
+            $$"com.sec.android.app.samsungapps.curate.ad.AdInventoryManager$PLATFORM",
             returnNull
         )
 
