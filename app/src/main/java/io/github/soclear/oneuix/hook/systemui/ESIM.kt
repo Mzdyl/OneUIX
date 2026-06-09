@@ -10,9 +10,11 @@ import android.view.View
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedBridge.hookAllConstructors
+import de.robv.android.xposed.XposedBridge.hookAllMethods
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
+import de.robv.android.xposed.XposedHelpers.findClassIfExists
 import de.robv.android.xposed.XposedHelpers.findFieldIfExists
 import de.robv.android.xposed.XposedHelpers.getIntField
 import de.robv.android.xposed.XposedHelpers.getObjectField
@@ -68,23 +70,32 @@ object ESIM {
         val selectedSlots = selectedPhysicalEsimAdapterSlots(simSlotMode)
 
         try {
-            findAndHookMethod(
-                "com.android.systemui.statusbar.pipeline.mobile.ui.view.ModernStatusBarMobileView",
-                loadPackageParam.classLoader,
+            hookAllMethods(
+                findClass(
+                    "com.android.systemui.statusbar.pipeline.mobile.ui.view.ModernStatusBarMobileView",
+                    loadPackageParam.classLoader
+                ),
                 "constructAndBind",
-                Context::class.java,
-                "com.android.systemui.statusbar.pipeline.mobile.ui.MobileViewLogger",
-                String::class.java,
-                "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.LocationBasedMobileViewModel",
-                "com.android.systemui.statusbar.policy.ConfigurationController",
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
                         val context = param.args[0] as? Context
                         updatePhysicalEsimAdapterContext(context)
                         updateUnavailableCarrierTexts(context)
                         val viewModel = param.args[3] ?: return
-                        val slot = getMobileViewModelSlot(viewModel) ?: return
+                        val subId = getMobileViewModelSubId(viewModel)
+                        val slot = subId
+                            ?.let(SubscriptionManager::getSlotIndex)
+                            ?.takeIf { it >= 0 }
+                            ?: getMobileViewModelSlot(viewModel)
+                            ?: return
                         if (slot in selectedSlots) {
+                            subId?.let {
+                                updateCarrierSlotAvailabilityFromSubId(
+                                    subId = it,
+                                    slot = slot,
+                                    context = context
+                                )
+                            }
                             trackMobileView(param.result as? View, slot, selectedSlots)
                         }
                     }
@@ -139,27 +150,32 @@ object ESIM {
         }
 
         try {
-            findAndHookMethod(
+            val legacyStatusBarMobileView = findClassIfExists(
                 "com.android.systemui.statusbar.StatusBarMobileView",
-                loadPackageParam.classLoader,
-                "applyMobileState",
-                $$"com.android.systemui.statusbar.phone.StatusBarSignalPolicy$MobileIconState",
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        val state = param.args[0] ?: return
-                        val slot = SubscriptionManager.getSlotIndex(getIntField(state, "subId"))
-                        if (slot in selectedSlots) {
-                            val view = param.thisObject as? View
-                            updateCarrierSlotAvailabilityFromMobileState(
-                                state = state,
-                                slot = slot,
-                                context = view?.context
-                            )
-                            trackMobileView(view, slot, selectedSlots)
+                loadPackageParam.classLoader
+            )
+            if (legacyStatusBarMobileView != null) {
+                findAndHookMethod(
+                    legacyStatusBarMobileView,
+                    "applyMobileState",
+                    $$"com.android.systemui.statusbar.phone.StatusBarSignalPolicy$MobileIconState",
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            val state = param.args[0] ?: return
+                            val slot = SubscriptionManager.getSlotIndex(getIntField(state, "subId"))
+                            if (slot in selectedSlots) {
+                                val view = param.thisObject as? View
+                                updateCarrierSlotAvailabilityFromMobileState(
+                                    state = state,
+                                    slot = slot,
+                                    context = view?.context
+                                )
+                                trackMobileView(view, slot, selectedSlots)
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }
@@ -221,6 +237,11 @@ object ESIM {
         return null
     }
 
+    private fun getMobileViewModelSubId(viewModel: Any): Int? =
+        runCatching { callMethod(viewModel, "getSubscriptionId") as Int }
+            .getOrNull()
+            ?.takeIf(SubscriptionManager::isValidSubscriptionId)
+
     private fun selectedPhysicalEsimAdapterSlots(simSlotMode: Int): Set<Int> =
         when (simSlotMode) {
             PHYSICAL_ESIM_ADAPTER_SIM_1 -> setOf(PHYSICAL_ESIM_ADAPTER_SIM_1)
@@ -265,6 +286,17 @@ object ESIM {
         val unavailable = getUnavailableServiceState(context, getIntField(state, "subId"))
             ?: isUnavailableMobileStateText(state)
 
+        synchronized(unavailableCarrierSlots) {
+            if (unavailable) {
+                unavailableCarrierSlots.add(slot)
+            } else {
+                unavailableCarrierSlots.remove(slot)
+            }
+        }
+    }
+
+    private fun updateCarrierSlotAvailabilityFromSubId(subId: Int, slot: Int, context: Context?) {
+        val unavailable = getUnavailableServiceState(context, subId) ?: return
         synchronized(unavailableCarrierSlots) {
             if (unavailable) {
                 unavailableCarrierSlots.add(slot)

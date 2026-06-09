@@ -16,6 +16,10 @@
     <string name="sim_slot_1">SIM 1</string>
     <string name="sim_slot_2">SIM 2</string>
     <string name="sim_slot_both">SIM 1 and SIM 2</string>
+    <string name="addBatteryLevelText_title">Show battery level text</string>
+    <string name="addBatteryLevelText_summary">Display battery level as text alongside the icon, e.g. 96%</string>
+    <string name="hideBatteryLevelTextPercentageSign_title">Hide percentage sign</string>
+    <string name="hideBatteryLevelTextChargingIcon_title">Hide charging icon</string>
     <string name="supportRealTimeNetworkSpeed_title">Support displaying real-time network speed</string>
     <string name="supportRealTimeNetworkSpeed_summary">Settings -> Notifications -> Advanced settings -> Show real-time network speed</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">Show separate upload/download speeds in status bar</string>
@@ -30,6 +34,7 @@
     <string name="hideQsBarMediaPlayer_title">Hide Media Player bar in QS panel</string>
     <string name="hideQsBarSecurityFooter_title">Hide Security footer bar in QS panel</string>
     <string name="hideQsBarSecurityFooter_summary">e.g., Your personal apps are connected to the internet via VPN</string>
+    <string name="hideQsBarDataUsage_title">Hide Data usage bar in QS panel</string>
     <string name="hideQsBarSmartViewAndModes_title">Hide Smart View and Modes bar in QS panel</string>
     <string name="hideDeviceControlQsTile_title">Hide Device Control in Quick Settings</string>
     <string name="hideSmartViewQsTile_title">Hide Smart View in Quick Settings</string>
@@ -45,6 +50,8 @@
     <string name="showWiFiLinkSpeed_summary">Format is Tx, Rx in Mbps</string>
     <string name="showMorePlaybackSpeeds_title">Add 3.0x and 4.0x playback speeds to video player</string>
     <string name="showMorePlaybackSpeeds_summary">Includes local video player and built-in browser player</string>
+    <string name="redirect_custom_tab_title">Force links to open in external Samsung Internet</string>
+    <string name="redirect_custom_tab_summary">When Samsung Internet is set as the default browser, many apps open links in a limited in-app Samsung Internet Custom Tab. Enable this to force links out of the app and open them in the full Samsung Internet browser.</string>
     <string name="blockGalaxyStoreAds_title">Remove ads in Galaxy Store</string>
     <string name="blockGalaxyStoreAds_summary">Remove splash screen ads, recommended ads/pop-ups, and installation age restriction pop-ups</string>
     <string name="galaxyStoreChangeRegion_title">Change Galaxy Store region</string>
@@ -67,6 +74,11 @@
     <string name="supportBodyBeauty_title">Enable body beauty feature</string>
     <string name="supportBodyBeauty_summary">Enable body shaping and beauty features in camera</string>
     <string name="disableScreenshotCaptureSound_title">Disable screenshot sound</string>
+    <string name="disableNotificationGrouping_title">Disable notification grouping</string>
+    <string name="disableNotificationGrouping_summary">Prevent status bar icon merging and notification center grouping for same-app notifications</string>
+    <string name="hideOngoingActivityMedia_title">Hide ongoing activity for media apps</string>
+    <string name="hideOngoingActivityMedia_summary">Hide the ongoing activity chip in status bar and media notification card in notification shade when playing music in the background</string>
+    <string name="hideOngoingActivityMedia_packages_hint">Package names, separated by commas</string>
     <string name="customPowerMenu_title">Customize power menu actions</string>
     <string name="powerMenuActionVisible_summary">Visible, position %1$d</string>
     <string name="powerMenuActionHidden_summary">Hidden</string>
@@ -79,6 +91,7 @@
     <string name="powerMenuAction_lockDownMode">Lockdown mode</string>
     <string name="powerMenuAction_emergencyCall">Emergency call</string>
     <string name="powerMenuAction_medicalInfo">Medical info</string>
+    <string name="powerMenuAction_forceRestartMessage">Force restart message</string>
     <string name="showPackageInfo_title">Show package info on App Info page</string>
     <string name="showPackageInfo_summary">Long press or double tap to copy</string>
     <string name="makeAllUserAppsAvailable_title">Make all user apps available for app cloning</string>
@@ -126,6 +139,8 @@
     <string name="bixby_wwv_bypass_title">Bypass wake word text limits</string>
     <string name="bixby_wwv_bypass_summary">Bypass native library blocklists so arbitrary words can be used as wake words</string>
     <string name="showNotificationCategory_summary">Enable hidden notification category options in Settings (requires root)</string>
+    <string name="spoofPhoneStatusAsOfficial_title">Spoof phone status as Official</string>
+    <string name="spoofPhoneStatusAsOfficial_summary">Settings -> About phone -> Status information</string>
     <string name="noAIWatermark_title">Disable Photo Editor AI watermark</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
     <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries</string>
@@ -173,4 +188,9 @@
     <string name="status_bar">Status Bar</string>
     <string name="qs">Quick Settings</string>
     <string name="aod">Always On Display</string>
+    <string name="sideKeySettings">Side button settings</string>
+    <string name="allowAllRotation_title">Allow all rotation angles</string>
+    <string name="allowAllRotation_summary">Enable 180° rotation on phones (normally only available on tablets)</string>
+    <string name="liftFcmNetworkLimit_title">Lift FCM network limit</string>
+    <string name="liftFcmNetworkLimit_summary">Remove the China (including Hong Kong) firmware restriction that throttles GMS/FCM push network access</string>
 </resources>

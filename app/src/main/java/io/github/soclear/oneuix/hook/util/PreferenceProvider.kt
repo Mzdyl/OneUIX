@@ -22,6 +22,10 @@ object PreferenceProvider {
     val preference: Preference? = try {
         getPreferenceFile()?.readText()?.let { json.decodeFromString<Preference>(it) }
     } catch (_: Throwable) {
+        // 如果一个用户启用模块后，没有点过任何偏好设置
+        // 那么调用 getPreferenceFile().readText() 会 FileNotFoundException
+        // 导致 preference 为空，于是不会有任何 hook 生效
+        // 意料之外，情理之中
         null
     }
 

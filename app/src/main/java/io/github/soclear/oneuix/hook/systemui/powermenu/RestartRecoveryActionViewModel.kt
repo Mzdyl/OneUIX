@@ -1,7 +1,6 @@
 package io.github.soclear.oneuix.hook.systemui.powermenu
 
 import android.app.AndroidAppHelper
-import android.content.ComponentName
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
@@ -11,8 +10,8 @@ import com.samsung.android.globalactions.presentation.viewmodel.ActionViewModel
 import com.samsung.android.globalactions.presentation.viewmodel.ViewType
 import io.github.soclear.oneuix.BuildConfig
 import io.github.soclear.oneuix.R
+import io.github.soclear.oneuix.RebootActivity
 import io.github.soclear.oneuix.data.PowerMenuAction
-import io.github.soclear.oneuix.data.RebootRequest
 
 class RestartRecoveryActionViewModel(
     private val globalActions: SamsungGlobalActions,
@@ -35,10 +34,11 @@ class RestartRecoveryActionViewModel(
 
         globalActions.dismissDialog(false)
         Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(RebootRequest.ACTION)
-                .setComponent(ComponentName(BuildConfig.APPLICATION_ID, "${BuildConfig.APPLICATION_ID}.RebootReceiver"))
-                .putExtra(RebootRequest.EXTRA_REASON, RebootRequest.RECOVERY)
-            AndroidAppHelper.currentApplication().sendBroadcast(intent)
+            val intent = Intent("recovery").apply {
+                setClassName(BuildConfig.APPLICATION_ID, RebootActivity::class.java.name)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            AndroidAppHelper.currentApplication().startActivity(intent)
         }, 100L)
     }
 

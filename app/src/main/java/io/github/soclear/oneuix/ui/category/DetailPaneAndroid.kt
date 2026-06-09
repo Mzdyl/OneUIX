@@ -94,7 +94,20 @@ fun DetailPaneAndroid(
                 onCheckedChange = { onEvent(AndroidEvent.SupportAppJumpBlock(it)) }
             )
         }
-        // ASKS 策略移除
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.expand),
+            title = stringResource(id = R.string.allowAllRotation_title),
+            summary = stringResource(id = R.string.allowAllRotation_summary),
+            checked = uiState.allowAllRotation,
+            onCheckedChange = { onEvent(AndroidEvent.AllowAllRotation(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.google_play),
+            title = stringResource(id = R.string.liftFcmNetworkLimit_title),
+            summary = stringResource(id = R.string.liftFcmNetworkLimit_summary),
+            checked = uiState.liftFcmNetworkLimit,
+            onCheckedChange = { onEvent(AndroidEvent.LiftFcmNetworkLimit(it)) }
+        )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.block),
             title = stringResource(id = R.string.disableAsksRestriction_title),
@@ -102,7 +115,6 @@ fun DetailPaneAndroid(
             checked = uiState.disableAsksRestriction,
             onCheckedChange = { onEvent(AndroidEvent.DisableAsksRestriction(it)) }
         )
-        // GMS/FCM 限制绕过
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.five_g),
             title = stringResource(id = R.string.allowGms_title),
@@ -110,7 +122,6 @@ fun DetailPaneAndroid(
             checked = uiState.allowGms,
             onCheckedChange = { onEvent(AndroidEvent.AllowGms(it)) }
         )
-        // FCM 强制唤醒
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.notifications),
             title = stringResource(id = R.string.fcmFix_title),
@@ -118,20 +129,17 @@ fun DetailPaneAndroid(
             checked = uiState.fcmFix,
             onCheckedChange = { onEvent(AndroidEvent.FcmFix(it)) }
         )
-        // 隐藏导航栏手势提示条
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.expand),
             title = stringResource(id = R.string.hideNavigationBarGestureHint_title),
             summary = stringResource(id = R.string.hideNavigationBarGestureHint_summary),
             checked = uiState.hideNavigationBarGestureHint,
             onCheckedChange = {
-                // 执行 shell 命令修改系统设置
                 if (setNavigationBarGestureHint(it)) {
                     onEvent(AndroidEvent.HideNavigationBarGestureHint(it))
                 }
             }
         )
-        // 谷歌即圈即搜
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.search),
             title = stringResource(id = R.string.enableGoogleSearch_title),
@@ -157,6 +165,12 @@ sealed interface AndroidEvent {
 
     @JvmInline
     value class SupportAppJumpBlock(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class AllowAllRotation(val value: Boolean) : AndroidEvent
+
+    @JvmInline
+    value class LiftFcmNetworkLimit(val value: Boolean) : AndroidEvent
 
     @JvmInline
     value class DisableAsksRestriction(val value: Boolean) : AndroidEvent
@@ -213,6 +227,22 @@ fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
                 preference.copy(
                     android = preference.android.copy(
                         supportAppJumpBlock = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.AllowAllRotation -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        allowAllRotation = event.value
+                    )
+                )
+            }
+
+            is AndroidEvent.LiftFcmNetworkLimit -> {
+                preference.copy(
+                    android = preference.android.copy(
+                        liftFcmNetworkLimit = event.value
                     )
                 )
             }

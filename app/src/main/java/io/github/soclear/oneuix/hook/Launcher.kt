@@ -411,12 +411,20 @@ object Launcher {
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
                         val searchBar = param.thisObject as View
-                        searchBar.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                        searchBar.addOnAttachStateChangeListener(object :
+                            View.OnAttachStateChangeListener {
                             override fun onViewAttachedToWindow(v: View) {
-                                (v.parent as? ViewGroup)?.removeView(v)
+                                v.visibility = View.GONE
                             }
+
                             override fun onViewDetachedFromWindow(v: View) {}
                         })
+                        // 监听该 View 自身布局变化，防止 Data Binding 将 visibility 重置为 VISIBLE
+                        searchBar.addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
+                            if (view.visibility != View.GONE) {
+                                view.visibility = View.GONE
+                            }
+                        }
                     }
                 }
             )

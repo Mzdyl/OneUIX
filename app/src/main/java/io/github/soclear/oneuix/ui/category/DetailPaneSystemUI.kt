@@ -37,8 +37,9 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.soclear.oneuix.R
-import io.github.soclear.oneuix.data.Preference
+import io.github.soclear.oneuix.data.ONE_UI_VERSION
 import io.github.soclear.oneuix.data.PowerMenuAction
+import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.hook.util.restartSystemUI
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.DropdownItem
@@ -228,6 +229,37 @@ fun DetailPaneSystemUI(
                 onEvent(SystemUIEvent.StatusBar.HideBatteryIcon(it))
             }
         )
+        if (ONE_UI_VERSION >= 70000) {
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.battery),
+                title = stringResource(id = R.string.addBatteryLevelText_title),
+                summary = stringResource(id = R.string.addBatteryLevelText_summary),
+                checked = uiState.statusBar.addBatteryLevelText,
+                onCheckedChange = {
+                    onEvent(SystemUIEvent.StatusBar.AddBatteryLevelText(it))
+                }
+            )
+            AnimatedVisibility(uiState.statusBar.addBatteryLevelText) {
+                Column {
+                    SwitchItem(
+                        icon = ImageVector.vectorResource(id = R.drawable.battery),
+                        title = stringResource(id = R.string.hideBatteryLevelTextPercentageSign_title),
+                        checked = uiState.statusBar.hideBatteryLevelTextPercentageSign,
+                        onCheckedChange = {
+                            onEvent(SystemUIEvent.StatusBar.HideBatteryLevelTextPercentageSign(it))
+                        }
+                    )
+                    SwitchItem(
+                        icon = ImageVector.vectorResource(id = R.drawable.battery),
+                        title = stringResource(id = R.string.hideBatteryLevelTextChargingIcon_title),
+                        checked = uiState.statusBar.hideBatteryLevelTextChargingIcon,
+                        onCheckedChange = {
+                            onEvent(SystemUIEvent.StatusBar.HideBatteryLevelTextChargingIcon(it))
+                        }
+                    )
+                }
+            }
+        }
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.sim_card),
             title = stringResource(id = R.string.physicalEsimAdapterWorkaround_title),
@@ -511,22 +543,26 @@ fun DetailPaneSystemUI(
                 },
                 supportingContent = { Text(stringResource(id = R.string.root5gQsTile_summary)) }
             )
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
-                title = stringResource(id = R.string.hideQsBarMediaPlayer_title),
-                checked = uiState.qs.hideQsBarMediaPlayer,
-                onCheckedChange = {
-                    onEvent(SystemUIEvent.QS.HideQsBarMediaPlayer(it))
-                }
-            )
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
-                title = stringResource(id = R.string.hideQsBarNearbyDevicesAndDeviceControl_title),
-                checked = uiState.qs.hideQsBarNearbyDevicesAndDeviceControl,
-                onCheckedChange = {
-                    onEvent(SystemUIEvent.QS.HideQsBarNearbyDevicesAndDeviceControl(it))
-                }
-            )
+            if (ONE_UI_VERSION < 80500) {
+                SwitchItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
+                    title = stringResource(id = R.string.hideQsBarMediaPlayer_title),
+                    checked = uiState.qs.hideQsBarMediaPlayer,
+                    onCheckedChange = {
+                        onEvent(SystemUIEvent.QS.HideQsBarMediaPlayer(it))
+                    }
+                )
+            }
+            if (ONE_UI_VERSION < 80500) {
+                SwitchItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
+                    title = stringResource(id = R.string.hideQsBarNearbyDevicesAndDeviceControl_title),
+                    checked = uiState.qs.hideQsBarNearbyDevicesAndDeviceControl,
+                    onCheckedChange = {
+                        onEvent(SystemUIEvent.QS.HideQsBarNearbyDevicesAndDeviceControl(it))
+                    }
+                )
+            }
             SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
                 title = stringResource(id = R.string.hideQsBarSecurityFooter_title),
@@ -538,44 +574,62 @@ fun DetailPaneSystemUI(
             )
             SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
-                title = stringResource(id = R.string.hideQsBarSmartViewAndModes_title),
-                checked = uiState.qs.hideQsBarSmartViewAndModes,
+                title = stringResource(id = R.string.hideQsBarDataUsage_title),
+                checked = uiState.qs.hideQsBarDataUsage,
                 onCheckedChange = {
-                    onEvent(SystemUIEvent.QS.HideQsBarSmartViewAndModes(it))
+                    onEvent(SystemUIEvent.QS.HideQsBarDataUsage(it))
                 }
             )
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.expand),
-                title = stringResource(id = R.string.alwaysExpandQsTileChunk_title),
-                checked = uiState.qs.alwaysExpandQsTileChunk,
-                onCheckedChange = {
-                    onEvent(SystemUIEvent.QS.AlwaysExpandQsTileChunk(it))
-                }
-            )
-            SwitchItem(
-                title = stringResource(id = R.string.alwaysShowTimeDateOnQs_title),
-                icon = ImageVector.vectorResource(id = R.drawable.nest_clock_farsight_digital),
-                checked = uiState.qs.alwaysShowTimeDateOnQs,
-                onCheckedChange = {
-                    onEvent(SystemUIEvent.QS.AlwaysShowTimeDateOnQs(it))
-                }
-            )
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.light_mode),
-                title = stringResource(id = R.string.addBrightnessProgressToQsBar_title),
-                checked = uiState.qs.addBrightnessProgressToQsBar,
-                onCheckedChange = {
-                    onEvent(SystemUIEvent.QS.AddBrightnessProgressToQsBar(it))
-                }
-            )
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.music_note),
-                title = stringResource(id = R.string.addVolumeProgressToQsBar_title),
-                checked = uiState.qs.addVolumeProgressToQsBar,
-                onCheckedChange = {
-                    onEvent(SystemUIEvent.QS.AddVolumeProgressToQsBar(it))
-                }
-            )
+            if (ONE_UI_VERSION < 80500) {
+                SwitchItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
+                    title = stringResource(id = R.string.hideQsBarSmartViewAndModes_title),
+                    checked = uiState.qs.hideQsBarSmartViewAndModes,
+                    onCheckedChange = {
+                        onEvent(SystemUIEvent.QS.HideQsBarSmartViewAndModes(it))
+                    }
+                )
+            }
+            if (ONE_UI_VERSION < 80500) {
+                SwitchItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.expand),
+                    title = stringResource(id = R.string.alwaysExpandQsTileChunk_title),
+                    checked = uiState.qs.alwaysExpandQsTileChunk,
+                    onCheckedChange = {
+                        onEvent(SystemUIEvent.QS.AlwaysExpandQsTileChunk(it))
+                    }
+                )
+            }
+            if (ONE_UI_VERSION < 80500) {
+                SwitchItem(
+                    title = stringResource(id = R.string.alwaysShowTimeDateOnQs_title),
+                    icon = ImageVector.vectorResource(id = R.drawable.nest_clock_farsight_digital),
+                    checked = uiState.qs.alwaysShowTimeDateOnQs,
+                    onCheckedChange = {
+                        onEvent(SystemUIEvent.QS.AlwaysShowTimeDateOnQs(it))
+                    }
+                )
+            }
+            if (ONE_UI_VERSION < 80500) {
+                SwitchItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.light_mode),
+                    title = stringResource(id = R.string.addBrightnessProgressToQsBar_title),
+                    checked = uiState.qs.addBrightnessProgressToQsBar,
+                    onCheckedChange = {
+                        onEvent(SystemUIEvent.QS.AddBrightnessProgressToQsBar(it))
+                    }
+                )
+            }
+            if (ONE_UI_VERSION < 80500) {
+                SwitchItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.music_note),
+                    title = stringResource(id = R.string.addVolumeProgressToQsBar_title),
+                    checked = uiState.qs.addVolumeProgressToQsBar,
+                    onCheckedChange = {
+                        onEvent(SystemUIEvent.QS.AddVolumeProgressToQsBar(it))
+                    }
+                )
+            }
             SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.today),
                 title = stringResource(id = R.string.showTraditionalChineseDateOnQS_title),
@@ -685,6 +739,63 @@ fun DetailPaneSystemUI(
                 .animateContentSize()
                 .clickable(role = Role.Button) { restartSystemUI() }
         )
+        Column {
+            var expanded by rememberSaveable { mutableStateOf(false) }
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.music_note),
+                title = stringResource(id = R.string.hideOngoingActivityMedia_title),
+                summary = if (uiState.other.hideOngoingActivityMedia && uiState.other.hideOngoingActivityMediaPackages.isNotEmpty()) {
+                    uiState.other.hideOngoingActivityMediaPackages
+                } else {
+                    stringResource(id = R.string.hideOngoingActivityMedia_summary)
+                },
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.other.hideOngoingActivityMedia,
+                onCheckedChange = {
+                    if (it && uiState.other.hideOngoingActivityMediaPackages.isEmpty()) {
+                        expanded = true
+                    } else if (!it) {
+                        expanded = false
+                    }
+                    onEvent(SystemUIEvent.Other.HideOngoingActivityMedia(it))
+                }
+            )
+            AnimatedVisibility(expanded && uiState.other.hideOngoingActivityMedia) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    var tempPackages by remember {
+                        mutableStateOf(uiState.other.hideOngoingActivityMediaPackages)
+                    }
+                    OutlinedTextField(
+                        value = tempPackages,
+                        onValueChange = { tempPackages = it },
+                        modifier = Modifier.weight(1f),
+                        label = { Text(text = stringResource(id = R.string.hideOngoingActivityMedia_packages_hint)) },
+                        singleLine = true,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            onEvent(SystemUIEvent.Other.HideOngoingActivityMediaPackages(tempPackages))
+                        }
+                    ) {
+                        Text(text = stringResource(id = R.string.confirm))
+                    }
+                }
+            }
+        }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.notifications),
+            title = stringResource(id = R.string.disableNotificationGrouping_title),
+            summary = stringResource(id = R.string.disableNotificationGrouping_summary),
+            checked = uiState.other.disableNotificationGrouping,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.Other.DisableNotificationGrouping(it))
+            }
+        )
     }
 }
 
@@ -711,7 +822,10 @@ private fun PowerMenuActionEditor(
                 supportingContent = {
                     Text(
                         text = if (action.visible) {
-                            stringResource(id = R.string.powerMenuActionVisible_summary, visiblePosition)
+                            stringResource(
+                                id = R.string.powerMenuActionVisible_summary,
+                                visiblePosition
+                            )
                         } else {
                             stringResource(id = R.string.powerMenuActionHidden_summary)
                         }
@@ -768,12 +882,13 @@ private fun powerMenuActionTitle(actionName: String): Int = when (actionName) {
     PowerMenuAction.LOCK_DOWN_MODE -> R.string.powerMenuAction_lockDownMode
     PowerMenuAction.EMERGENCY_CALL -> R.string.powerMenuAction_emergencyCall
     PowerMenuAction.MEDICAL_INFO -> R.string.powerMenuAction_medicalInfo
+    PowerMenuAction.SIDE_KEY_SETTINGS -> R.string.sideKeySettings
+    PowerMenuAction.FORCE_RESTART_MESSAGE -> R.string.powerMenuAction_forceRestartMessage
     PowerMenuAction.RESTART_SYSTEMUI -> R.string.restartSystemUI
     PowerMenuAction.RESTART_RECOVERY -> R.string.restartRecovery
     PowerMenuAction.RESTART_DOWNLOAD -> R.string.restartDownload
     else -> R.string.other
 }
-
 
 sealed interface SystemUIEvent {
     sealed interface StatusBar : SystemUIEvent {
@@ -794,6 +909,15 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class HideBatteryIcon(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class AddBatteryLevelText(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class HideBatteryLevelTextPercentageSign(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class HideBatteryLevelTextChargingIcon(val value: Boolean) : StatusBar
 
         @JvmInline
         value class SupportRealTimeNetworkSpeed(val value: Boolean) : StatusBar
@@ -870,6 +994,9 @@ sealed interface SystemUIEvent {
         value class HideQsBarSecurityFooter(val value: Boolean) : QS
 
         @JvmInline
+        value class HideQsBarDataUsage(val value: Boolean) : QS
+
+        @JvmInline
         value class HideQsBarSmartViewAndModes(val value: Boolean) : QS
 
         @JvmInline
@@ -911,6 +1038,15 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class DisableScreenshotCaptureSound(val value: Boolean) : Other
+
+        @JvmInline
+        value class DisableNotificationGrouping(val value: Boolean) : Other
+
+        @JvmInline
+        value class HideOngoingActivityMedia(val value: Boolean) : Other
+
+        @JvmInline
+        value class HideOngoingActivityMediaPackages(val value: String) : Other
     }
 }
 
@@ -1032,6 +1168,36 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             hideBatteryIcon = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.AddBatteryLevelText -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            addBatteryLevelText = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.HideBatteryLevelTextPercentageSign -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            hideBatteryLevelTextPercentageSign = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.HideBatteryLevelTextChargingIcon -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            hideBatteryLevelTextChargingIcon = event.value
                         )
                     )
                 )
@@ -1234,6 +1400,16 @@ private fun SettingViewModel.onQSEvent(event: SystemUIEvent.QS) {
                 )
             }
 
+            is SystemUIEvent.QS.HideQsBarDataUsage -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        qs = preference.systemUI.qs.copy(
+                            hideQsBarDataUsage = event.value
+                        )
+                    )
+                )
+            }
+
             is SystemUIEvent.QS.HideQsBarSmartViewAndModes -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(
@@ -1371,6 +1547,36 @@ private fun SettingViewModel.onOtherEvent(event: SystemUIEvent.Other) {
                     systemUI = preference.systemUI.copy(
                         other = preference.systemUI.other.copy(
                             disableScreenshotCaptureSound = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.Other.DisableNotificationGrouping -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        other = preference.systemUI.other.copy(
+                            disableNotificationGrouping = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.Other.HideOngoingActivityMedia -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        other = preference.systemUI.other.copy(
+                            hideOngoingActivityMedia = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.Other.HideOngoingActivityMediaPackages -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        other = preference.systemUI.other.copy(
+                            hideOngoingActivityMediaPackages = event.value
                         )
                     )
                 )

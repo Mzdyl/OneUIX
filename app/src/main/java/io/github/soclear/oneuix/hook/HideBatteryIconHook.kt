@@ -93,12 +93,12 @@ internal object HideBatteryIconHook {
         }
 
         try {
-            findAndHookMethod(
-                "com.android.systemui.battery.BatteryMeterView",
-                loadPackageParam.classLoader,
+            hookAllMethods(
+                findClass(
+                    "com.android.systemui.battery.BatteryMeterView",
+                    loadPackageParam.classLoader
+                ),
                 "updateColors",
-                Int::class.javaPrimitiveType,
-                Int::class.javaPrimitiveType,
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
                         val batteryMeterView = resolveBatteryMeterView(param.thisObject) ?: return
@@ -179,7 +179,7 @@ internal object HideBatteryIconHook {
             listOf("batteryState", "mBatteryState")
         ) ?: return false
         return readFieldValue(batteryState, listOf("charging")) as? Boolean == true ||
-            readFieldValue(batteryState, listOf("isDirectPowerMode")) as? Boolean == true
+                readFieldValue(batteryState, listOf("isDirectPowerMode")) as? Boolean == true
     }
 
     private fun setBatteryChargingIcon(iconView: ImageView) {

@@ -39,6 +39,13 @@ fun DetailPaneBrowser(
             checked = uiState.spoofBrowserCountryCodeToUS,
             onCheckedChange = { onEvent(BrowserEvent.SpoofBrowserCountryCodeToUS(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.tab_move),
+            title = stringResource(id = R.string.redirect_custom_tab_title),
+            summary = stringResource(id = R.string.redirect_custom_tab_summary),
+            checked = uiState.redirectCustomTab,
+            onCheckedChange = { onEvent(BrowserEvent.RedirectCustomTab(it)) }
+        )
     }
 }
 
@@ -48,6 +55,9 @@ sealed interface BrowserEvent {
 
     @JvmInline
     value class SpoofBrowserCountryCodeToUS(val value: Boolean) : BrowserEvent
+
+    @JvmInline
+    value class RedirectCustomTab(val value: Boolean) : BrowserEvent
 }
 
 fun SettingViewModel.onBrowserEvent(event: BrowserEvent) {
@@ -62,6 +72,12 @@ fun SettingViewModel.onBrowserEvent(event: BrowserEvent) {
             is BrowserEvent.SpoofBrowserCountryCodeToUS -> preference.copy(
                 browser = preference.browser.copy(
                     spoofBrowserCountryCodeToUS = event.value
+                )
+            )
+
+            is BrowserEvent.RedirectCustomTab -> preference.copy(
+                browser = preference.browser.copy(
+                    redirectCustomTab = event.value
                 )
             )
         }

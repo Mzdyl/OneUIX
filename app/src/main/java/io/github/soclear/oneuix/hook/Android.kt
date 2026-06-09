@@ -9,6 +9,7 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedBridge.hookAllConstructors
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
+import de.robv.android.xposed.XposedHelpers.findClassIfExists
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.XposedHelpers.setBooleanField
 import de.robv.android.xposed.XposedHelpers.setObjectField
@@ -78,6 +79,25 @@ object Android {
             setStaticIntField(clazz, "MAX_NEVERKILLEDAPP_NUM", num)
         } catch (t: Throwable) {
             logError("setMaxNeverKilledAppNum failed", t)
+        }
+    }
+
+    // 解除国行/港版对 GMS（含 FCM 推送）的网络限制
+    fun liftFcmNetworkLimit(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.ANDROID) return
+        val clazz = findClassIfExists(
+            "com.android.server.alarm.GmsAlarmManager",
+            loadPackageParam.classLoader
+        ) ?: return
+        try {
+            hookAllConstructors(clazz, object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    setBooleanField(param.thisObject, "isChinaMode", false)
+                    setBooleanField(param.thisObject, "isHongKongMode", false)
+                }
+            })
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
         }
     }
 

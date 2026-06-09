@@ -1,6 +1,9 @@
 package io.github.soclear.oneuix.hook
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -128,7 +131,8 @@ object Browser {
                             val radioGroup = getObjectField(
                                 param.thisObject, "mPlaybackSpeedRadioGroup"
                             ) as? RadioGroup ?: return null
-                            val radioButton = radioGroup.getChildAt(index) as? RadioButton ?: return null
+                            val radioButton =
+                                radioGroup.getChildAt(index) as? RadioButton ?: return null
 
                             callMethod(mController, "setPlaybackRate", speed)
                             setObjectField(param.thisObject, "mCurrentSpeed", radioButton)
@@ -185,5 +189,40 @@ object Browser {
         } catch (t: Throwable) {
             logError("setCountryIsoCode failed", t)
         }
+    }
+    fun redirectCustomTab(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.BROWSER) return
+        findAndHookMethod(
+            "com.sec.android.app.sbrowser.customtabs.CustomTabActivity",
+            loadPackageParam.classLoader,
+            "onCreate",
+            Bundle::class.java,
+            object : XC_MethodHook() {
+                override fun beforeHookedMethod(param: MethodHookParam) {
+                    val activity = param.thisObject as Activity
+                    val originalIntent = activity.intent ?: return
+                    val uri = originalIntent.data ?: return
+                    val scheme = uri.scheme?.lowercase()
+                    if (scheme != "http" && scheme != "https") {
+                        return
+                    }
+                    val cleanIntent = Intent(originalIntent).apply {
+                        component = null
+                        `package` = loadPackageParam.packageName
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        extras?.keySet()?.filter { key ->
+                            key.startsWith("androidx.browser.customtabs.extra.") ||
+                                    key.startsWith("android.support.customtabs.extra.") ||
+                                    key.startsWith("org.chromium.chrome.browser.customtabs.")
+                        }?.forEach(::removeExtra)
+                        putExtra("com.android.browser.application_id", loadPackageParam.packageName)
+                        putExtra("create_new_tab", true)
+                    }
+                    activity.startActivity(cleanIntent)
+                    activity.finish()
+                    originalIntent.data = null
+                }
+            }
+        )
     }
 }

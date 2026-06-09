@@ -15,6 +15,8 @@ data class PowerMenuAction(
         const val LOCK_DOWN_MODE = "lock_down_mode"
         const val EMERGENCY_CALL = "emergency_call"
         const val MEDICAL_INFO = "medical_info"
+        const val SIDE_KEY_SETTINGS = "side_key_settings"
+        const val FORCE_RESTART_MESSAGE = "force_restart_message"
         const val RESTART_SYSTEMUI = "restart_systemui"
         const val RESTART_RECOVERY = "restart_recovery"
         const val RESTART_DOWNLOAD = "restart_download"
@@ -27,6 +29,8 @@ data class PowerMenuAction(
             LOCK_DOWN_MODE,
             EMERGENCY_CALL,
             MEDICAL_INFO,
+            SIDE_KEY_SETTINGS,
+            FORCE_RESTART_MESSAGE,
             RESTART_SYSTEMUI,
             RESTART_RECOVERY,
             RESTART_DOWNLOAD,

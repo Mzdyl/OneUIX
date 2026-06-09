@@ -16,6 +16,10 @@
     <string name="sim_slot_1">SIM 1</string>
     <string name="sim_slot_2">SIM 2</string>
     <string name="sim_slot_both">SIM 1 和 SIM 2</string>
+    <string name="addBatteryLevelText_title">显示电量文字</string>
+    <string name="addBatteryLevelText_summary">在电池图标旁显示电量文字，如 96%</string>
+    <string name="hideBatteryLevelTextPercentageSign_title">隐藏百分号</string>
+    <string name="hideBatteryLevelTextChargingIcon_title">隐藏充电图标</string>
     <string name="supportRealTimeNetworkSpeed_title">支持显示实时网速</string>
     <string name="supportRealTimeNetworkSpeed_summary">设置->通知->高级设置->显示实时网速</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">状态栏显示上传下载网速</string>
@@ -30,6 +34,7 @@
     <string name="hideQsBarMediaPlayer_title">隐藏快捷设置面板的媒体播放器 Bar</string>
     <string name="hideQsBarSecurityFooter_title">隐藏快捷设置面板的安全底部提示 Bar</string>
     <string name="hideQsBarSecurityFooter_summary">例如：您的个人应用已通过“VPN”连接到互联网</string>
+    <string name="hideQsBarDataUsage_title">隐藏快捷设置面板的已用流量 Bar</string>
     <string name="hideQsBarSmartViewAndModes_title">隐藏快捷设置面板的 Smart View 和模式 Bar</string>
     <string name="hideDeviceControlQsTile_title">隐藏快捷设置的设备控制</string>
     <string name="hideSmartViewQsTile_title">隐藏快捷设置的Smart View</string>
@@ -45,6 +50,8 @@
     <string name="showWiFiLinkSpeed_summary">格式为 Tx,Rx ，单位为 Mbps</string>
     <string name="showMorePlaybackSpeeds_title">视频播放器添加 3.0 和 4.0 倍速</string>
     <string name="showMorePlaybackSpeeds_summary">包含本地播放器和浏览器内置播放器</string>
+    <string name="redirect_custom_tab_title">强制跳转外部三星浏览器</string>
+    <string name="redirect_custom_tab_summary">当三星浏览器被设置为默认浏览器后，很多应用在点击链接时，会在应用内部弹出一个受限的简易三星浏览器网页窗口。开启此功能后，会强制跳出应用并交由外部三星浏览器打开，让你能使用完整的三星浏览器功能</string>
     <string name="blockGalaxyStoreAds_title">去除应用商店的广告</string>
     <string name="blockGalaxyStoreAds_summary">去除开屏广告、推荐广告和推荐弹窗，去除安装年龄限制弹窗</string>
     <string name="galaxyStoreChangeRegion_title">切换应用商店区域</string>
@@ -67,6 +74,11 @@
     <string name="supportBodyBeauty_title">启用身体美化功能</string>
     <string name="supportBodyBeauty_summary">启用相机中的身材塑形和美化功能</string>
     <string name="disableScreenshotCaptureSound_title">禁用截图声音</string>
+    <string name="disableNotificationGrouping_title">禁用通知分组</string>
+    <string name="disableNotificationGrouping_summary">禁止同一应用的多个通知在状态栏合并图标、在通知中心分组显示</string>
+    <string name="hideOngoingActivityMedia_title">隐藏音乐应用的实时活动</string>
+    <string name="hideOngoingActivityMedia_summary">后台播放音乐时，隐藏状态栏实时活动胶囊和通知栏媒体通知卡片</string>
+    <string name="hideOngoingActivityMedia_packages_hint">包名，用英文逗号分隔</string>
     <string name="customPowerMenu_title">自定义关机菜单按钮</string>
     <string name="powerMenuActionVisible_summary">已显示，位置 %1$d</string>
     <string name="powerMenuActionHidden_summary">已隐藏</string>
@@ -79,6 +91,7 @@
     <string name="powerMenuAction_lockDownMode">锁定模式</string>
     <string name="powerMenuAction_emergencyCall">紧急呼叫</string>
     <string name="powerMenuAction_medicalInfo">医疗信息</string>
+    <string name="powerMenuAction_forceRestartMessage">强制重启提示</string>
     <string name="showPackageInfo_title">应用程序信息页面显示包信息</string>
     <string name="showPackageInfo_summary">长按或双击可复制</string>
     <string name="makeAllUserAppsAvailable_title">应用分身支持所有用户应用</string>
@@ -126,6 +139,8 @@
     <string name="bixby_custom_wakeup_summary">绕过 Labs 功能检查，允许创建和使用自定义唤醒词</string>
     <string name="bixby_wwv_bypass_title">绕过唤醒词文本限制</string>
     <string name="bixby_wwv_bypass_summary">绕过原生库黑名单，允许使用任意词语作为唤醒词</string>
+    <string name="spoofPhoneStatusAsOfficial_title">伪装手机状态为官方</string>
+    <string name="spoofPhoneStatusAsOfficial_summary">设置->关于手机->状态信息</string>
     <string name="noAIWatermark_title">禁用图片编辑器 AI 水印</string>
     <string name="bypassHealthMonitorCountryCheck_title">绕过 Samsung Health Monitor 国家检查</string>
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>
@@ -173,4 +188,9 @@
     <string name="status_bar">状态栏</string>
     <string name="qs">快捷设置</string>
     <string name="aod">息屏提醒</string>
+    <string name="sideKeySettings">侧面按钮设置</string>
+    <string name="allowAllRotation_title">允许所有旋转角度</string>
+    <string name="allowAllRotation_summary">在手机上启用 180° 旋转（通常仅平板可用）</string>
+    <string name="liftFcmNetworkLimit_title">解除 FCM 网络限制</string>
+    <string name="liftFcmNetworkLimit_summary">解除国行（包含港版）固件对 GMS/FCM 推送的网络限制</string>
 </resources>

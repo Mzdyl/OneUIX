@@ -49,6 +49,14 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     CoreRune.supportAppJumpBlock(lpparam)
                 }
 
+                if (preference.android.allowAllRotation) {
+                    CoreRune.allowAllRotation(lpparam)
+                }
+
+                if (preference.android.liftFcmNetworkLimit) {
+                    Android.liftFcmNetworkLimit(lpparam)
+                }
+
                 if (preference.android.disableAsksRestriction) {
                     Android.disableAsksRestriction(lpparam)
                 }
@@ -73,6 +81,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.browser.spoofBrowserCountryCodeToUS) {
                     Browser.setCountryIsoCode(lpparam, "US")
+                }
+
+                if (preference.browser.redirectCustomTab) {
+                    Browser.redirectCustomTab(lpparam)
                 }
             }
 
@@ -224,6 +236,16 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.settings.supportAutoPowerOnOff) {
                     Settings.supportAutoPowerOnOff(lpparam)
                 }
+
+                if (preference.settings.spoofPhoneStatusAsOfficial) {
+                    Settings.spoofPhoneStatusAsOfficial(lpparam)
+                }
+            }
+
+            Package.SM_CN -> {
+                if (preference.settings.spoofPhoneStatusAsOfficial) {
+                    SMCN.spoofPhoneStatusAsOfficial(lpparam)
+                }
             }
 
             Package.STORE -> {
@@ -252,6 +274,14 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     SystemUI.setStatusBarPaddingDp(lpparam, leftPaddingDp, rightPaddingDp)
                 }
 
+
+                if (preference.systemUI.statusBar.addBatteryLevelText) {
+                    SystemUI.addBatteryLevelText(
+                        lpparam,
+                        preference.systemUI.statusBar.hideBatteryLevelTextPercentageSign,
+                        preference.systemUI.statusBar.hideBatteryLevelTextChargingIcon,
+                    )
+                }
 
                 if (preference.systemUI.statusBar.supportRealTimeNetworkSpeed) {
                     Network.supportRealTimeNetworkSpeed(lpparam)
@@ -345,6 +375,9 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                         if (preference.systemUI.qs.hideQsBarSecurityFooter) {
                             add(SystemUI.QsBar.SecurityFooter)
                         }
+                        if (preference.systemUI.qs.hideQsBarDataUsage) {
+                            add(SystemUI.QsBar.DataUsage)
+                        }
                         if (preference.systemUI.qs.hideQsBarSmartViewAndModes) {
                             add(SystemUI.QsBar.SmartViewAndModes)
                         }
@@ -383,6 +416,21 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.systemUI.other.disableScreenshotCaptureSound) {
                     SystemUI.disableScreenshotCaptureSound(lpparam)
+                }
+
+                if (preference.systemUI.other.disableNotificationGrouping) {
+                    SystemUI.disableNotificationGrouping(lpparam)
+                }
+
+                if (preference.systemUI.other.hideOngoingActivityMedia) {
+                    SystemUI.hideOngoingActivityMedia(
+                        lpparam,
+                        preference.systemUI.other.hideOngoingActivityMediaPackages
+                            .split(",")
+                            .map { it.trim() }
+                            .filter { it.isNotEmpty() }
+                            .toSet()
+                    )
                 }
 
                 if (preference.settings.supportOutdoorMode) {

@@ -41,12 +41,14 @@
 - 修改状态栏左边距
 - 修改状态栏右边距
 - 隐藏状态栏电池的百分号
+- 隐藏电池图标
 - 支持显示实时网速
 - 状态栏显示上传下载网速
 - 设置状态栏日期时间格式
 - 状态栏时间每秒更新
 - 极简中文时间日期
 - 隐藏安全文件夹状态栏图标
+- 实体 eSIM 适配器兼容处理
 - 双击状态栏锁屏
 - 修改状态栏最大通知图标数量
 - 自定义运营商名称
@@ -61,6 +63,7 @@
 - 隐藏快捷设置面板的媒体播放器 Bar
 - 隐藏快捷设置面板的附近设备和设备控制 Bar
 - 隐藏快捷设置面板的安全底部提示 Bar
+- 隐藏快捷设置面板的已用流量 Bar
 - 隐藏快捷设置面板的 Smart View 和模式 Bar
 - 总是展开快捷设置磁贴块
 - 快捷设置面板总是显示时间日期
@@ -82,11 +85,13 @@
 #### 设置
 
 - 开发者选项显示强制最大刷新率选项
+- 解锁户外模式
 - 显示更多电池信息
 - 应用程序信息页面显示包信息
 - Wi-Fi 列表页显示当前连接速度
 - 支持任意字体
 - 支持自动开/关机
+- 伪装手机状态为官方
 
 #### 电话
 
@@ -107,6 +112,7 @@
 - 天气源设为中国天气
 - 最近任务页面显示内存信息
 - 视频播放器添加 3.0 和 4.0 倍速
+- 强制链接跳转外部三星浏览器
 - 显示相册的所有设置
 - 支持三星笔记的所有功能
 - 日历中显示中国节假日
@@ -132,6 +138,10 @@
 ### 备份
 
 `/data/misc/[UUID]/prefs/io.github.soclear.oneuix/preference.json`
+
+或者
+
+`/data/misc//apexdata/[UUID]/prefs/io.github.soclear.oneuix/preference.json`
 
 ### 🤝 参与贡献
 
@@ -160,12 +170,14 @@
 - Modify status bar left padding
 - Modify status bar right padding
 - Hide battery percentage sign in status bar
+- Hide battery icon
 - Support displaying real-time network speed
 - Show separate upload/download speeds in status bar
 - Set status bar date and time format
 - Update status bar clock every second
 - Compact Chinese time and date
 - Hide Secure Folder status bar icon
+- Workaround for physical eSIM adapter
 - Double tap status bar to sleep
 - Modify maximum number of notification icons in status bar
 - Set custom carrier name
@@ -180,6 +192,7 @@
 - Hide Media Player bar in QS panel
 - Hide Nearby Devices and Device Control bar in QS panel
 - Hide Security footer bar in QS panel
+- Hide Data usage bar in QS panel
 - Hide Smart View and Modes bar in QS panel
 - Always expand Quick Settings tile chunk
 - Always show time and date in QS panel
@@ -201,11 +214,13 @@
 #### Settings
 
 - Show 'Force peak refresh rate' in Developer options
+- Unlock Outdoor mode
 - Show more battery info
 - Show package info on App Info page
 - Show current link speed in Wi-Fi list
 - Support any font
 - Support Auto power on/off
+- Spoof phone status as Official
 
 #### Phone
 
@@ -226,6 +241,7 @@
 - Set weather provider to China Weather
 - Show memory usage in Recents page
 - Add 3.0x and 4.0x playback speeds to video player
+- Force links to open in external Samsung Internet
 - Show all Gallery settings
 - Support all Samsung Notes features
 - Show Chinese holidays in Calendar
@@ -251,6 +267,10 @@
 ### Backup
 
 `/data/misc/[UUID]/prefs/io.github.soclear.oneuix/preference.json`
+
+or
+
+`/data/misc//apexdata/[UUID]/prefs/io.github.soclear.oneuix/preference.json`
 
 ### 🤝 Contributing
 

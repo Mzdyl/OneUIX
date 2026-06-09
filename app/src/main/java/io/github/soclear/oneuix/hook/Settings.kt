@@ -9,7 +9,9 @@ import android.widget.TextView
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import de.robv.android.xposed.XposedBridge
+import de.robv.android.xposed.XposedBridge.hookMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
+import de.robv.android.xposed.XposedHelpers.findMethodExactIfExists
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
@@ -117,13 +119,14 @@ object Settings {
         }
 
         try {
-            findAndHookMethod(
+            findMethodExactIfExists(
                 "com.samsung.android.settings.Rune",
                 loadPackageParam.classLoader,
                 "supportOutdoorMode",
-                Context::class.java,
-                returnConstant(true)
-            )
+                Context::class.java
+            )?.let {
+                hookMethod(it, returnConstant(true))
+            }
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }
@@ -188,5 +191,25 @@ object Settings {
                 }
             }
         )
+    }
+
+    fun spoofPhoneStatusAsOfficial(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.processName != Package.SETTINGS) return
+        try {
+            findAndHookMethod(
+                "com.samsung.android.settings.deviceinfo.SecDeviceInfoUtils",
+                loadPackageParam.classLoader,
+                "isPhoneStatusUnlocked",
+                returnConstant(false)
+            )
+            findAndHookMethod(
+                "com.samsung.android.settings.deviceinfo.SecDeviceInfoUtils",
+                loadPackageParam.classLoader,
+                "checkRootingCondition",
+                returnConstant(false)
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
     }
 }

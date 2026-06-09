@@ -34,6 +34,8 @@ data class Preference(
         val maxNeverKilledAppNum: Int = 5,
         val setBlockableNotificationChannel: Boolean = false,
         val supportAppJumpBlock: Boolean = false,
+        val allowAllRotation: Boolean = false,
+        val liftFcmNetworkLimit: Boolean = false,
         val disableAsksRestriction: Boolean = false,
         val allowGms: Boolean = false,
         val fcmFix: Boolean = false,
@@ -56,6 +58,9 @@ data class Preference(
             val statusBarRightPaddingDp: Float = 0f,
             val hideBatteryPercentageSign: Boolean = false,
             val hideBatteryIcon: Boolean = false,
+            val addBatteryLevelText: Boolean = false,
+            val hideBatteryLevelTextPercentageSign: Boolean = false,
+            val hideBatteryLevelTextChargingIcon: Boolean = false,
             val supportRealTimeNetworkSpeed: Boolean = true,
             val showSeparateUpDownNetworkSpeeds: Boolean = false,
             val setStatusBarClockFormat: Boolean = false,
@@ -85,6 +90,7 @@ data class Preference(
             val hideQsBarMediaPlayer: Boolean = false,
             val hideQsBarNearbyDevicesAndDeviceControl: Boolean = false,
             val hideQsBarSecurityFooter: Boolean = false,
+            val hideQsBarDataUsage: Boolean = false,
             val hideQsBarSmartViewAndModes: Boolean = false,
             val alwaysExpandQsTileChunk: Boolean = false,
             val alwaysShowTimeDateOnQs: Boolean = false,
@@ -107,6 +113,9 @@ data class Preference(
             val customPowerMenu: Boolean = false,
             val powerMenuActions: List<PowerMenuAction> =
                 PowerMenuAction.defaultPreferences(),
+            val disableNotificationGrouping: Boolean = false,
+            val hideOngoingActivityMedia: Boolean = false,
+            val hideOngoingActivityMediaPackages: String = "",
         )
     }
 
@@ -120,6 +129,7 @@ data class Preference(
         val supportAnyFont: Boolean = true,
         val supportAutoPowerOnOff: Boolean = false,
         val showNotificationCategory: Boolean = false,
+        val spoofPhoneStatusAsOfficial: Boolean = false,
     )
 
     @Serializable
@@ -163,6 +173,7 @@ data class Preference(
     data class Browser(
         val showMorePlaybackSpeeds: Boolean = false,
         val spoofBrowserCountryCodeToUS: Boolean = false,
+        val redirectCustomTab: Boolean = false,
     )
 
     @Serializable
@@ -231,7 +242,6 @@ data class Preference(
 
     @Serializable
     data class Other(
-        // 保留给模块自身设置或未分类功能
         val placeholder: Boolean = false
     )
 
