@@ -1157,23 +1157,6 @@ object SystemUI {
         }
     }
 
-    fun enableGoogleSearch(loadPackageParam: LoadPackageParam, enabled: Boolean) {
-        if (loadPackageParam.packageName != Package.SYSTEMUI) return
-        try {
-            val settingsHelperClass = findClass(
-                "com.android.systemui.util.SettingsHelper",
-                loadPackageParam.classLoader
-            )
-            XposedBridge.hookAllMethods(
-                settingsHelperClass,
-                "isCNSupportCTS",
-                returnConstant(enabled)
-            )
-        } catch (t: Throwable) {
-            XposedBridge.log(t)
-        }
-    }
-
     fun disableNotificationGrouping(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
         try {

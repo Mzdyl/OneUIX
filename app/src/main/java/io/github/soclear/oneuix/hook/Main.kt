@@ -61,16 +61,8 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Android.disableAsksRestriction(lpparam)
                 }
 
-                if (preference.android.allowGms) {
-                    Android.allowGms(lpparam)
-                }
-
                 if (preference.android.fcmFix) {
                     Android.fcmFix(lpparam)
-                }
-
-                if (preference.android.enableGoogleSearch) {
-                    Android.enableGoogleSearch(lpparam)
                 }
             }
 
@@ -435,10 +427,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.settings.supportOutdoorMode) {
                     SystemUI.supportOutdoorMode(lpparam)
-                }
-
-                if (preference.android.enableGoogleSearch) {
-                    SystemUI.enableGoogleSearch(lpparam, true)
                 }
 
                 if (preference.systemUI.other.customPowerMenu) {

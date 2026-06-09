@@ -37,10 +37,8 @@ data class Preference(
         val allowAllRotation: Boolean = false,
         val liftFcmNetworkLimit: Boolean = false,
         val disableAsksRestriction: Boolean = false,
-        val allowGms: Boolean = false,
         val fcmFix: Boolean = false,
         val hideNavigationBarGestureHint: Boolean = false,
-        val enableGoogleSearch: Boolean = false,
     )
 
     @Serializable

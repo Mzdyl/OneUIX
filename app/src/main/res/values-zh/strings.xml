@@ -146,14 +146,10 @@
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>
     <string name="disableAsksRestriction_title">禁用 ASKS 限制</string>
     <string name="disableAsksRestriction_summary">移除 ASKS 策略对应用安装的限制</string>
-    <string name="allowGms_title">绕过 GMS/FCM 限制</string>
-    <string name="allowGms_summary">在国行设备上启用 FCM 推送服务</string>
     <string name="fcmFix_title">强制唤醒 FCM</string>
     <string name="fcmFix_summary">接收推送通知时强制唤醒 FCM 服务</string>
     <string name="hideNavigationBarGestureHint_title">隐藏导航栏手势提示条</string>
     <string name="hideNavigationBarGestureHint_summary">隐藏底部手势提示条，获得更纯净的全面屏体验（需要 root 权限）</string>
-    <string name="enableGoogleSearch_title">启用谷歌即圈即搜</string>
-    <string name="enableGoogleSearch_summary">在国行设备上启用谷歌即圈即搜功能</string>
     <string name="enableSketch_title">启用涂鸦生图</string>
     <string name="enableSketch_summary">在国行设备上启用涂鸦生图功能</string>
     <string name="useGoogleTranslate_title">使用谷歌翻译</string>

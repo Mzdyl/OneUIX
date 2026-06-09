@@ -178,21 +178,20 @@
 偏好项：
 
 - `disableAsksRestriction`
-- `allowGms`
+- `liftFcmNetworkLimit`
 - `fcmFix`
 - `hideNavigationBarGestureHint`
-- `enableGoogleSearch`
 
 实现要点：
 
 - `disableAsksRestriction` 清理 ASKS 受限包列表并禁用相关判断
-- `allowGms` 绕过 `GmsAlarmManager` 的中国区和网络限制判断
+- `liftFcmNetworkLimit` 使用上游实现，解除 `GmsAlarmManager` 的中国区和港版 FCM 网络限制
 - `fcmFix` 在 `ActivityManagerService.broadcastIntentLocked` 中放宽 FCM 广播限制
-- `enableGoogleSearch` 绕过 Contextual Search denylist 并指定 Google 搜索包
 
 合并风险：
 
-- 上游新提交已加入 `liftFcmNetworkLimit`，功能目标与 `allowGms` / `fcmFix` 部分重叠；合并时应比较实现，避免重复 hook 同一方法导致行为不确定
+- `allowGms` 已移除，和上游 `liftFcmNetworkLimit` 功能重叠时优先使用上游实现
+- `fcmFix` 仍保留，因为它处理广播唤醒路径，不等同于 `liftFcmNetworkLimit`
 - 上游新提交已加入 `allowAllRotation`，需要迁移到 `Preference.Android` 和 `DetailPaneAndroid.kt`
 
 ### SystemUI 自用 Hook
@@ -327,7 +326,7 @@ git log --oneline --no-merges HEAD..upstream/main
 上游新增字段迁移到 `Self` 的目标位置：
 
 - `android.allowAllRotation` 保留在 `Preference.Android`
-- `android.liftFcmNetworkLimit` 需要与 `allowGms` / `fcmFix` 对比后决定是否独立保留
+- `android.liftFcmNetworkLimit` 保留在 `Preference.Android`，用于替代已删除的 `allowGms`
 - `settings.spoofPhoneStatusAsOfficial` 保留在 `Preference.Settings`
 - `systemUI.statusBar.addBatteryLevelText` 等电池文本字段保留在 `Preference.SystemUI.StatusBar`
 - `systemUI.qs.hideQsBarDataUsage` 保留在 `Preference.SystemUI.QS`

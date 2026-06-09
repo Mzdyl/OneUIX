@@ -116,13 +116,6 @@ fun DetailPaneAndroid(
             onCheckedChange = { onEvent(AndroidEvent.DisableAsksRestriction(it)) }
         )
         SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.five_g),
-            title = stringResource(id = R.string.allowGms_title),
-            summary = stringResource(id = R.string.allowGms_summary),
-            checked = uiState.allowGms,
-            onCheckedChange = { onEvent(AndroidEvent.AllowGms(it)) }
-        )
-        SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.notifications),
             title = stringResource(id = R.string.fcmFix_title),
             summary = stringResource(id = R.string.fcmFix_summary),
@@ -139,13 +132,6 @@ fun DetailPaneAndroid(
                     onEvent(AndroidEvent.HideNavigationBarGestureHint(it))
                 }
             }
-        )
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.search),
-            title = stringResource(id = R.string.enableGoogleSearch_title),
-            summary = stringResource(id = R.string.enableGoogleSearch_summary),
-            checked = uiState.enableGoogleSearch,
-            onCheckedChange = { onEvent(AndroidEvent.EnableGoogleSearch(it)) }
         )
     }
 }
@@ -176,16 +162,10 @@ sealed interface AndroidEvent {
     value class DisableAsksRestriction(val value: Boolean) : AndroidEvent
 
     @JvmInline
-    value class AllowGms(val value: Boolean) : AndroidEvent
-
-    @JvmInline
     value class FcmFix(val value: Boolean) : AndroidEvent
 
     @JvmInline
     value class HideNavigationBarGestureHint(val value: Boolean) : AndroidEvent
-
-    @JvmInline
-    value class EnableGoogleSearch(val value: Boolean) : AndroidEvent
 }
 
 fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
@@ -255,14 +235,6 @@ fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
                 )
             }
 
-            is AndroidEvent.AllowGms -> {
-                preference.copy(
-                    android = preference.android.copy(
-                        allowGms = event.value
-                    )
-                )
-            }
-
             is AndroidEvent.FcmFix -> {
                 preference.copy(
                     android = preference.android.copy(
@@ -275,14 +247,6 @@ fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
                 preference.copy(
                     android = preference.android.copy(
                         hideNavigationBarGestureHint = event.value
-                    )
-                )
-            }
-
-            is AndroidEvent.EnableGoogleSearch -> {
-                preference.copy(
-                    android = preference.android.copy(
-                        enableGoogleSearch = event.value
                     )
                 )
             }
