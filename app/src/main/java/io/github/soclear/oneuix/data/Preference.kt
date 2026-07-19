@@ -21,6 +21,7 @@ data class Preference(
     val dualApp: DualApp = DualApp(),
     val photoRetouching: PhotoRetouching = PhotoRetouching(),
     val watchPairing: WatchPairing = WatchPairing(),
+    val samsungHealth: SamsungHealth = SamsungHealth(),
     val healthMonitor: HealthMonitor = HealthMonitor(),
     val galaxyStore: GalaxyStore = GalaxyStore(),
     val sPen: SPen = SPen(),
@@ -215,6 +216,14 @@ data class Preference(
         val bypassRegionCheck: Boolean = false,           // 绕过区域限制
         val connectionMode: Int = 0,                       // 0=自动，1=WearOS CN，2=WearOS Global
         val forceChinaGmsCore: Boolean = false,            // 补充国行 WearOS GMS
+    )
+
+    @Serializable
+    data class SamsungHealth(
+        val bypassAccountCountryCheck: Boolean = false,
+        val serverRegion: Int = 0,
+        val unlockCountryFeatures: Boolean = false,
+        val unlockAccessoryProfiles: Boolean = false,
     )
 
     @Serializable

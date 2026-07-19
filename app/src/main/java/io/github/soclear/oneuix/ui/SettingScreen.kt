@@ -42,6 +42,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneNotes
 import io.github.soclear.oneuix.ui.category.DetailPaneOther
 import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
 import io.github.soclear.oneuix.ui.category.DetailPaneSPen
+import io.github.soclear.oneuix.ui.category.DetailPaneSamsungHealth
 import io.github.soclear.oneuix.ui.category.DetailPaneSettings
 import io.github.soclear.oneuix.ui.category.DetailPaneSystemUI
 import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
@@ -65,6 +66,7 @@ import io.github.soclear.oneuix.ui.category.onNotesEvent
 import io.github.soclear.oneuix.ui.category.onOtherEvent
 import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
 import io.github.soclear.oneuix.ui.category.onSPenEvent
+import io.github.soclear.oneuix.ui.category.onSamsungHealthEvent
 import io.github.soclear.oneuix.ui.category.onSettingsEvent
 import io.github.soclear.oneuix.ui.category.onSystemUIEvent
 import io.github.soclear.oneuix.ui.category.onThemeCenterEvent
@@ -216,6 +218,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.PhotoRetouching -> DetailPanePhotoRetouching(
                             uiState = preference.photoRetouching,
                             onEvent = viewModel::onPhotoRetouchingEvent
+                        )
+
+                        Category.SamsungHealth -> DetailPaneSamsungHealth(
+                            uiState = preference.samsungHealth,
+                            onEvent = viewModel::onSamsungHealthEvent
                         )
 
                         Category.HealthMonitor -> DetailPaneHealthMonitor(

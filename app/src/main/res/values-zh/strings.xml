@@ -146,6 +146,17 @@
     <string name="noAIWatermark_title">禁用图片编辑器 AI 水印</string>
     <string name="bypassHealthMonitorCountryCheck_title">绕过 Samsung Health Monitor 国家检查</string>
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>
+    <string name="samsungHealthBypassAccountCountry_title">绕过账号地区同步检查</string>
+    <string name="samsungHealthBypassAccountCountry_summary">允许三星健康版本与三星账号国家/地区不一致</string>
+    <string name="samsungHealthServerRegion_title">健康数据服务器</string>
+    <string name="samsungHealthServerRegion_summary">独立于已安装的三星健康版本选择同步服务器</string>
+    <string name="samsungHealthServerRegion_default">跟随已安装应用</string>
+    <string name="samsungHealthServerRegion_china">中国</string>
+    <string name="samsungHealthServerRegion_global">全球</string>
+    <string name="samsungHealthUnlockCountryFeatures_title">解锁国家/地区限制功能</string>
+    <string name="samsungHealthUnlockCountryFeatures_summary">绕过功能设置中的国家、CSC 和版本条件</string>
+    <string name="samsungHealthUnlockAccessories_title">解锁健康配件类型</string>
+    <string name="samsungHealthUnlockAccessories_summary">允许当前国家/地区被禁用的健康配件类型</string>
     <string name="disableAsksRestriction_title">禁用 ASKS 限制</string>
     <string name="disableAsksRestriction_summary">移除 ASKS 策略对应用安装的限制</string>
     <string name="fcmFix_title">强制唤醒 FCM</string>

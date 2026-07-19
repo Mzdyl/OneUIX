@@ -140,6 +140,17 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 }
             }
 
+            Package.SAMSUNG_HEALTH -> {
+                val samsungHealth = preference.samsungHealth
+                if (samsungHealth.bypassAccountCountryCheck ||
+                    samsungHealth.serverRegion != SamsungHealth.SERVER_REGION_DEFAULT ||
+                    samsungHealth.unlockCountryFeatures ||
+                    samsungHealth.unlockAccessoryProfiles
+                ) {
+                    SamsungHealth.init(lpparam, samsungHealth)
+                }
+            }
+
             Package.INCALLUI -> {
                 if (preference.call.supportVoiceCallRecording) {
                     Call.supportVoiceCallRecording(

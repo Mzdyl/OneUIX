@@ -11,6 +11,7 @@
         <package android:name="com.sec.android.app.camera" />
         <package android:name="com.sec.android.app.launcher" />
         <package android:name="com.sec.android.app.sbrowser" />
+        <package android:name="com.sec.android.app.shealth" />
         <package android:name="com.sec.android.gallery3d" />
         <package android:name="com.sec.android.mimage.photoretouching" />
         <package android:name="com.samsung.android.app.telephonyui" />

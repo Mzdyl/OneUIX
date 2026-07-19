@@ -41,6 +41,7 @@ class SettingViewModel(application: Application) : ViewModel() {
         Category.Launcher,
         Category.DualApp,
         Category.PhotoRetouching,
+        Category.SamsungHealth,
         Category.HealthMonitor,
         Category.SPen,
         Category.Bixby

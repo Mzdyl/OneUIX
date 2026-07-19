@@ -20,6 +20,7 @@ enum class Category(val packageName: String) {
     Launcher(Package.LAUNCHER),
     DualApp(Package.DUAL_APP),
     PhotoRetouching(Package.PHOTO_RETOUCHING),
+    SamsungHealth(Package.SAMSUNG_HEALTH),
     HealthMonitor(Package.HEALTH_MONITOR),
     GalaxyStore(Package.STORE),
     SPen(Package.SPEN),
