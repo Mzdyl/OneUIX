@@ -15,6 +15,7 @@ import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
 import kotlinx.serialization.Serializable
 import org.luckypray.dexkit.DexKitBridge
+import org.luckypray.dexkit.wrap.DexMethod
 import java.io.File
 import java.lang.reflect.Modifier
 import java.util.Locale
@@ -28,6 +29,8 @@ object SamsungHealth {
         "com.samsung.android.sdk.healthdata.privileged.AccountOperation"
     private const val ACCOUNT_SERVER_API_UTIL_CLASS =
         "com.samsung.android.sdk.util.AccountServerApiUtil"
+    private const val RECOVERABLE_ACCOUNT_OPERATION_CLASS =
+        "com.samsung.android.app.shealth.data.recoverable.RecoverableAccountOperationKt"
     private const val SERVER_API_UTIL_CLASS =
         "com.samsung.android.service.health.util.ServerApiUtil"
     private const val COUNTRY_CODE_CONDITION_CLASS =
@@ -42,6 +45,7 @@ object SamsungHealth {
     private const val PERMANENT_PREFERENCES_REMOTE = "permanent_sharedpreferences_remote"
     private const val BLOCKED_ACCOUNT_KEY = "sam_is_blocked_by_not_allowed_account"
     private const val LEGACY_BLOCKED_ACCOUNT_KEY = "sam_is_not_allowed_account_state"
+    private const val GLOBAL_ACCOUNT_COUNTRY = "US"
 
     fun init(loadPackageParam: LoadPackageParam, preference: Preference.SamsungHealth) {
         if (loadPackageParam.packageName != Package.SAMSUNG_HEALTH) return
@@ -77,6 +81,28 @@ object SamsungHealth {
         }
 
         try {
+            val clazz = classLoader.loadClass(RECOVERABLE_ACCOUNT_OPERATION_CLASS)
+            clazz.declaredMethods
+                .filter {
+                    Modifier.isStatic(it.modifiers) &&
+                        it.returnType == String::class.java &&
+                        it.parameterTypes.contentEquals(arrayOf(Context::class.java))
+                }
+                .forEach { method ->
+                    XposedBridge.hookMethod(method, object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            if ((param.result as? String).equals("CN", ignoreCase = true)) {
+                                param.result = GLOBAL_ACCOUNT_COUNTRY
+                            }
+                        }
+                    })
+                }
+            log("SamsungHealth China account country treated as global")
+        } catch (t: Throwable) {
+            logError("SamsungHealth China account country hook failed", t)
+        }
+
+        try {
             clearBlockedAccountState(context)
             val config = context.getHookConfig(
                 File(context.filesDir, "SamsungHealthHookConfig.json")
@@ -96,6 +122,7 @@ object SamsungHealth {
                     param.args[2] = false
                 }
             })
+            hookRestrictedChinaDialog(classLoader, config)
             log("SamsungHealth blocked China account state bypassed")
         } catch (t: Throwable) {
             logError("SamsungHealth blocked China account bypass failed", t)
@@ -116,7 +143,29 @@ object SamsungHealth {
     private data class SamsungHealthHookConfig(
         override val versionCode: Long,
         val allowedAccountResultClass: String,
+        val restrictedChinaHandlerMethod: String,
     ) : HookConfig
+
+    private fun hookRestrictedChinaDialog(
+        classLoader: ClassLoader,
+        config: SamsungHealthHookConfig,
+    ) {
+        val method = DexMethod(config.restrictedChinaHandlerMethod)
+            .getMethodInstance(classLoader)
+        val handledCasesField = generateSequence(method.declaringClass) {
+            it.superclass
+        }.flatMap { it.declaredFields.asSequence() }
+            .first { MutableMap::class.java.isAssignableFrom(it.type) }
+            .apply { isAccessible = true }
+        XposedBridge.hookMethod(method, object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                @Suppress("UNCHECKED_CAST")
+                val handledCases = handledCasesField.get(param.thisObject) as?
+                    MutableMap<String, Any?> ?: return
+                handledCases["SHEALTH#RestrictedChinaCaseHandler"] = true
+            }
+        })
+    }
 
     private fun Context.getAccountRestrictionHookConfig(): SamsungHealthHookConfig? {
         System.loadLibrary("dexkit")
@@ -130,7 +179,23 @@ object SamsungHealth {
                     )
                 }
             }.singleOrNull() ?: return null
-            return SamsungHealthHookConfig(longVersionCode, resultClass.name)
+            val restrictedChinaHandlerMethod = bridge.findMethod {
+                matcher {
+                    returnType = "void"
+                    paramCount = 0
+                    usingStrings(
+                        "SHEALTH#RestrictedChinaCaseHandler",
+                        "RESTRICTED_CHINA_CASE_DIALOG",
+                        "RestrictedChinaCaseHandler: already handled"
+                    )
+                }
+            }.singleOrNull() ?: return null
+            return SamsungHealthHookConfig(
+                versionCode = longVersionCode,
+                allowedAccountResultClass = resultClass.name,
+                restrictedChinaHandlerMethod =
+                    restrictedChinaHandlerMethod.toDexMethod().serialize()
+            )
         }
     }
 
