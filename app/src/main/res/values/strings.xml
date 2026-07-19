@@ -146,8 +146,8 @@
     <string name="noAIWatermark_title">Disable Photo Editor AI watermark</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
     <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries</string>
-    <string name="samsungHealthBypassAccountCountry_title">Bypass account region sync check</string>
-    <string name="samsungHealthBypassAccountCountry_summary">Allow Samsung Health flavor and Samsung account country to differ</string>
+    <string name="samsungHealthBypassAccountCountry_title">Bypass account region restrictions</string>
+    <string name="samsungHealthBypassAccountCountry_summary">Allow the app flavor and account country to differ, including restricted China accounts</string>
     <string name="samsungHealthServerRegion_title">Health data server</string>
     <string name="samsungHealthServerRegion_summary">Choose the server independently from the installed Samsung Health flavor</string>
     <string name="samsungHealthServerRegion_default">Follow installed app</string>

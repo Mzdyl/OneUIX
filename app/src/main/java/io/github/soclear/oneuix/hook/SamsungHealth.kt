@@ -1,14 +1,21 @@
 package io.github.soclear.oneuix.hook
 
 import android.content.Context
+import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.data.Preference
+import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
+import io.github.soclear.oneuix.hook.util.getHookConfig
+import io.github.soclear.oneuix.hook.util.longVersionCode
 import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
+import kotlinx.serialization.Serializable
+import org.luckypray.dexkit.DexKitBridge
+import java.io.File
 import java.lang.reflect.Modifier
 import java.util.Locale
 
@@ -31,12 +38,16 @@ object SamsungHealth {
         "com.samsung.android.app.shealth.home.watchsettings.viewmodel.KidsInitStatusResponse"
     private const val ACCESSORY_INFO_CLASS =
         "com.samsung.android.app.shealth.sensor.accessory.service.data.accessoryinfo.AccessoryInfoInternal"
+    private const val PERMANENT_PREFERENCES_MAIN = "permanent_sharedpreferences_main"
+    private const val PERMANENT_PREFERENCES_REMOTE = "permanent_sharedpreferences_remote"
+    private const val BLOCKED_ACCOUNT_KEY = "sam_is_blocked_by_not_allowed_account"
+    private const val LEGACY_BLOCKED_ACCOUNT_KEY = "sam_is_not_allowed_account_state"
 
     fun init(loadPackageParam: LoadPackageParam, preference: Preference.SamsungHealth) {
         if (loadPackageParam.packageName != Package.SAMSUNG_HEALTH) return
         afterAttach {
             if (preference.bypassAccountCountryCheck) {
-                hookAccountCountryCheck(classLoader)
+                hookAccountCountryCheck(this, classLoader)
             }
             if (preference.serverRegion != SERVER_REGION_DEFAULT) {
                 hookServerRegion(classLoader, preference.serverRegion)
@@ -50,7 +61,7 @@ object SamsungHealth {
         }
     }
 
-    private fun hookAccountCountryCheck(classLoader: ClassLoader) {
+    private fun hookAccountCountryCheck(context: Context, classLoader: ClassLoader) {
         try {
             val clazz = classLoader.loadClass(ACCOUNT_OPERATION_CLASS)
             setOf("isValidSync", "isLegalCountry", "isSyncLegal").forEach { methodName ->
@@ -63,6 +74,63 @@ object SamsungHealth {
             log("SamsungHealth account country checks bypassed")
         } catch (t: Throwable) {
             logError("SamsungHealth account country bypass failed", t)
+        }
+
+        try {
+            clearBlockedAccountState(context)
+            val config = context.getHookConfig(
+                File(context.filesDir, "SamsungHealthHookConfig.json")
+            ) {
+                getAccountRestrictionHookConfig()
+            } ?: error("Allowed-account result class not found")
+            val clazz = classLoader.loadClass(config.allowedAccountResultClass)
+            XposedBridge.hookAllConstructors(clazz, object : XC_MethodHook() {
+                override fun beforeHookedMethod(param: MethodHookParam) {
+                    if (param.args.size != 3 || param.args[0] !is Boolean ||
+                        param.args[1] !is Boolean || param.args[2] !is Boolean
+                    ) {
+                        return
+                    }
+                    param.args[0] = true
+                    param.args[1] = true
+                    param.args[2] = false
+                }
+            })
+            log("SamsungHealth blocked China account state bypassed")
+        } catch (t: Throwable) {
+            logError("SamsungHealth blocked China account bypass failed", t)
+        }
+    }
+
+    private fun clearBlockedAccountState(context: Context) {
+        listOf(PERMANENT_PREFERENCES_MAIN, PERMANENT_PREFERENCES_REMOTE).forEach { name ->
+            context.getSharedPreferences(name, Context.MODE_PRIVATE)
+                .edit()
+                .remove(BLOCKED_ACCOUNT_KEY)
+                .remove(LEGACY_BLOCKED_ACCOUNT_KEY)
+                .apply()
+        }
+    }
+
+    @Serializable
+    private data class SamsungHealthHookConfig(
+        override val versionCode: Long,
+        val allowedAccountResultClass: String,
+    ) : HookConfig
+
+    private fun Context.getAccountRestrictionHookConfig(): SamsungHealthHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val resultClass = bridge.findClass {
+                matcher {
+                    usingStrings(
+                        "ResultForAllowedAccount(isSuccessForChecking=",
+                        ", isAllowedAccount=",
+                        ", isRemovingServerDataNeeded="
+                    )
+                }
+            }.singleOrNull() ?: return null
+            return SamsungHealthHookConfig(longVersionCode, resultClass.name)
         }
     }
 

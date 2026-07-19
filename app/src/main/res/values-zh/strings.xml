@@ -146,8 +146,8 @@
     <string name="noAIWatermark_title">禁用图片编辑器 AI 水印</string>
     <string name="bypassHealthMonitorCountryCheck_title">绕过 Samsung Health Monitor 国家检查</string>
     <string name="bypassHealthMonitorCountryCheck_summary">在不支持的国家/地区使用 Health Monitor</string>
-    <string name="samsungHealthBypassAccountCountry_title">绕过账号地区同步检查</string>
-    <string name="samsungHealthBypassAccountCountry_summary">允许三星健康版本与三星账号国家/地区不一致</string>
+    <string name="samsungHealthBypassAccountCountry_title">绕过账号地区限制</string>
+    <string name="samsungHealthBypassAccountCountry_summary">允许版本与账号国家/地区不一致，并解除中国区账号功能受限</string>
     <string name="samsungHealthServerRegion_title">健康数据服务器</string>
     <string name="samsungHealthServerRegion_summary">独立于已安装的三星健康版本选择同步服务器</string>
     <string name="samsungHealthServerRegion_default">跟随已安装应用</string>
