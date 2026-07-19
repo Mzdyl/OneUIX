@@ -591,7 +591,7 @@ object ESIM {
         val value = readFieldValue(info, names) ?: return null
         return when (value) {
             is IntArray -> value
-            is Array<*> -> value.mapNotNull { it as? Int }.toIntArray()
+            is Array<*> -> value.filterIsInstance<Int>().toIntArray()
             else -> null
         }
     }

@@ -30,6 +30,7 @@
     <string name="setStatusBarClockFormat_title">Set status bar date and time format</string>
     <string name="setStatusBarClockFormat_summary">Supports time format and variables:\n{temp} = battery temp, {lunar} = lunar date, {rate} = refresh rate, {shichen} = Chinese hour, {sec} = seconds, {date} = system date\nExample: HH:mm {temp} → 12:30 25.0°C</string>
     <string name="hideSecureFolderStatusBarIcon_title">Hide Secure Folder status bar icon</string>
+    <string name="restoreBluetoothStatusBarIcon_title">Restore Bluetooth status bar icon</string>
     <string name="hideQsBarNearbyDevicesAndDeviceControl_title">Hide Nearby Devices and Device Control bar in QS panel</string>
     <string name="hideQsBarMediaPlayer_title">Hide Media Player bar in QS panel</string>
     <string name="hideQsBarSecurityFooter_title">Hide Security footer bar in QS panel</string>
@@ -76,6 +77,7 @@
     <string name="disableScreenshotCaptureSound_title">Disable screenshot sound</string>
     <string name="disableNotificationGrouping_title">Disable notification grouping</string>
     <string name="disableNotificationGrouping_summary">Prevent status bar icon merging and notification center grouping for same-app notifications</string>
+    <string name="autoExpandNotifications_title">Auto expand notifications</string>
     <string name="hideOngoingActivityMedia_title">Hide ongoing activity for media apps</string>
     <string name="hideOngoingActivityMedia_summary">Hide the ongoing activity chip in status bar and media notification card in notification shade when playing music in the background</string>
     <string name="hideOngoingActivityMedia_packages_hint">Package names, separated by commas</string>
@@ -189,4 +191,8 @@
     <string name="allowAllRotation_summary">Enable 180° rotation on phones (normally only available on tablets)</string>
     <string name="liftFcmNetworkLimit_title">Lift FCM network limit</string>
     <string name="liftFcmNetworkLimit_summary">Remove the China (including Hong Kong) firmware restriction that throttles GMS/FCM push network access</string>
+    <string name="disableScreenWakeOnPowerUnplugged_title">Keep screen off when unplugged</string>
+    <string name="backup_config">Back up config</string>
+    <string name="restore_config">Restore config</string>
+    <string name="restore_failed">Restore failed, the file may be corrupted</string>
 </resources>

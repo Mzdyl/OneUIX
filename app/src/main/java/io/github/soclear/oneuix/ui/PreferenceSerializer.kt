@@ -11,7 +11,7 @@ import java.io.InputStream
 import java.io.OutputStream
 
 // 使用自定义 Json 配置，忽略未知字段以兼容旧版本数据
-private val json = Json {
+internal val PreferenceJson = Json {
     ignoreUnknownKeys = true  // 忽略旧版本中存在但新版本已删除的字段
     isLenient = true          // 宽松模式，允许一些非标准 JSON
     encodeDefaults = true     // 编码默认值
@@ -26,7 +26,7 @@ object PreferenceSerializer : Serializer<Preference> {
             if (jsonString.isBlank() || jsonString == "{}") {
                 return defaultValue
             }
-            json.decodeFromString(
+            PreferenceJson.decodeFromString(
                 deserializer = Preference.serializer(),
                 string = jsonString
             )
@@ -39,7 +39,7 @@ object PreferenceSerializer : Serializer<Preference> {
 
     override suspend fun writeTo(t: Preference, output: OutputStream) = withContext(Dispatchers.IO) {
         output.write(
-            json.encodeToString(
+            PreferenceJson.encodeToString(
                 serializer = Preference.serializer(),
                 value = t
             ).encodeToByteArray()

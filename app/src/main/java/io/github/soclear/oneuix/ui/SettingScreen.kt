@@ -1,5 +1,8 @@
 package io.github.soclear.oneuix.ui
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,14 +71,45 @@ import io.github.soclear.oneuix.ui.category.onThemeCenterEvent
 import io.github.soclear.oneuix.ui.category.onVideoEvent
 import io.github.soclear.oneuix.ui.category.onWatchPairingEvent
 import io.github.soclear.oneuix.ui.category.onWeatherEvent
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
     val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<Category>()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val categoryAppInfoList by viewModel.categoryAppInfoList.collectAsStateWithLifecycle()
     val preference by viewModel.preference.collectAsStateWithLifecycle()
+
+    val backupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                context.contentResolver.openOutputStream(it)?.use { stream ->
+                    viewModel.backupTo(stream)
+                }
+            }
+        }
+    }
+    val restoreLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                context.contentResolver.openInputStream(it)?.use { stream ->
+                    try {
+                        viewModel.restoreFrom(stream)
+                    } catch (_: Throwable) {
+                        Toast.makeText(context, R.string.restore_failed, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
     NavigableListDetailPaneScaffold(
         navigator = scaffoldNavigator,
         listPane = {
@@ -88,7 +123,14 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                                 category
                             )
                         }
-                    }
+                    },
+                    onBackup = {
+                        val name = "OneUIX_backup_${
+                            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                        }.json"
+                        backupLauncher.launch(name)
+                    },
+                    onRestore = { restoreLauncher.launch(arrayOf("application/json")) }
                 )
             }
         },

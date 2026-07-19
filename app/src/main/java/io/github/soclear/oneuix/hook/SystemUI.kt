@@ -26,6 +26,7 @@ import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedBridge.hookAllConstructors
 import de.robv.android.xposed.XposedBridge.hookAllMethods
+import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.callStaticMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookConstructor
@@ -34,6 +35,7 @@ import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.XposedHelpers.findClassIfExists
 import de.robv.android.xposed.XposedHelpers.getIntField
 import de.robv.android.xposed.XposedHelpers.getObjectField
+import de.robv.android.xposed.XposedHelpers.setBooleanField
 import de.robv.android.xposed.XposedHelpers.setIntField
 import de.robv.android.xposed.XposedHelpers.setObjectField
 import de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResourcesParam
@@ -793,6 +795,30 @@ object SystemUI {
     }
 
 
+    fun restoreBluetoothStatusBarIcon(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.phone.ui.StatusBarIconControllerImpl",
+                loadPackageParam.classLoader,
+                "hideBySimplification",
+                "com.android.systemui.statusbar.phone.ui.IconManager",
+                String::class.java,
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        val slot = param.args[1] as? String ?: return
+                        if (slot == "bluetooth" || slot == "bluetooth_connected") {
+                            param.result = false
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
+
     fun setStatusBarMaxNotificationIcons(loadPackageParam: LoadPackageParam, max: Int) {
         if (loadPackageParam.packageName != Package.SYSTEMUI ||
             max < 0 ||
@@ -946,6 +972,7 @@ object SystemUI {
                         textView.apply {
                             isSingleLine = false
                             setLines(2)
+                            ellipsize = null
                             setPadding(paddingLeft, -10, paddingRight, -10)
                             setLineSpacing(0f, 0.8f)
                             val density = context.resources.displayMetrics.density
@@ -960,15 +987,17 @@ object SystemUI {
                 "com.android.systemui.statusbar.policy.QSClockBellSound",
                 object : XC_MethodReplacement() {
                     var previousDate = ""
-
-                    @SuppressLint("SetTextI18n")
+                    var result = ""
                     override fun replaceHookedMethod(param: MethodHookParam): Any? {
                         val shortDateText = getObjectField(param.args[0], "ShortDateText") as String
-                        if (shortDateText == previousDate) return null
-                        previousDate = shortDateText
-                        val traditionalChineseDate = TraditionalChineseCalendar.getMonthAndDay()
+                        if (shortDateText != previousDate) {
+                            previousDate = shortDateText
+                            result = "$shortDateText\n${TraditionalChineseCalendar.getMonthAndDay()}"
+                        }
                         val dateTextView = param.thisObject as TextView
-                        dateTextView.text = "$shortDateText\n$traditionalChineseDate"
+                        if (dateTextView.text != result) {
+                            dateTextView.text = result
+                        }
                         return null
                     }
                 }
@@ -1169,6 +1198,36 @@ object SystemUI {
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }
+        // isGroup()=false lets children show individually, but the group summary
+        // (FLAG_GROUP_SUMMARY) leaks through as a standalone entry whose dismissal
+        // clears all the app's notifications. Filter it out of the shade list
+        // while keeping it in NotifCollection so lifecycle events stay consistent.
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.notification.collection.ShadeListBuilder",
+                loadPackageParam.classLoader,
+                "applyFilters",
+                "com.android.systemui.statusbar.notification.collection.NotificationEntry",
+                Long::class.javaPrimitiveType,
+                List::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        try {
+                            val entry = param.args[0] ?: return
+                            val sbn = getObjectField(entry, "mSbn") ?: return
+                            val notification = callMethod(sbn, "getNotification") ?: return
+                            if (callMethod(notification, "isGroupSummary") as Boolean) {
+                                param.result = true
+                            }
+                        } catch (t: Throwable) {
+                            XposedBridge.log(t)
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
     }
 
     fun hideOngoingActivityMedia(loadPackageParam: LoadPackageParam, packages: Set<String>) {
@@ -1283,6 +1342,49 @@ object SystemUI {
                     }
                 }
             })
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
+    fun autoExpandNotifications(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        try {
+            findAndHookMethod(
+                "com.android.systemui.statusbar.notification.row.ExpandableNotificationRow",
+                loadPackageParam.classLoader,
+                "isExpanded",
+                Boolean::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        try {
+                            val row = param.thisObject
+                            // 确保非分组展开开关被打开
+                            setBooleanField(row, "mEnableNonGroupedNotificationExpand", true)
+                            // 1. 锁屏敏感隐私校验
+                            val shouldShowPublic = callMethod(row, "shouldShowPublic") as Boolean
+                            if (shouldShowPublic) {
+                                // 锁屏隐藏敏感内容时不展开
+                                return
+                            }
+                            // 2. 锁屏状态与 keyguard 约束校验
+                            val onKeyguard = XposedHelpers.getBooleanField(row, "mOnKeyguard")
+                            val allowOnKeyguard = param.args[0] as Boolean
+                            if (onKeyguard && !allowOnKeyguard) {
+                                return
+                            }
+                            // 3. 用户手动折叠校验（若用户手动折叠了该单条通知，则不强制展开）
+                            val hasUserChanged =
+                                XposedHelpers.getBooleanField(row, "mHasUserChangedExpansion")
+                            if (!hasUserChanged) {
+                                param.setResult(true)
+                            }
+                        } catch (t: Throwable) {
+                            XposedBridge.log(t)
+                        }
+                    }
+                }
+            )
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }

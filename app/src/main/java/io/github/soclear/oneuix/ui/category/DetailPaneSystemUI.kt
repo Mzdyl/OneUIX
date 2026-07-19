@@ -391,6 +391,14 @@ fun DetailPaneSystemUI(
             }
         )
         SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.bluetooth),
+            title = stringResource(id = R.string.restoreBluetoothStatusBarIcon_title),
+            checked = uiState.statusBar.restoreBluetoothStatusBarIcon,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.StatusBar.RestoreBluetoothStatusBarIcon(it))
+            }
+        )
+        SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.mobile_screensaver),
             title = stringResource(id = R.string.doubleTapStatusBarToSleep_title),
             checked = uiState.statusBar.doubleTapStatusBarToSleep,
@@ -796,6 +804,14 @@ fun DetailPaneSystemUI(
                 onEvent(SystemUIEvent.Other.DisableNotificationGrouping(it))
             }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.notifications),
+            title = stringResource(id = R.string.autoExpandNotifications_title),
+            checked = uiState.other.autoExpandNotifications,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.Other.AutoExpandNotifications(it))
+            }
+        )
     }
 }
 
@@ -935,6 +951,9 @@ sealed interface SystemUIEvent {
         value class HideSecureFolderStatusBarIcon(val value: Boolean) : StatusBar
 
         @JvmInline
+        value class RestoreBluetoothStatusBarIcon(val value: Boolean) : StatusBar
+
+        @JvmInline
         value class PhysicalEsimAdapterWorkaround(val value: Boolean) : StatusBar
 
         @JvmInline
@@ -1041,6 +1060,9 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class DisableNotificationGrouping(val value: Boolean) : Other
+
+        @JvmInline
+        value class AutoExpandNotifications(val value: Boolean) : Other
 
         @JvmInline
         value class HideOngoingActivityMedia(val value: Boolean) : Other
@@ -1249,6 +1271,16 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                     systemUI = preference.systemUI.copy(
                         statusBar = preference.systemUI.statusBar.copy(
                             hideSecureFolderStatusBarIcon = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.RestoreBluetoothStatusBarIcon -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            restoreBluetoothStatusBarIcon = event.value
                         )
                     )
                 )
@@ -1557,6 +1589,16 @@ private fun SettingViewModel.onOtherEvent(event: SystemUIEvent.Other) {
                     systemUI = preference.systemUI.copy(
                         other = preference.systemUI.other.copy(
                             disableNotificationGrouping = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.Other.AutoExpandNotifications -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        other = preference.systemUI.other.copy(
+                            autoExpandNotifications = event.value
                         )
                     )
                 )

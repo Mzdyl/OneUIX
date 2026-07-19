@@ -7,6 +7,7 @@ import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XC_MethodReplacement.DO_NOTHING
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedBridge.hookAllConstructors
+import de.robv.android.xposed.XposedBridge.hookAllMethods
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.XposedHelpers.findClassIfExists
@@ -105,7 +106,7 @@ object Android {
     fun disablePinVerifyPer72h(loadPackageParam: LoadPackageParam) {
         if (loadPackageParam.packageName != Package.ANDROID) return
         try {
-            XposedBridge.hookAllMethods(
+            hookAllMethods(
                 findClass(
                     "com.android.server.locksettings.LockSettingsStrongAuth",
                     loadPackageParam.classLoader
@@ -227,4 +228,26 @@ object Android {
         }
     }
 
+    fun disableScreenWakeOnPowerUnplugged(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.ANDROID) return
+        try {
+            hookAllMethods(
+                findClass(
+                    "com.android.server.power.PowerManagerService",
+                    loadPackageParam.classLoader
+                ),
+                "wakePowerGroupLocked",
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        val details = param.args.getOrNull(3) as? String ?: return
+                        if (details == "android.server.power:PLUGGED:false") {
+                            param.result = null
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
 }

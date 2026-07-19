@@ -30,6 +30,7 @@
     <string name="setStatusBarClockFormat_title">设置状态栏时钟格式</string>
     <string name="setStatusBarClockFormat_summary">支持时间格式和变量：\n{temp}=电池温度, {lunar}=农历, {rate}=刷新率, {shichen}=时辰, {sec}=秒数, {date}=系统日期\n示例：HH:mm {temp} → 12:30 25.0°C</string>
     <string name="hideSecureFolderStatusBarIcon_title">隐藏安全文件夹状态栏图标</string>
+    <string name="restoreBluetoothStatusBarIcon_title">恢复蓝牙状态栏图标</string>
     <string name="hideQsBarNearbyDevicesAndDeviceControl_title">隐藏快捷设置面板的附近设备和设备控制 Bar</string>
     <string name="hideQsBarMediaPlayer_title">隐藏快捷设置面板的媒体播放器 Bar</string>
     <string name="hideQsBarSecurityFooter_title">隐藏快捷设置面板的安全底部提示 Bar</string>
@@ -76,6 +77,7 @@
     <string name="disableScreenshotCaptureSound_title">禁用截图声音</string>
     <string name="disableNotificationGrouping_title">禁用通知分组</string>
     <string name="disableNotificationGrouping_summary">禁止同一应用的多个通知在状态栏合并图标、在通知中心分组显示</string>
+    <string name="autoExpandNotifications_title">自动展开通知</string>
     <string name="hideOngoingActivityMedia_title">隐藏音乐应用的实时活动</string>
     <string name="hideOngoingActivityMedia_summary">后台播放音乐时，隐藏状态栏实时活动胶囊和通知栏媒体通知卡片</string>
     <string name="hideOngoingActivityMedia_packages_hint">包名，用英文逗号分隔</string>
@@ -189,4 +191,8 @@
     <string name="allowAllRotation_summary">在手机上启用 180° 旋转（通常仅平板可用）</string>
     <string name="liftFcmNetworkLimit_title">解除 FCM 网络限制</string>
     <string name="liftFcmNetworkLimit_summary">解除国行（包含港版）固件对 GMS/FCM 推送的网络限制</string>
+    <string name="disableScreenWakeOnPowerUnplugged_title">拔出充电器时不亮屏</string>
+    <string name="backup_config">备份配置</string>
+    <string name="restore_config">恢复配置</string>
+    <string name="restore_failed">恢复失败，文件可能已损坏</string>
 </resources>

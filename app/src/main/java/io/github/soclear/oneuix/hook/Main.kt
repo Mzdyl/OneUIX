@@ -15,7 +15,6 @@ import io.github.soclear.oneuix.hook.util.PreferenceProvider
 import io.github.soclear.oneuix.hook.util.addAssetPath
 
 
-@Suppress("unused")
 class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHookZygoteInit {
     override fun initZygote(startupParam: StartupParam) {
         modulePath = startupParam.modulePath
@@ -63,6 +62,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.android.fcmFix) {
                     Android.fcmFix(lpparam)
+                }
+
+                if (preference.android.disableScreenWakeOnPowerUnplugged) {
+                    Android.disableScreenWakeOnPowerUnplugged(lpparam)
                 }
             }
 
@@ -253,6 +256,9 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.android.setBlockableNotificationChannel) {
                     Android.setBlockableNotificationChannel()
                 }
+                if (preference.systemUI.other.autoExpandNotifications) {
+                    SystemUI.autoExpandNotifications(lpparam)
+                }
 
                 run {
                     val leftPaddingDp =
@@ -294,6 +300,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
                 if (preference.systemUI.statusBar.hideSecureFolderStatusBarIcon) {
                     SystemUI.hideSecureFolderStatusBarIcon(lpparam)
+                }
+
+                if (preference.systemUI.statusBar.restoreBluetoothStatusBarIcon) {
+                    SystemUI.restoreBluetoothStatusBarIcon(lpparam)
                 }
 
                 if (preference.systemUI.statusBar.physicalEsimAdapterWorkaround) {

@@ -33,6 +33,8 @@
 - 修改“保持打开”应用的最大数量
 - 可以禁用系统的通知类别
 - 支持应用跳转拦截
+- 解除 FCM 网络限制
+- 拔出充电器时不亮屏
 
 #### 系统 UI
 
@@ -42,12 +44,14 @@
 - 修改状态栏右边距
 - 隐藏状态栏电池的百分号
 - 隐藏电池图标
+- 显示电量文字
 - 支持显示实时网速
 - 状态栏显示上传下载网速
 - 设置状态栏日期时间格式
 - 状态栏时间每秒更新
 - 极简中文时间日期
 - 隐藏安全文件夹状态栏图标
+- 恢复蓝牙状态栏图标
 - 实体 eSIM 适配器兼容处理
 - 双击状态栏锁屏
 - 修改状态栏最大通知图标数量
@@ -71,6 +75,7 @@
 - 快捷设置面板显示音量级别
 - 快捷设置面板显示农历
 - 修改快捷设置面板时钟字体大小
+- 禁用通知分组
 
 ##### 息屏提醒
 
@@ -81,6 +86,9 @@
 
 - 自定义关机菜单按钮
 - 禁用截图声音
+- 隐藏音乐应用的实时活动
+- 允许所有旋转角度
+- 自动展开通知
 
 #### 设置
 
@@ -162,6 +170,8 @@
 - Modify max number of 'Keep open' apps
 - Allow disabling system notification categories
 - Support app jump blocking
+- Lift FCM network limit
+- Keep screen off when unplugged
 
 #### System UI
 
@@ -171,12 +181,14 @@
 - Modify status bar right padding
 - Hide battery percentage sign in status bar
 - Hide battery icon
+- Show battery level text
 - Support displaying real-time network speed
 - Show separate upload/download speeds in status bar
 - Set status bar date and time format
 - Update status bar clock every second
 - Compact Chinese time and date
 - Hide Secure Folder status bar icon
+- Restore Bluetooth status bar icon
 - Workaround for physical eSIM adapter
 - Double tap status bar to sleep
 - Modify maximum number of notification icons in status bar
@@ -200,6 +212,7 @@
 - Show volume level in QS panel
 - Show Lunar calendar in QS panel
 - Modify Quick Settings panel clock text size
+- Disable notification grouping
 
 ##### Always On Display
 
@@ -210,6 +223,9 @@
 
 - Customize power menu actions
 - Disable screenshot sound
+- Hide ongoing activity for media apps
+- Allow all rotation angles
+- Auto expand notifications
 
 #### Settings
 

@@ -39,6 +39,7 @@ data class Preference(
         val disableAsksRestriction: Boolean = false,
         val fcmFix: Boolean = false,
         val hideNavigationBarGestureHint: Boolean = false,
+        val disableScreenWakeOnPowerUnplugged: Boolean = false,
     )
 
     @Serializable
@@ -74,9 +75,10 @@ data class Preference(
             val setCustomCarrierName: Boolean = false,
             val customCarrierName: String = "",
             val hideLockscreenStatusBar: Boolean = false,
-            val updateStatusBarClockEverySecond: Boolean = false,
-            val physicalEsimAdapterWorkaround: Boolean = false,
-            val physicalEsimAdapterSimSlot: Int = 1,
+        val updateStatusBarClockEverySecond: Boolean = false,
+        val physicalEsimAdapterWorkaround: Boolean = false,
+        val physicalEsimAdapterSimSlot: Int = 1,
+        val restoreBluetoothStatusBarIcon: Boolean = false,
         )
 
         @Serializable
@@ -112,6 +114,7 @@ data class Preference(
             val powerMenuActions: List<PowerMenuAction> =
                 PowerMenuAction.defaultPreferences(),
             val disableNotificationGrouping: Boolean = false,
+            val autoExpandNotifications: Boolean = false,
             val hideOngoingActivityMedia: Boolean = false,
             val hideOngoingActivityMediaPackages: String = "",
         )
