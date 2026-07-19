@@ -76,10 +76,10 @@ data class Preference(
             val setCustomCarrierName: Boolean = false,
             val customCarrierName: String = "",
             val hideLockscreenStatusBar: Boolean = false,
-        val updateStatusBarClockEverySecond: Boolean = false,
-        val physicalEsimAdapterWorkaround: Boolean = false,
-        val physicalEsimAdapterSimSlot: Int = 1,
-        val restoreBluetoothStatusBarIcon: Boolean = false,
+            val updateStatusBarClockEverySecond: Boolean = false,
+            val physicalEsimAdapterWorkaround: Boolean = false,
+            val physicalEsimAdapterSimSlot: Int = 1,
+            val restoreBluetoothStatusBarIcon: Boolean = false,
         )
 
         @Serializable

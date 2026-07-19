@@ -1,14 +1,12 @@
 # Self 分支维护笔记
 
-本文档记录 `Self` 分支相对 `upstream/main` 的主要结构差异、自用功能和后续合并注意点。当前快照基于 2026-06-10 已执行 `git fetch upstream` 后的本地状态。
+本文档记录 `Self` 分支相对 `upstream/main` 的主要结构差异、自用功能和后续合并注意点。
 
-## 当前分支状态
+## 上游同步基线
 
-- 当前分支：`Self`
-- 当前 HEAD：`9c044716 Merge upstream/main into Self`
-- 对比基准：`upstream/main`，当前为 `a2ef38f9 feat(Android): Lift FCM network limit`
-- `Self` 相对 `upstream/main`：落后 25 个提交，领先 89 个提交
-- 工作区在本次记录前已有未提交改动：`.gitignore` 修改、`icon.svg` 删除；本文件未触碰这些改动
+- 2026-07-20 审计基线：`upstream/main@bd3c9ebb`
+- 审计时 `upstream/main` 是 `Self` 的直接祖先，不存在待合入的上游提交
+- 后续状态以 `git fetch upstream` 和 `git log HEAD..upstream/main` 的实时结果为准
 
 ## 架构差异
 
@@ -28,6 +26,7 @@
 - `Preference.DualApp`
 - `Preference.PhotoRetouching`
 - `Preference.WatchPairing`
+- `Preference.SamsungHealth`
 - `Preference.HealthMonitor`
 - `Preference.GalaxyStore`
 - `Preference.SPen`
@@ -247,6 +246,7 @@
 核心文件：
 
 - `app/src/main/java/io/github/soclear/oneuix/hook/util/PreferenceProvider.kt`
+- `app/src/main/java/io/github/soclear/oneuix/data/PreferenceCodec.kt`
 - `app/src/main/java/io/github/soclear/oneuix/ui/PreferenceSerializer.kt`
 
 实现要点：
@@ -255,46 +255,19 @@
 - 开启 `isLenient`
 - 开启 `encodeDefaults`
 - 开启 `coerceInputValues`
-- `PreferenceProvider.getPreferenceFile()` 带文件缓存、空路径保护、缺失文件初始化和 world-readable 设置
+- `PreferenceCodec` 将上游旧版 `Preference.Other` 字段迁移到 `Self` 的应用分组
+- 混合格式同时存在旧字段和新字段时，以新字段为准
+- `PreferenceProvider.getPreferenceFile()` 不主动创建空文件，未修改过偏好时不启用默认 Hook
 - `PreferenceSerializer.readFrom()` 对空文件、`{}` 和解析异常回退默认偏好
 
 合并风险：
 
-- 上游偏好字段频繁增删，必须保留容错 JSON 配置，否则用户已有 `preference.json` 可能导致设置页或 hook 读取失败
+- 上游偏好字段频繁增删，必须同步更新 `PreferenceCodec` 的旧字段迁移映射
+- 必须保留容错 JSON 配置，否则用户已有 `preference.json` 可能导致设置页或 hook 读取失败
 
-## 当前未合入上游功能
+## 上游功能核对
 
-截至 `upstream/main@a2ef38f9`，以下上游功能尚未合入 `Self`：
-
-- `feat(Android): Lift FCM network limit`
-- `feat(SystemUI): Hide ongoing activity for media apps`
-- `fix(SystemUI): fix setCustomCarrierName access fields error`
-- `feat(SystemUI): Show battery level text on One UI 7.0 and above`
-- `feat(CoreRune): allow all rotation`
-- `fix(SystemUI): prevent NoSuchFieldError when setting carrier text`
-- `feat(SystemUI): Disable notification grouping`
-- `fix(Launcher): keep AppsSearchBar hidden after folder click`
-- `fix(SystemUI): fix restart_recovery and restart_download when no background process`
-- `feat(SystemUI): hide power menu side_key_settings`
-- `chore: no hook when no preference ever changed`
-- `feat: Spoof phone status as Official on SmartManagerCN`
-- `feat(Browser): redirectCustomTab`
-- `feat(Settings): spoof phone status as official`
-- `feat(SystemUI): supports power menu force_restart_message`
-- `feat(SystemUI): supports hideQsBarDataUsage`
-- `feat: supports hideAppsSearchBar on One UI 8.5`
-- `feat: supports dual SIM 5G synchronous switching`
-- `feat: support Outdoor Mode on One UI 8.5`
-- `feat(SystemUI): fully support workaroundPhysicalEsimAdapter on One UI 8.5`
-- `feat(SystemUI): support hide battery icon on One UI 8.5`
-- `feat(SystemUI): support setStatusBarMaxNotificationIcons on One UI 8.5`
-- `feat: add android.os.SystemProperties stub`
-
-优先合并建议：
-
-1. 先合并安全修复和兼容性修复：carrier 字段、Launcher 搜索栏、重启 recovery/download、One UI 8.5 兼容、`SystemProperties` stub
-2. 再合并相对独立的新功能：电池电量文本、禁用通知分组、隐藏媒体 ongoing activity、`hideQsBarDataUsage`
-3. 最后处理与 `Self` 自用功能重叠的 Android/FCM、WatchPairing、Browser 和 Settings 功能
+2026-07-20 审计确认此前记录的待合入功能均已进入 `Self`。后续每次合并仍需按“字段迁移规则”和“每个新功能的接线清单”核对冲突解决结果，不能仅依赖提交祖先关系。
 
 ## 合并操作建议
 

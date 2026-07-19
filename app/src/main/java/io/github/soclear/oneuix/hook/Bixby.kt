@@ -111,30 +111,56 @@ object Bixby {
     // 签名匹配而非硬编码方法名，兼容不同 Bixby 版本
 
     private fun hookWakeupWordValidator(lpparam: LoadPackageParam) {
-        val cls = lpparam.classLoader.loadClass("com.samsung.voicewakeup.wwv.WakeupWordValidator")
-        for (m in cls.declaredMethods) {
-            if (!Modifier.isPublic(m.modifiers)) continue
-            val pts = m.parameterTypes
-            // b(Locale, String, String, String) boolean → 绕过长度校验
-            if (m.returnType == Boolean::class.javaPrimitiveType &&
-                pts.contentEquals(arrayOf(Locale::class.java, String::class.java, String::class.java, String::class.java))) {
-                XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                    override fun beforeHookedMethod(p: MethodHookParam) {
-                        p.result = true
-                        log("wwvBypass forced length validator ${m.name} locale=${p.args[0]} keyword=${p.args[1]}")
-                    }
-                })
+        try {
+            val cls = lpparam.classLoader.loadClass(
+                "com.samsung.voicewakeup.wwv.WakeupWordValidator"
+            )
+            for (m in cls.declaredMethods) {
+                if (!Modifier.isPublic(m.modifiers)) continue
+                val pts = m.parameterTypes
+                if (m.returnType == Boolean::class.javaPrimitiveType &&
+                    pts.contentEquals(
+                        arrayOf(
+                            Locale::class.java,
+                            String::class.java,
+                            String::class.java,
+                            String::class.java
+                        )
+                    )
+                ) {
+                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
+                        override fun beforeHookedMethod(p: MethodHookParam) {
+                            p.result = true
+                            log(
+                                "wwvBypass forced length validator ${m.name} " +
+                                    "locale=${p.args[0]} keyword=${p.args[1]}"
+                            )
+                        }
+                    })
+                }
+                if (m.returnType == Int::class.javaPrimitiveType &&
+                    pts.contentEquals(
+                        arrayOf(
+                            Context::class.java,
+                            String::class.java,
+                            Locale::class.java,
+                            String::class.java
+                        )
+                    )
+                ) {
+                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
+                        override fun beforeHookedMethod(p: MethodHookParam) {
+                            p.result = 0
+                            log(
+                                "wwvBypass forced blacklist validator ${m.name} " +
+                                    "keyword=${p.args[1]} locale=${p.args[2]}"
+                            )
+                        }
+                    })
+                }
             }
-            // d(Context, String, Locale, String) int → 绕过所有黑名单校验
-            if (m.returnType == Int::class.javaPrimitiveType &&
-                pts.contentEquals(arrayOf(Context::class.java, String::class.java, Locale::class.java, String::class.java))) {
-                XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                    override fun beforeHookedMethod(p: MethodHookParam) {
-                        p.result = 0
-                        log("wwvBypass forced blacklist validator ${m.name} keyword=${p.args[1]} locale=${p.args[2]}")
-                    }
-                })
-            }
+        } catch (t: Throwable) {
+            logError("hookWakeupWordValidator failed", t)
         }
     }
 

@@ -105,9 +105,9 @@ object SamsungHealth {
         try {
             clearBlockedAccountState(context)
             val config = context.getHookConfig(
-                File(context.filesDir, "SamsungHealthHookConfig.json")
+                File(context.filesDir, "SamsungHealthAllowedAccountHookConfig.json")
             ) {
-                getAccountRestrictionHookConfig()
+                getAllowedAccountHookConfig()
             } ?: error("Allowed-account result class not found")
             val clazz = classLoader.loadClass(config.allowedAccountResultClass)
             XposedBridge.hookAllConstructors(clazz, object : XC_MethodHook() {
@@ -122,10 +122,21 @@ object SamsungHealth {
                     param.args[2] = false
                 }
             })
-            hookRestrictedChinaDialog(classLoader, config)
             log("SamsungHealth blocked China account state bypassed")
         } catch (t: Throwable) {
             logError("SamsungHealth blocked China account bypass failed", t)
+        }
+
+        try {
+            context.getHookConfig(
+                File(context.filesDir, "SamsungHealthRestrictedChinaDialogHookConfig.json")
+            ) {
+                getRestrictedChinaDialogHookConfig()
+            }?.restrictedChinaHandlerMethod?.let {
+                hookRestrictedChinaDialog(classLoader, it)
+            }
+        } catch (t: Throwable) {
+            logError("SamsungHealth restricted China dialog hook failed", t)
         }
     }
 
@@ -140,18 +151,22 @@ object SamsungHealth {
     }
 
     @Serializable
-    private data class SamsungHealthHookConfig(
+    private data class AllowedAccountHookConfig(
         override val versionCode: Long,
         val allowedAccountResultClass: String,
-        val restrictedChinaHandlerMethod: String,
+    ) : HookConfig
+
+    @Serializable
+    private data class RestrictedChinaDialogHookConfig(
+        override val versionCode: Long,
+        val restrictedChinaHandlerMethod: String?,
     ) : HookConfig
 
     private fun hookRestrictedChinaDialog(
         classLoader: ClassLoader,
-        config: SamsungHealthHookConfig,
+        methodData: String,
     ) {
-        val method = DexMethod(config.restrictedChinaHandlerMethod)
-            .getMethodInstance(classLoader)
+        val method = DexMethod(methodData).getMethodInstance(classLoader)
         val handledCasesField = generateSequence(method.declaringClass) {
             it.superclass
         }.flatMap { it.declaredFields.asSequence() }
@@ -165,9 +180,10 @@ object SamsungHealth {
                 handledCases["SHEALTH#RestrictedChinaCaseHandler"] = true
             }
         })
+        log("SamsungHealth restricted China dialog suppressed")
     }
 
-    private fun Context.getAccountRestrictionHookConfig(): SamsungHealthHookConfig? {
+    private fun Context.getAllowedAccountHookConfig(): AllowedAccountHookConfig? {
         System.loadLibrary("dexkit")
         DexKitBridge.create(classLoader, true).use { bridge ->
             val resultClass = bridge.findClass {
@@ -179,7 +195,18 @@ object SamsungHealth {
                     )
                 }
             }.singleOrNull() ?: return null
-            val restrictedChinaHandlerMethod = bridge.findMethod {
+
+            return AllowedAccountHookConfig(
+                versionCode = longVersionCode,
+                allowedAccountResultClass = resultClass.name
+            )
+        }
+    }
+
+    private fun Context.getRestrictedChinaDialogHookConfig(): RestrictedChinaDialogHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val method = bridge.findMethod {
                 matcher {
                     returnType = "void"
                     paramCount = 0
@@ -189,12 +216,11 @@ object SamsungHealth {
                         "RestrictedChinaCaseHandler: already handled"
                     )
                 }
-            }.singleOrNull() ?: return null
-            return SamsungHealthHookConfig(
+            }.singleOrNull()
+
+            return RestrictedChinaDialogHookConfig(
                 versionCode = longVersionCode,
-                allowedAccountResultClass = resultClass.name,
-                restrictedChinaHandlerMethod =
-                    restrictedChinaHandlerMethod.toDexMethod().serialize()
+                restrictedChinaHandlerMethod = method?.toDexMethod()?.serialize()
             )
         }
     }

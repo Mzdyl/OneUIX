@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
+import io.github.soclear.oneuix.data.PreferenceJson
+import io.github.soclear.oneuix.data.decodePreference
 import io.github.soclear.oneuix.ui.category.Category
 import io.github.soclear.oneuix.ui.category.CategoryAppInfo
 import java.io.InputStream
@@ -112,9 +114,7 @@ class SettingViewModel(application: Application) : ViewModel() {
     }
 
     suspend fun restoreFrom(input: InputStream) = withContext(Dispatchers.IO) {
-        val restored = PreferenceJson.decodeFromString(
-            Preference.serializer(), input.readBytes().decodeToString()
-        )
+        val restored = decodePreference(input.readBytes().decodeToString())
         dataStore.updateData { restored }
     }
 }

@@ -28,15 +28,19 @@ object StatusBarClock {
         setupSecondUpdate(loadPackageParam)
     }
 
-    fun setStatusBarClockStyle(loadPackageParam: LoadPackageParam, format: String, needsSecondUpdate: Boolean = false) {
+    fun setStatusBarClockStyle(
+        loadPackageParam: LoadPackageParam,
+        format: String,
+        needsSecondUpdate: Boolean = false,
+    ) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
 
-        val autoDetectSecondUpdate = format.contains("ss") || 
-                                format.contains("SS") ||
-                                format.contains("{sec}") ||
-                                format.contains("{temp}") ||
-                                format.contains("{rate}")
-        
+        val autoDetectSecondUpdate = format.contains("ss") ||
+            format.contains("SS") ||
+            format.contains("{sec}") ||
+            format.contains("{temp}") ||
+            format.contains("{rate}")
+
         val shouldEnableSecondUpdate = needsSecondUpdate || autoDetectSecondUpdate
 
         if (shouldEnableSecondUpdate) {
@@ -48,12 +52,13 @@ object StatusBarClock {
                 try {
                     val clockTextView = param.thisObject as TextView
                     val context = clockTextView.context
-                    
-                    clockIndicatorViewRef = WeakReference(clockTextView)
-                    clockFormat = format
-                    
-                    ensureSecondUpdateRunning()
-                    
+
+                    if (shouldEnableSecondUpdate) {
+                        clockIndicatorViewRef = WeakReference(clockTextView)
+                        clockFormat = format
+                        ensureSecondUpdateRunning()
+                    }
+
                     val text = formatClockText(format, context)
                     clockTextView.text = text
                     clockTextView.contentDescription = text
@@ -81,6 +86,10 @@ object StatusBarClock {
     private var secondUpdateHandler: Handler? = null
     private var secondUpdateRunnable: Runnable? = null
     private var clockIndicatorViewRef: WeakReference<TextView>? = null
+
+    @Volatile
+    private var secondUpdateHooksInstalled = false
+
     @Volatile
     private var clockFormat: String = ""
 
@@ -99,7 +108,11 @@ object StatusBarClock {
     @Volatile
     private var cachedSimpleDateDay: Int = -1
 
+    @Synchronized
     private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
+        if (secondUpdateHooksInstalled) return
+        secondUpdateHooksInstalled = true
+
         try {
             findAndHookMethod(
                 "com.android.systemui.statusbar.policy.QSClockIndicatorViewController",
@@ -155,7 +168,7 @@ object StatusBarClock {
 
     private fun ensureSecondUpdateRunning() {
         if (secondUpdateHandler != null) return
-        
+
         secondUpdateHandler = Handler(Looper.getMainLooper())
         secondUpdateRunnable = object : Runnable {
             override fun run() {
@@ -175,7 +188,7 @@ object StatusBarClock {
         secondUpdateHandler?.post(secondUpdateRunnable!!)
         log("ensureSecondUpdateRunning: started")
     }
-    
+
     private fun stopSecondUpdate() {
         secondUpdateRunnable?.let { secondUpdateHandler?.removeCallbacks(it) }
         secondUpdateHandler = null
@@ -225,45 +238,15 @@ object StatusBarClock {
             }
         }
         
-        val sb = StringBuilder(result)
-        
-        val tempIdx = sb.indexOf("\u0001TEMP\u0001")
-        if (tempIdx >= 0) {
-            val temp = getBatteryTempText(context) ?: ""
-            sb.replace(tempIdx, tempIdx + 7, temp)
-        }
-        
-        val lunarIdx = sb.indexOf("\u0002LUNAR\u0002")
-        if (lunarIdx >= 0) {
-            val lunar = getLunarDateCached()
-            sb.replace(lunarIdx, lunarIdx + 7, lunar)
-        }
-        
-        val rateIdx = sb.indexOf("\u0003RATE\u0003")
-        if (rateIdx >= 0) {
-            val rate = getRefreshRate(context)
-            sb.replace(rateIdx, rateIdx + 7, rate)
-        }
-        
-        val shichenIdx = sb.indexOf("\u0004SHICHEN\u0004")
-        if (shichenIdx >= 0) {
-            val shichen = getChineseTimeHour()
-            sb.replace(shichenIdx, shichenIdx + 9, shichen)
-        }
-        
-        val secIdx = sb.indexOf("\u0005SEC\u0005")
-        if (secIdx >= 0) {
-            val sec = getSeconds()
-            sb.replace(secIdx, secIdx + 6, sec)
-        }
-        
-        val dateIdx = sb.indexOf("\u0006DATE\u0006")
-        if (dateIdx >= 0) {
-            val date = getSimpleDateCached()
-            sb.replace(dateIdx, dateIdx + 7, date)
-        }
-        
-        return sb.toString()
+        result = result
+            .replace(clockPlaceholders.getValue("{temp}"), getBatteryTempText(context).orEmpty())
+            .replace(clockPlaceholders.getValue("{lunar}"), getLunarDateCached())
+            .replace(clockPlaceholders.getValue("{rate}"), getRefreshRate(context))
+            .replace(clockPlaceholders.getValue("{shichen}"), getChineseTimeHour())
+            .replace(clockPlaceholders.getValue("{sec}"), getSeconds())
+            .replace(clockPlaceholders.getValue("{date}"), getSimpleDateCached())
+
+        return result
     }
     
     private fun getLunarDateCached(): String {
