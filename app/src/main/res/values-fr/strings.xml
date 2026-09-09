@@ -113,6 +113,7 @@
     <string name="addBrightnessProgressToQsBar_title">Afficher le niveau de luminosité (Paramètres rapides)</string>
     <string name="addVolumeProgressToQsBar_title">Afficher le niveau de volume (Paramètres rapides)</string>
     <string name="showMemoryUsageInRecents_title">Afficher l\'utilisation de la RAM dans les applications récentes</string>
+    <string name="hideRecentsCloseAllButton_title">Masquer le bouton Tout fermer dans les applications récentes</string>
     <string name="showForcePeakRefreshRatePreference_title">Afficher l\'option Forcer le taux de rafraîchissement maximal</string>
     <string name="showForcePeakRefreshRatePreference_summary">Rechercher \"Force peak refresh rate\" dans les paramètres</string>
     <string name="supportOutdoorMode_title">Déverrouiller le mode Extérieur</string>

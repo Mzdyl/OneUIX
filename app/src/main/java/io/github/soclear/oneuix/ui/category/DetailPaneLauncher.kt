@@ -27,6 +27,12 @@ fun DetailPaneLauncher(
             )
         }
         SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.block),
+            title = stringResource(id = R.string.hideRecentsCloseAllButton_title),
+            checked = uiState.hideRecentsCloseAllButton,
+            onCheckedChange = { onEvent(LauncherEvent.HideRecentsCloseAllButton(it)) }
+        )
+        SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.apps),
             title = stringResource(id = R.string.hideAppsSearchBar_title),
             checked = uiState.hideAppsSearchBar,
@@ -47,6 +53,9 @@ sealed interface LauncherEvent {
     value class ShowMemoryUsageInRecents(val value: Boolean) : LauncherEvent
 
     @JvmInline
+    value class HideRecentsCloseAllButton(val value: Boolean) : LauncherEvent
+
+    @JvmInline
     value class HideAppsSearchBar(val value: Boolean) : LauncherEvent
 
     @JvmInline
@@ -59,6 +68,12 @@ fun SettingViewModel.onLauncherEvent(event: LauncherEvent) {
             is LauncherEvent.ShowMemoryUsageInRecents -> preference.copy(
                 other = preference.other.copy(
                     showMemoryUsageInRecents = event.value
+                )
+            )
+
+            is LauncherEvent.HideRecentsCloseAllButton -> preference.copy(
+                other = preference.other.copy(
+                    hideRecentsCloseAllButton = event.value
                 )
             )
 

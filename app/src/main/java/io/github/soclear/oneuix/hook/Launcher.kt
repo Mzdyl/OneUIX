@@ -397,6 +397,28 @@ object Launcher {
         }
     }
 
+    fun hideRecentsCloseAllButton(loadPackageParam: LoadPackageParam) {
+        try {
+            findAndHookConstructor(
+                "com.honeyspace.ui.honeypots.tasklist.presentation.CloseAllButton",
+                loadPackageParam.classLoader,
+                Context::class.java,
+                AttributeSet::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val button = param.thisObject as View
+                        button.visibility = View.GONE
+                        button.addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
+                            if (view.visibility != View.GONE) view.visibility = View.GONE
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
     fun hideAppsSearchBar(loadPackageParam: LoadPackageParam) {
         try {
             findAndHookConstructor(
