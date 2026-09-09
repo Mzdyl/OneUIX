@@ -19,6 +19,29 @@ jobs:
           java-version: '25'
           cache: 'gradle'
 
+      # 仓库内的构建使用与 Release 相同的签名，以便互相覆盖安装。
+      # Fork PR 无法访问 Secrets，因此只做编译检查，不上传 APK。
+      - name: Set up signing
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Signing secrets are not fully configured"
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > app/release.keystore
+          {
+            printf 'storeFile=release.keystore\n'
+            printf 'storePassword=%s\n' "$KEYSTORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+          } > keystore.properties
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -35,12 +58,14 @@ jobs:
       # github.run_number: Actions 的历史运行编号 (例如 15)
       # env.SHORT_SHA: 刚刚获取的 7 位 commit 标识 (例如 a1b2c3d)
       - name: Rename APK
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           SAFE_BRANCH_NAME=$(echo "${{ github.ref_name }}" | tr '/' '-')
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/OneUIX-Debug-${SAFE_BRANCH_NAME}-Run${{ github.run_number }}-${{ env.SHORT_SHA }}.apk"
 
       # 上传产物
       - name: Upload APK
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/upload-artifact@v7
         with:
           # name: OneUIX-Debug-${{ github.ref_name }}-Run${{ github.run_number }}-${{ env.SHORT_SHA }}
