@@ -53,6 +53,29 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
+      - name: Verify Debug signature
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          EXPECTED_CERT_SHA256: 3cfb2d32db4526e9cce22a0092a7d6819659db433cfec613fed68d44d999682a
+        run: |
+          APK_PATH=app/build/outputs/apk/debug/app-debug.apk
+          if [ -z "$ANDROID_HOME" ]; then
+            echo "::error::ANDROID_HOME is not configured"
+            exit 1
+          fi
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::apksigner was not found"
+            exit 1
+          fi
+          SIGNATURE_INFO=$("$APKSIGNER" verify --verbose --print-certs "$APK_PATH")
+          ACTUAL_CERT_SHA256=$(printf '%s\n' "$SIGNATURE_INFO" | sed -n 's/^.*certificate SHA-256 digest: //p' | head -n 1)
+          if [ "$ACTUAL_CERT_SHA256" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "::error::Unexpected signing certificate: $ACTUAL_CERT_SHA256"
+            exit 1
+          fi
+          echo "Verified signing certificate: $ACTUAL_CERT_SHA256"
+
       # 重命名 Debug 包
       # github.ref_name: 分支名 (例如 main)
       # github.run_number: Actions 的历史运行编号 (例如 15)
