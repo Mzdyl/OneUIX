@@ -1,9 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,15 +12,11 @@ import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
 fun DetailPaneGallery(
-    uiState: Preference.Gallery,
+    uiState: Preference.Other,
     onEvent: (GalleryEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    PackagePane(modifier) {
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.photo_library),
             title = stringResource(id = R.string.supportAllGallerySettings_title),
@@ -32,20 +24,51 @@ fun DetailPaneGallery(
             checked = uiState.supportAllGallerySettings,
             onCheckedChange = { onEvent(GalleryEvent.SupportAllGallerySettings(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.photo_library),
+            title = stringResource(id = R.string.supportSharedAlbumsInHide_title),
+            summary = stringResource(id = R.string.supportSharedAlbumsInHide_summary),
+            checked = uiState.supportSharedAlbumsInHide,
+            onCheckedChange = { onEvent(GalleryEvent.SupportSharedAlbumsInHide(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.photo_library),
+            title = stringResource(id = R.string.hideVideoEditorStudio_title),
+            checked = uiState.hideVideoEditorStudio,
+            onCheckedChange = { onEvent(GalleryEvent.HideVideoEditorStudio(it)) }
+        )
     }
 }
 
 sealed interface GalleryEvent {
     @JvmInline
     value class SupportAllGallerySettings(val value: Boolean) : GalleryEvent
+
+    @JvmInline
+    value class SupportSharedAlbumsInHide(val value: Boolean) : GalleryEvent
+
+    @JvmInline
+    value class HideVideoEditorStudio(val value: Boolean) : GalleryEvent
 }
 
 fun SettingViewModel.onGalleryEvent(event: GalleryEvent) {
     updateData { preference ->
         when (event) {
             is GalleryEvent.SupportAllGallerySettings -> preference.copy(
-                gallery = preference.gallery.copy(
+                other = preference.other.copy(
                     supportAllGallerySettings = event.value
+                )
+            )
+
+            is GalleryEvent.SupportSharedAlbumsInHide -> preference.copy(
+                other = preference.other.copy(
+                    supportSharedAlbumsInHide = event.value
+                )
+            )
+
+            is GalleryEvent.HideVideoEditorStudio -> preference.copy(
+                other = preference.other.copy(
+                    hideVideoEditorStudio = event.value
                 )
             )
         }

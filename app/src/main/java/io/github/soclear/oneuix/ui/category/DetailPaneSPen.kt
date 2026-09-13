@@ -1,9 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,36 +12,32 @@ import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
 fun DetailPaneSPen(
-    uiState: Preference.SPen,
+    uiState: Preference.Other,
     onEvent: (SPenEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    PackagePane(modifier) {
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.spen),
-            title = stringResource(id = R.string.useGoogleTranslate_title),
-            summary = stringResource(id = R.string.useGoogleTranslate_summary),
-            checked = uiState.useGoogleTranslate,
-            onCheckedChange = { onEvent(SPenEvent.UseGoogleTranslate(it)) }
+            title = stringResource(id = R.string.useSPenGoogleTranslate_title),
+            summary = stringResource(id = R.string.useSPenGoogleTranslate_summary),
+            checked = uiState.useSPenGoogleTranslate,
+            onCheckedChange = { onEvent(SPenEvent.UseSPenGoogleTranslate(it)) }
         )
     }
 }
 
 sealed interface SPenEvent {
     @JvmInline
-    value class UseGoogleTranslate(val value: Boolean) : SPenEvent
+    value class UseSPenGoogleTranslate(val value: Boolean) : SPenEvent
 }
 
 fun SettingViewModel.onSPenEvent(event: SPenEvent) {
     updateData { preference ->
         when (event) {
-            is SPenEvent.UseGoogleTranslate -> preference.copy(
-                sPen = preference.sPen.copy(
-                    useGoogleTranslate = event.value
+            is SPenEvent.UseSPenGoogleTranslate -> preference.copy(
+                other = preference.other.copy(
+                    useSPenGoogleTranslate = event.value
                 )
             )
         }

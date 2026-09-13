@@ -20,39 +20,45 @@ fun decodePreference(string: String): Preference {
 }
 
 private fun migrateLegacyOtherFields(root: JsonObject): JsonObject {
-    val legacy = root["other"] as? JsonObject ?: return root
-    val migrated = root.toMutableMap()
+    val otherMap = (root["other"] as? JsonObject)?.toMutableMap() ?: mutableMapOf()
 
-    fun move(legacyField: String, groupName: String, fieldName: String = legacyField) {
-        val value = legacy[legacyField] ?: return
-        val group = (migrated[groupName] as? JsonObject)?.toMutableMap() ?: mutableMapOf()
-        if (fieldName !in group) {
-            group[fieldName] = value
-            migrated[groupName] = JsonObject(group)
+    fun copyToOther(groupName: String, fieldName: String, otherField: String = fieldName) {
+        val group = root[groupName] as? JsonObject ?: return
+        val value = group[fieldName] ?: return
+        if (otherField !in otherMap) {
+            otherMap[otherField] = value
         }
     }
 
-    move("blockGalaxyStoreAds", "galaxyStore")
-    move("makeAllUserAppsAvailable", "dualApp")
-    move("setWeatherProviderCN", "weather")
-    move("showMemoryUsageInRecents", "launcher")
-    move("showMorePlaybackSpeeds", "browser")
-    move("showMorePlaybackSpeeds", "video")
-    move("redirectCustomTab", "browser")
-    move("supportAllGallerySettings", "gallery")
-    move("supportAllNotesFeatures", "notes")
-    move("enableChineseHolidayDisplay", "calendar")
-    move("supportBlockMessage", "messaging")
-    move("setThemeTrialNeverExpired", "themeCenter")
-    move("spoofBrowserCountryCodeToUS", "browser")
-    move("noAIWatermark", "photoRetouching")
-    move("bypassHealthMonitorCountryCheck", "healthMonitor")
-    move("useSPenGoogleTranslate", "sPen", "useGoogleTranslate")
-    move("hideAppsSearchBar", "launcher")
-    move("removeShortcutBadge", "launcher")
-    move("bypassWatchPairingRegionCheck", "watchPairing", "bypassRegionCheck")
-    move("watchPairingConnectionMode", "watchPairing", "connectionMode")
-    move("supplementChinaWearOsGms", "watchPairing", "forceChinaGmsCore")
+    copyToOther("galaxyStore", "blockGalaxyStoreAds")
+    copyToOther("galaxyStore", "changeRegion")
+    copyToOther("galaxyStore", "regionCode")
+    copyToOther("dualApp", "makeAllUserAppsAvailable")
+    copyToOther("weather", "setWeatherProviderCN")
+    copyToOther("launcher", "showMemoryUsageInRecents")
+    copyToOther("launcher", "hideRecentsCloseAllButton")
+    copyToOther("launcher", "hideAppsSearchBar")
+    copyToOther("launcher", "removeShortcutBadge")
+    copyToOther("browser", "showMorePlaybackSpeeds")
+    copyToOther("browser", "spoofBrowserCountryCodeToUS")
+    copyToOther("browser", "redirectCustomTab")
+    copyToOther("video", "showMorePlaybackSpeeds")
+    copyToOther("gallery", "supportAllGallerySettings")
+    copyToOther("gallery", "supportSharedAlbumsInHide")
+    copyToOther("gallery", "hideVideoEditorStudio")
+    copyToOther("notes", "supportAllNotesFeatures")
+    copyToOther("calendar", "enableChineseHolidayDisplay")
+    copyToOther("messaging", "supportBlockMessage")
+    copyToOther("themeCenter", "setThemeTrialNeverExpired")
+    copyToOther("photoRetouching", "noAIWatermark")
+    copyToOther("photoRetouching", "enableSketch")
+    copyToOther("healthMonitor", "bypassHealthMonitorCountryCheck")
+    copyToOther("sPen", "useGoogleTranslate", "useSPenGoogleTranslate")
+    copyToOther("watchPairing", "bypassRegionCheck", "bypassWatchPairingRegionCheck")
+    copyToOther("watchPairing", "connectionMode", "watchPairingConnectionMode")
+    copyToOther("watchPairing", "forceChinaGmsCore", "supplementChinaWearOsGms")
 
+    val migrated = root.toMutableMap()
+    migrated["other"] = JsonObject(otherMap)
     return JsonObject(migrated)
 }

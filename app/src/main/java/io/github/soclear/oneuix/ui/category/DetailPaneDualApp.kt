@@ -1,9 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,15 +12,11 @@ import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
 fun DetailPaneDualApp(
-    uiState: Preference.DualApp,
+    uiState: Preference.Other,
     onEvent: (DualAppEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    PackagePane(modifier) {
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.apk_document),
             title = stringResource(id = R.string.makeAllUserAppsAvailable_title),
@@ -43,7 +35,7 @@ fun SettingViewModel.onDualAppEvent(event: DualAppEvent) {
     updateData { preference ->
         when (event) {
             is DualAppEvent.MakeAllUserAppsAvailable -> preference.copy(
-                dualApp = preference.dualApp.copy(
+                other = preference.other.copy(
                     makeAllUserAppsAvailable = event.value
                 )
             )

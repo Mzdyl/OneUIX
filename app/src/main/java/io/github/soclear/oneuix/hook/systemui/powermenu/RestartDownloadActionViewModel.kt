@@ -20,7 +20,7 @@ class RestartDownloadActionViewModel(
         val context = AndroidAppHelper.currentApplication()
         name = PowerMenuAction.RESTART_DOWNLOAD
         viewType = ViewType.CENTER_ICON_3P_VIEW
-        icon = R.drawable.power_settings_new
+        icon = R.drawable.ic_restart_download
         label = context.getString(R.string.restartDownload)
     }
 

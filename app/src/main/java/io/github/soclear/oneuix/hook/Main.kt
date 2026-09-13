@@ -8,7 +8,13 @@ import de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResou
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.BuildConfig
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.hook.systemui.AOD
 import io.github.soclear.oneuix.hook.systemui.ESIM
+import io.github.soclear.oneuix.hook.systemui.HideBatteryIcon
+import io.github.soclear.oneuix.hook.systemui.Notification
+import io.github.soclear.oneuix.hook.systemui.Other
+import io.github.soclear.oneuix.hook.systemui.QS
+import io.github.soclear.oneuix.hook.systemui.StatusBar
 import io.github.soclear.oneuix.hook.systemui.StatusBarClock
 import io.github.soclear.oneuix.hook.systemui.powermenu.PowerMenu
 import io.github.soclear.oneuix.hook.util.PreferenceProvider
@@ -29,6 +35,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
         when (lpparam.packageName) {
             Package.ANDROID -> {
+                if (preference.android.disableWritingToolkitGlobally) {
+                    Android.disableWritingToolkitGlobally(lpparam)
+                }
+
                 if (preference.android.disablePinVerifyPer72h) {
                     Android.disablePinVerifyPer72h(lpparam)
                 }
@@ -70,21 +80,21 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.BROWSER -> {
-                if (preference.browser.showMorePlaybackSpeeds) {
+                if (preference.other.showMorePlaybackSpeeds) {
                     Browser.showMorePlaybackSpeeds(lpparam)
                 }
 
-                if (preference.browser.spoofBrowserCountryCodeToUS) {
+                if (preference.other.spoofBrowserCountryCodeToUS) {
                     Browser.setCountryIsoCode(lpparam, "US")
                 }
 
-                if (preference.browser.redirectCustomTab) {
+                if (preference.other.redirectCustomTab) {
                     Browser.redirectCustomTab(lpparam)
                 }
             }
 
             Package.CALENDAR -> {
-                if (preference.calendar.enableChineseHolidayDisplay) {
+                if (preference.other.enableChineseHolidayDisplay) {
                     Calendar.enableChineseHolidayDisplay(lpparam)
                 }
             }
@@ -123,19 +133,25 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.DUAL_APP -> {
-                if (preference.dualApp.makeAllUserAppsAvailable) {
+                if (preference.other.makeAllUserAppsAvailable) {
                     DualApp.makeAllUserAppsAvailable(lpparam)
                 }
             }
 
             Package.GALLERY -> {
-                if (preference.gallery.supportAllGallerySettings) {
+                if (preference.other.supportAllGallerySettings) {
                     Gallery.supportAllSettings(lpparam)
+                }
+                if (preference.other.supportSharedAlbumsInHide) {
+                    Gallery.supportSharedAlbumsInHide(lpparam)
+                }
+                if (preference.other.hideVideoEditorStudio) {
+                    Gallery.hideVideoEditorStudio(lpparam)
                 }
             }
 
             Package.HEALTH_MONITOR -> {
-                if (preference.healthMonitor.bypassHealthMonitorCountryCheck) {
+                if (preference.other.bypassHealthMonitorCountryCheck) {
                     HealthMonitor.bypassCountryCheck(lpparam)
                 }
             }
@@ -161,15 +177,19 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.LAUNCHER -> {
-                if (preference.launcher.showMemoryUsageInRecents) {
+                if (preference.other.showMemoryUsageInRecents) {
                     Launcher.showMemoryUsageInRecents(lpparam)
                 }
 
-                if (preference.launcher.hideAppsSearchBar) {
+                if (preference.other.hideRecentsCloseAllButton) {
+                    Launcher.hideRecentsCloseAllButton(lpparam)
+                }
+
+                if (preference.other.hideAppsSearchBar) {
                     Launcher.hideAppsSearchBar(lpparam)
                 }
 
-                if (preference.launcher.removeShortcutBadge) {
+                if (preference.other.removeShortcutBadge) {
                     Launcher.removeShortcutBadge(lpparam)
                 }
             }
@@ -181,23 +201,23 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.MESSAGING -> {
-                if (preference.messaging.supportBlockMessage) {
+                if (preference.other.supportBlockMessage) {
                     Messaging.isSupportBlock(lpparam)
                 }
             }
 
             Package.NOTES -> {
-                if (preference.notes.supportAllNotesFeatures) {
+                if (preference.other.supportAllNotesFeatures) {
                     Notes.supportAllFeatures(lpparam)
                 }
             }
 
             Package.PHOTO_RETOUCHING -> {
-                if (preference.photoRetouching.noAIWatermark) {
+                if (preference.other.noAIWatermark) {
                     PhotoRetouching.noAIWatermark()
                 }
 
-                if (preference.photoRetouching.enableSketch) {
+                if (preference.other.enableSketch) {
                     PhotoRetouching.enableSketch(lpparam)
                 }
             }
@@ -248,6 +268,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 }
             }
 
+            Package.SKETCH_BOOK -> {
+                if (preference.other.noAIWatermark) {
+                    SketchBook.noAIWatermark(lpparam)
+                }
+            }
+
             Package.SM_CN -> {
                 if (preference.settings.spoofPhoneStatusAsOfficial) {
                     SMCN.spoofPhoneStatusAsOfficial(lpparam)
@@ -255,11 +281,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.STORE -> {
-                if (preference.galaxyStore.blockGalaxyStoreAds) {
+                if (preference.other.blockGalaxyStoreAds) {
                     GalaxyStore.blockGalaxyStoreAds(lpparam)
                 }
-                if (preference.galaxyStore.changeRegion) {
-                    GalaxyStore.changeRegion(lpparam, preference.galaxyStore.regionCode)
+
+                if (preference.other.changeRegion) {
+                    GalaxyStore.changeRegion(lpparam, preference.other.regionCode)
                 }
             }
 
@@ -268,7 +295,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Android.setBlockableNotificationChannel()
                 }
                 if (preference.systemUI.other.autoExpandNotifications) {
-                    SystemUI.autoExpandNotifications(lpparam)
+                    Notification.autoExpandNotifications(lpparam)
                 }
 
                 run {
@@ -280,12 +307,25 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                         if (preference.systemUI.statusBar.modifyStatusBarRightPadding) {
                             preference.systemUI.statusBar.statusBarRightPaddingDp
                         } else null
-                    SystemUI.setStatusBarPaddingDp(lpparam, leftPaddingDp, rightPaddingDp)
+                    StatusBar.setStatusBarPaddingDp(lpparam, leftPaddingDp, rightPaddingDp)
                 }
 
+                run {
+                    val widthScale = if (preference.systemUI.statusBar.setBatteryIconWidthScale) {
+                        preference.systemUI.statusBar.batteryIconWidthScale
+                    } else null
+                    val heightScale = if (preference.systemUI.statusBar.setBatteryIconHeightScale) {
+                        preference.systemUI.statusBar.batteryIconHeightScale
+                    } else null
+                    StatusBar.setBatteryIconScale(lpparam, widthScale, heightScale)
+                }
+
+                if (preference.systemUI.statusBar.hideBatteryIcon) {
+                    HideBatteryIcon.apply(lpparam)
+                }
 
                 if (preference.systemUI.statusBar.addBatteryLevelText) {
-                    SystemUI.addBatteryLevelText(
+                    StatusBar.addBatteryLevelText(
                         lpparam,
                         preference.systemUI.statusBar.hideBatteryLevelTextPercentageSign,
                         preference.systemUI.statusBar.hideBatteryLevelTextChargingIcon,
@@ -305,16 +345,21 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     StatusBarClock.setStatusBarClockStyle(lpparam, format)
                 }
 
+                if (preference.systemUI.statusBar.setStatusBarClockTextScale) {
+                    val scale = preference.systemUI.statusBar.statusBarClockTextScale
+                    StatusBar.setStatusBarClockTextScale(lpparam, scale)
+                }
+
                 if (preference.systemUI.statusBar.updateStatusBarClockEverySecond) {
                     StatusBarClock.updateStatusBarClockEverySecond(lpparam)
                 }
 
                 if (preference.systemUI.statusBar.hideSecureFolderStatusBarIcon) {
-                    SystemUI.hideSecureFolderStatusBarIcon(lpparam)
+                    StatusBar.hideSecureFolderStatusBarIcon(lpparam)
                 }
 
                 if (preference.systemUI.statusBar.restoreBluetoothStatusBarIcon) {
-                    SystemUI.restoreBluetoothStatusBarIcon(lpparam)
+                    StatusBar.restoreBluetoothStatusBarIcon(lpparam)
                 }
 
                 if (preference.systemUI.statusBar.physicalEsimAdapterWorkaround) {
@@ -325,52 +370,39 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 }
 
                 if (preference.systemUI.statusBar.doubleTapStatusBarToSleep) {
-                    SystemUI.doubleTapStatusBarToSleep(lpparam)
+                    StatusBar.doubleTapStatusBarToSleep(lpparam)
                 }
 
                 if (preference.systemUI.statusBar.modifyStatusBarMaxNotificationIcons) {
                     val max = preference.systemUI.statusBar.statusBarMaxNotificationIcons
-                    SystemUI.setStatusBarMaxNotificationIcons(lpparam, max)
-                }
-
-                run {
-                    val widthScale =
-                        if (preference.systemUI.statusBar.setBatteryIconWidthScale) {
-                            preference.systemUI.statusBar.batteryIconWidthScale
-                        } else null
-                    val heightScale =
-                        if (preference.systemUI.statusBar.setBatteryIconHeightScale) {
-                            preference.systemUI.statusBar.batteryIconHeightScale
-                        } else null
-                    SystemUI.setBatteryIconScale(lpparam, widthScale, heightScale)
-                }
-
-                if (preference.systemUI.statusBar.hideBatteryIcon) {
-                    HideBatteryIconHook.apply(lpparam)
+                    Notification.setStatusBarMaxNotificationIcons(lpparam, max)
                 }
 
                 if (preference.systemUI.statusBar.setCustomCarrierName) {
-                    val carrierName = preference.systemUI.statusBar.customCarrierName
-                    SystemUI.setCustomCarrierName(lpparam, carrierName)
+                    StatusBar.setCustomCarrierName(lpparam, preference.systemUI.statusBar.customCarrierName)
                 }
 
                 if (preference.systemUI.statusBar.hideLockscreenStatusBar) {
-                    SystemUI.hideLockscreenStatusBar(lpparam)
+                    StatusBar.hideLockscreenStatusBar(lpparam)
+                }
+
+                if (preference.settings.supportOutdoorMode) {
+                    QS.supportOutdoorMode(lpparam)
                 }
 
                 run {
                     val monospaced = preference.systemUI.qs.setQsClockMonospaced
                     val modifyTextSize = preference.systemUI.qs.modifyQSClockTextSize
                     val textSize = preference.systemUI.qs.qsClockTextSize
-                    SystemUI.setQsClockStyle(lpparam, monospaced, modifyTextSize, textSize)
+                    QS.setQsClockStyle(lpparam, monospaced, modifyTextSize, textSize)
                 }
 
                 if (preference.systemUI.qs.hideDeviceControlQsTile) {
-                    SystemUI.hideDeviceControlQsTile(lpparam)
+                    QS.hideDeviceControlQsTile(lpparam)
                 }
 
                 if (preference.systemUI.qs.hideSmartViewQsTile) {
-                    SystemUI.hideSmartViewQsTile(lpparam)
+                    QS.hideSmartViewQsTile(lpparam)
                 }
 
                 if (preference.systemUI.qs.turnOn5gQsTile) {
@@ -380,63 +412,61 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 run {
                     val qsBarSet = buildSet {
                         if (preference.systemUI.qs.hideQsBarMediaPlayer) {
-                            add(SystemUI.QsBar.MediaPlayer)
+                            add(QS.QsBar.MediaPlayer)
                         }
                         if (preference.systemUI.qs.hideQsBarNearbyDevicesAndDeviceControl) {
-                            add(SystemUI.QsBar.NearbyDevicesAndDeviceControl)
+                            add(QS.QsBar.NearbyDevicesAndDeviceControl)
                         }
                         if (preference.systemUI.qs.hideQsBarSecurityFooter) {
-                            add(SystemUI.QsBar.SecurityFooter)
+                            add(QS.QsBar.SecurityFooter)
                         }
                         if (preference.systemUI.qs.hideQsBarDataUsage) {
-                            add(SystemUI.QsBar.DataUsage)
+                            add(QS.QsBar.DataUsage)
                         }
                         if (preference.systemUI.qs.hideQsBarSmartViewAndModes) {
-                            add(SystemUI.QsBar.SmartViewAndModes)
+                            add(QS.QsBar.SmartViewAndModes)
                         }
                     }
 
-                    SystemUI.hideQsBar(lpparam, qsBarSet)
+                    QS.hideQsBar(lpparam, qsBarSet)
                 }
 
                 if (preference.systemUI.qs.alwaysExpandQsTileChunk) {
-                    SystemUI.alwaysExpandQsTileChunk(lpparam)
+                    QS.alwaysExpandQsTileChunk(lpparam)
                 }
 
                 if (preference.systemUI.qs.alwaysShowTimeDateOnQs) {
-                    SystemUI.alwaysShowTimeDateOnQs(lpparam)
+                    QS.alwaysShowTimeDateOnQs(lpparam)
                 }
 
                 if (preference.systemUI.qs.addBrightnessProgressToQsBar) {
-                    SystemUI.addBrightnessProgressToQsBar(lpparam)
+                    QS.addBrightnessProgressToQsBar(lpparam)
                 }
 
                 if (preference.systemUI.qs.addVolumeProgressToQsBar) {
-                    SystemUI.addVolumeProgressToQsBar(lpparam)
+                    QS.addVolumeProgressToQsBar(lpparam)
                 }
 
                 if (preference.systemUI.qs.showTraditionalChineseDateOnQS) {
-                    SystemUI.showTraditionalChineseDateOnQS(lpparam)
+                    QS.showTraditionalChineseDateOnQS(lpparam)
                 }
 
                 if (preference.systemUI.aod.hideAODStatusBar) {
-                    SystemUI.hideAODStatusBar(lpparam)
+                    AOD.hideAODStatusBar(lpparam)
                 }
 
                 if (preference.systemUI.aod.aodLockSupportLunar) {
-                    SystemUI.aodLockSupportLunar(lpparam)
+                    AOD.aodLockSupportLunar(lpparam)
                 }
 
                 if (preference.systemUI.other.disableScreenshotCaptureSound) {
-                    SystemUI.disableScreenshotCaptureSound(lpparam)
+                    Other.disableScreenshotCaptureSound(lpparam)
                 }
-
                 if (preference.systemUI.other.disableNotificationGrouping) {
-                    SystemUI.disableNotificationGrouping(lpparam)
+                    Notification.disableNotificationGrouping(lpparam)
                 }
-
                 if (preference.systemUI.other.hideOngoingActivityMedia) {
-                    SystemUI.hideOngoingActivityMedia(
+                    Notification.hideOngoingActivityMedia(
                         lpparam,
                         preference.systemUI.other.hideOngoingActivityMediaPackages
                             .split(",")
@@ -445,11 +475,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                             .toSet()
                     )
                 }
-
-                if (preference.settings.supportOutdoorMode) {
-                    SystemUI.supportOutdoorMode(lpparam)
-                }
-
                 if (preference.systemUI.other.customPowerMenu) {
                     addAssetPath(modulePath)
                     PowerMenu.hookPowerMenuActions(
@@ -473,37 +498,39 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.THEME_CENTER -> {
-                if (preference.themeCenter.setThemeTrialNeverExpired) {
+                if (preference.other.setThemeTrialNeverExpired) {
                     ThemeCenter.setTrialNeverExpired(lpparam)
                 }
             }
 
-            Package.VIDEO -> {
-                if (preference.video.showMorePlaybackSpeeds) {
-                    Video.showMorePlaybackSpeeds(lpparam)
-                }
-            }
-
             Package.WEATHER -> {
-                if (preference.weather.setWeatherProviderCN) {
+                if (preference.other.setWeatherProviderCN) {
                     Weather.setProviderCN(lpparam)
                 }
             }
 
-            Package.SPEN -> {
-                SPen.switchTranslateSource(lpparam, preference.sPen.useGoogleTranslate)
+            Package.VIDEO -> {
+                if (preference.other.showMorePlaybackSpeeds) {
+                    Video.showMorePlaybackSpeeds(lpparam)
+                }
             }
 
             Package.WATCH_MANAGER -> {
-                if (preference.watchPairing.bypassRegionCheck ||
-                    preference.watchPairing.connectionMode != 0
+                if (preference.other.bypassWatchPairingRegionCheck ||
+                    preference.other.watchPairingConnectionMode != WatchPairing.MODE_NONE
                 ) {
                     WatchPairing.init(
                         lpparam = lpparam,
-                        bypassRegionCheck = preference.watchPairing.bypassRegionCheck,
-                        connectionMode = preference.watchPairing.connectionMode,
-                        forceChinaGmsCore = preference.watchPairing.forceChinaGmsCore
+                        bypassRegionCheck = preference.other.bypassWatchPairingRegionCheck,
+                        connectionMode = preference.other.watchPairingConnectionMode,
+                        supplementChinaWearOsGms = preference.other.supplementChinaWearOsGms
                     )
+                }
+            }
+
+            Package.TRANSLATION -> {
+                if (preference.other.useSPenGoogleTranslate) {
+                    SPen.switchTranslateSource(lpparam, useGoogle = true)
                 }
             }
 
@@ -516,7 +543,6 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Bixby.init(lpparam, preference.bixby)
                 }
             }
-
         }
     }
 
@@ -526,7 +552,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
         }
         val preference = PreferenceProvider.preference ?: return
         if (preference.systemUI.statusBar.hideBatteryPercentageSign) {
-            SystemUI.hideBatteryPercentageSign(resparam)
+            StatusBar.hideBatteryPercentageSign(resparam)
         }
     }
 

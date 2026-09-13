@@ -382,6 +382,43 @@ fun DetailPaneSystemUI(
                 }
             }
         }
+        Column {
+            var scale by remember {
+                mutableFloatStateOf(uiState.statusBar.statusBarClockTextScale)
+            }
+            var expanded by rememberSaveable { mutableStateOf(false) }
+
+            SwitchItem(
+                title = stringResource(id = R.string.setStatusBarClockTextScale_title),
+                modifier = Modifier.animateContentSize(),
+                summary = if (uiState.statusBar.setStatusBarClockTextScale) {
+                    "%.2fx".format(scale)
+                } else null,
+                icon = ImageVector.vectorResource(id = R.drawable.format_size),
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.statusBar.setStatusBarClockTextScale,
+                onCheckedChange = {
+                    if (it && scale == 1f) {
+                        expanded = true
+                    } else if (!it) {
+                        expanded = false
+                    }
+                    onEvent(SystemUIEvent.StatusBar.SetStatusBarClockTextScale(it))
+                }
+            )
+            AnimatedVisibility(expanded && uiState.statusBar.setStatusBarClockTextScale) {
+                Slider(
+                    value = scale,
+                    onValueChange = { scale = it },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    valueRange = 0.5f..2.5f,
+                    onValueChangeFinished = {
+                        onEvent(SystemUIEvent.StatusBar.StatusBarClockTextScale(scale))
+                    }
+                )
+            }
+        }
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.folder_managed),
             title = stringResource(id = R.string.hideSecureFolderStatusBarIcon_title),
@@ -551,6 +588,16 @@ fun DetailPaneSystemUI(
                 },
                 supportingContent = { Text(stringResource(id = R.string.root5gQsTile_summary)) }
             )
+            ListItem(
+                headlineContent = { Text(stringResource(id = R.string.immersiveModeQsTile_title)) },
+                leadingContent = {
+                    Icon(
+                        ImageVector.vectorResource(id = R.drawable.immersive_mode),
+                        stringResource(id = R.string.immersiveModeQsTile_title)
+                    )
+                },
+                supportingContent = { Text(stringResource(id = R.string.rootImmersiveModeQsTile_summary)) }
+            )
             if (ONE_UI_VERSION < 80500) {
                 SwitchItem(
                     icon = ImageVector.vectorResource(id = R.drawable.tile_medium),
@@ -703,50 +750,7 @@ fun DetailPaneSystemUI(
             )
         }
 
-        DividerText(R.string.other)
-        Column {
-            var expanded by rememberSaveable { mutableStateOf(false) }
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.power_settings_new),
-                title = stringResource(id = R.string.customPowerMenu_title),
-                clickable = true,
-                onClick = { expanded = !expanded },
-                checked = uiState.other.customPowerMenu,
-                onCheckedChange = {
-                    expanded = it
-                    onEvent(SystemUIEvent.Other.CustomPowerMenu(it))
-                }
-            )
-            AnimatedVisibility(expanded && uiState.other.customPowerMenu) {
-                PowerMenuActionEditor(
-                    actions = uiState.other.powerMenuActions,
-                    onActionsChange = {
-                        onEvent(SystemUIEvent.Other.PowerMenuActions(it))
-                    }
-                )
-            }
-        }
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.screenshot),
-            title = stringResource(id = R.string.disableScreenshotCaptureSound_title),
-            checked = uiState.other.disableScreenshotCaptureSound,
-            onCheckedChange = {
-                onEvent(SystemUIEvent.Other.DisableScreenshotCaptureSound(it))
-            }
-        )
-        ListItem(
-            headlineContent = { Text(stringResource(id = R.string.restartSystemUI_title)) },
-            supportingContent = { Text(stringResource(id = R.string.restartSystemUI_summary)) },
-            leadingContent = {
-                Icon(
-                    ImageVector.vectorResource(id = R.drawable.power_settings_new),
-                    stringResource(id = R.string.restartSystemUI_title)
-                )
-            },
-            modifier = Modifier
-                .animateContentSize()
-                .clickable(role = Role.Button) { restartSystemUI() }
-        )
+        DividerText(R.string.notification)
         Column {
             var expanded by rememberSaveable { mutableStateOf(false) }
             SwitchItem(
@@ -810,6 +814,38 @@ fun DetailPaneSystemUI(
             checked = uiState.other.autoExpandNotifications,
             onCheckedChange = {
                 onEvent(SystemUIEvent.Other.AutoExpandNotifications(it))
+            }
+        )
+
+        DividerText(R.string.other)
+        Column {
+            var expanded by rememberSaveable { mutableStateOf(false) }
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.power_settings_new),
+                title = stringResource(id = R.string.customPowerMenu_title),
+                clickable = true,
+                onClick = { expanded = !expanded },
+                checked = uiState.other.customPowerMenu,
+                onCheckedChange = {
+                    expanded = it
+                    onEvent(SystemUIEvent.Other.CustomPowerMenu(it))
+                }
+            )
+            AnimatedVisibility(expanded && uiState.other.customPowerMenu) {
+                PowerMenuActionEditor(
+                    actions = uiState.other.powerMenuActions,
+                    onActionsChange = {
+                        onEvent(SystemUIEvent.Other.PowerMenuActions(it))
+                    }
+                )
+            }
+        }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.screenshot),
+            title = stringResource(id = R.string.disableScreenshotCaptureSound_title),
+            checked = uiState.other.disableScreenshotCaptureSound,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.Other.DisableScreenshotCaptureSound(it))
             }
         )
     }
@@ -946,6 +982,15 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class StatusBarClockFormat(val value: String) : StatusBar
+
+        @JvmInline
+        value class SetStatusBarClockTextScale(val value: Boolean) : StatusBar
+
+        @JvmInline
+        value class StatusBarClockTextScale(val value: Float) : StatusBar
+
+        @JvmInline
+        value class UpdateStatusBarClockEverySecond(val value: Boolean) : StatusBar
 
         @JvmInline
         value class HideSecureFolderStatusBarIcon(val value: Boolean) : StatusBar
@@ -1266,6 +1311,35 @@ private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
                 )
             }
 
+            is SystemUIEvent.StatusBar.SetStatusBarClockTextScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            setStatusBarClockTextScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.StatusBarClockTextScale -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            statusBarClockTextScale = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.StatusBar.UpdateStatusBarClockEverySecond -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        statusBar = preference.systemUI.statusBar.copy(
+                            updateStatusBarClockEverySecond = event.value
+                        )
+                    )
+                )
+            }
             is SystemUIEvent.StatusBar.HideSecureFolderStatusBarIcon -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(

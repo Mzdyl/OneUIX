@@ -20,7 +20,7 @@ class RestartRecoveryActionViewModel(
         val context = AndroidAppHelper.currentApplication()
         name = PowerMenuAction.RESTART_RECOVERY
         viewType = ViewType.CENTER_ICON_3P_VIEW
-        icon = R.drawable.power_settings_new
+        icon = R.drawable.ic_restart_recovery
         label = context.getString(R.string.restartRecovery)
     }
 

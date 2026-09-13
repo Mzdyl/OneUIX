@@ -18,7 +18,7 @@ class RestartSystemUIActionViewModel(
         val context = AndroidAppHelper.currentApplication()
         name = PowerMenuAction.RESTART_SYSTEMUI
         viewType = ViewType.CENTER_ICON_3P_VIEW
-        icon = R.drawable.power_settings_new
+        icon = R.drawable.ic_restart_system_ui
         label = context.getString(R.string.restartSystemUI)
     }
 

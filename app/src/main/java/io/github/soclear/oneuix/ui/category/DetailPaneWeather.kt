@@ -1,9 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,15 +12,11 @@ import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
 fun DetailPaneWeather(
-    uiState: Preference.Weather,
+    uiState: Preference.Other,
     onEvent: (WeatherEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    PackagePane(modifier) {
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.partly_cloudy_day),
             title = stringResource(id = R.string.setWeatherProviderCN_title),
@@ -43,7 +35,7 @@ fun SettingViewModel.onWeatherEvent(event: WeatherEvent) {
     updateData { preference ->
         when (event) {
             is WeatherEvent.SetWeatherProviderCN -> preference.copy(
-                weather = preference.weather.copy(
+                other = preference.other.copy(
                     setWeatherProviderCN = event.value
                 )
             )

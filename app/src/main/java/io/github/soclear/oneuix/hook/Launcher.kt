@@ -401,6 +401,35 @@ object Launcher {
         }
     }
 
+    fun hideRecentsCloseAllButton(loadPackageParam: LoadPackageParam) {
+        try {
+            findAndHookConstructor(
+                "com.honeyspace.ui.honeypots.tasklist.presentation.CloseAllButton",
+                loadPackageParam.classLoader,
+                Context::class.java,
+                AttributeSet::class.java,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        // The launcher also fires "Close all" by hit-testing the button's
+                        // global visible rect during the recents gesture, independently of its
+                        // click listener. GONE stops clicks, but a GONE view keeps its last
+                        // laid-out bounds, leaving a phantom hit area; collapsing the width to
+                        // zero clears that rect so neither path can trigger.
+                        val button = param.thisObject as View
+                        val hide = {
+                            button.visibility = View.GONE
+                            button.right = button.left
+                        }
+                        hide()
+                        button.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> hide() }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            XposedBridge.log(t)
+        }
+    }
+
     fun hideAppsSearchBar(loadPackageParam: LoadPackageParam) {
         try {
             findAndHookConstructor(

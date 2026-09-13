@@ -33,21 +33,21 @@ import io.github.soclear.oneuix.ui.category.DetailPaneCalendar
 import io.github.soclear.oneuix.ui.category.DetailPaneCall
 import io.github.soclear.oneuix.ui.category.DetailPaneCamera
 import io.github.soclear.oneuix.ui.category.DetailPaneDualApp
-import io.github.soclear.oneuix.ui.category.DetailPaneGallery
 import io.github.soclear.oneuix.ui.category.DetailPaneGalaxyStore
+import io.github.soclear.oneuix.ui.category.DetailPaneGallery
 import io.github.soclear.oneuix.ui.category.DetailPaneHealthMonitor
 import io.github.soclear.oneuix.ui.category.DetailPaneLauncher
 import io.github.soclear.oneuix.ui.category.DetailPaneMessaging
 import io.github.soclear.oneuix.ui.category.DetailPaneNotes
-import io.github.soclear.oneuix.ui.category.DetailPaneOther
 import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
-import io.github.soclear.oneuix.ui.category.DetailPaneSPen
 import io.github.soclear.oneuix.ui.category.DetailPaneSamsungHealth
+import io.github.soclear.oneuix.ui.category.DetailPaneSketchBook
+import io.github.soclear.oneuix.ui.category.DetailPaneSPen
 import io.github.soclear.oneuix.ui.category.DetailPaneSettings
 import io.github.soclear.oneuix.ui.category.DetailPaneSystemUI
 import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
 import io.github.soclear.oneuix.ui.category.DetailPaneVideo
-import io.github.soclear.oneuix.ui.category.DetailPaneWatchPairing
+import io.github.soclear.oneuix.ui.category.DetailPaneWatchManager
 import io.github.soclear.oneuix.ui.category.DetailPaneWeather
 import io.github.soclear.oneuix.ui.category.ListPaneCategory
 import io.github.soclear.oneuix.ui.category.onAndroidEvent
@@ -57,21 +57,21 @@ import io.github.soclear.oneuix.ui.category.onCalendarEvent
 import io.github.soclear.oneuix.ui.category.onCallEvent
 import io.github.soclear.oneuix.ui.category.onCameraEvent
 import io.github.soclear.oneuix.ui.category.onDualAppEvent
-import io.github.soclear.oneuix.ui.category.onGalleryEvent
 import io.github.soclear.oneuix.ui.category.onGalaxyStoreEvent
+import io.github.soclear.oneuix.ui.category.onGalleryEvent
 import io.github.soclear.oneuix.ui.category.onHealthMonitorEvent
 import io.github.soclear.oneuix.ui.category.onLauncherEvent
 import io.github.soclear.oneuix.ui.category.onMessagingEvent
 import io.github.soclear.oneuix.ui.category.onNotesEvent
-import io.github.soclear.oneuix.ui.category.onOtherEvent
 import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
-import io.github.soclear.oneuix.ui.category.onSPenEvent
 import io.github.soclear.oneuix.ui.category.onSamsungHealthEvent
+import io.github.soclear.oneuix.ui.category.onSketchBookEvent
+import io.github.soclear.oneuix.ui.category.onSPenEvent
 import io.github.soclear.oneuix.ui.category.onSettingsEvent
 import io.github.soclear.oneuix.ui.category.onSystemUIEvent
 import io.github.soclear.oneuix.ui.category.onThemeCenterEvent
 import io.github.soclear.oneuix.ui.category.onVideoEvent
-import io.github.soclear.oneuix.ui.category.onWatchPairingEvent
+import io.github.soclear.oneuix.ui.category.onWatchManagerEvent
 import io.github.soclear.oneuix.ui.category.onWeatherEvent
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -165,59 +165,84 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                             onEvent = viewModel::onCameraEvent
                         )
 
-                        Category.Gallery -> DetailPaneGallery(
-                            uiState = preference.gallery,
-                            onEvent = viewModel::onGalleryEvent
-                        )
-
-                        Category.Notes -> DetailPaneNotes(
-                            uiState = preference.notes,
-                            onEvent = viewModel::onNotesEvent
-                        )
-
-                        Category.Calendar -> DetailPaneCalendar(
-                            uiState = preference.calendar,
-                            onEvent = viewModel::onCalendarEvent
-                        )
-
-                        Category.Messaging -> DetailPaneMessaging(
-                            uiState = preference.messaging,
-                            onEvent = viewModel::onMessagingEvent
-                        )
-
                         Category.Browser -> DetailPaneBrowser(
-                            uiState = preference.browser,
+                            uiState = preference.other,
                             onEvent = viewModel::onBrowserEvent
                         )
 
-                        Category.Video -> DetailPaneVideo(
-                            uiState = preference.video,
-                            onEvent = viewModel::onVideoEvent
-                        )
-
-                        Category.Weather -> DetailPaneWeather(
-                            uiState = preference.weather,
-                            onEvent = viewModel::onWeatherEvent
-                        )
-
-                        Category.ThemeCenter -> DetailPaneThemeCenter(
-                            uiState = preference.themeCenter,
-                            onEvent = viewModel::onThemeCenterEvent
-                        )
-
-                        Category.Launcher -> DetailPaneLauncher(
-                            uiState = preference.launcher,
-                            onEvent = viewModel::onLauncherEvent
+                        Category.Calendar -> DetailPaneCalendar(
+                            uiState = preference.other,
+                            onEvent = viewModel::onCalendarEvent
                         )
 
                         Category.DualApp -> DetailPaneDualApp(
-                            uiState = preference.dualApp,
+                            uiState = preference.other,
                             onEvent = viewModel::onDualAppEvent
                         )
 
+                        Category.Gallery -> DetailPaneGallery(
+                            uiState = preference.other,
+                            onEvent = viewModel::onGalleryEvent
+                        )
+
+                        Category.GalaxyStore -> DetailPaneGalaxyStore(
+                            uiState = preference.other,
+                            onEvent = viewModel::onGalaxyStoreEvent
+                        )
+
+                        Category.HealthMonitor -> DetailPaneHealthMonitor(
+                            uiState = preference.other,
+                            onEvent = viewModel::onHealthMonitorEvent
+                        )
+
+                        Category.Launcher -> DetailPaneLauncher(
+                            uiState = preference.other,
+                            onEvent = viewModel::onLauncherEvent
+                        )
+
+                        Category.Messaging -> DetailPaneMessaging(
+                            uiState = preference.other,
+                            onEvent = viewModel::onMessagingEvent
+                        )
+
+                        Category.Notes -> DetailPaneNotes(
+                            uiState = preference.other,
+                            onEvent = viewModel::onNotesEvent
+                        )
+
                         Category.PhotoRetouching -> DetailPanePhotoRetouching(
-                            uiState = preference.photoRetouching,
+                            uiState = preference.other,
                             onEvent = viewModel::onPhotoRetouchingEvent
+                        )
+
+                        Category.SketchBook -> DetailPaneSketchBook(
+                            uiState = preference.other,
+                            onEvent = viewModel::onSketchBookEvent
+                        )
+
+                        Category.SPen -> DetailPaneSPen(
+                            uiState = preference.other,
+                            onEvent = viewModel::onSPenEvent
+                        )
+
+                        Category.ThemeCenter -> DetailPaneThemeCenter(
+                            uiState = preference.other,
+                            onEvent = viewModel::onThemeCenterEvent
+                        )
+
+                        Category.Video -> DetailPaneVideo(
+                            uiState = preference.other,
+                            onEvent = viewModel::onVideoEvent
+                        )
+
+                        Category.WatchManager -> DetailPaneWatchManager(
+                            uiState = preference.other,
+                            onEvent = viewModel::onWatchManagerEvent
+                        )
+
+                        Category.Weather -> DetailPaneWeather(
+                            uiState = preference.other,
+                            onEvent = viewModel::onWeatherEvent
                         )
 
                         Category.SamsungHealth -> DetailPaneSamsungHealth(
@@ -225,35 +250,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                             onEvent = viewModel::onSamsungHealthEvent
                         )
 
-                        Category.HealthMonitor -> DetailPaneHealthMonitor(
-                            uiState = preference.healthMonitor,
-                            onEvent = viewModel::onHealthMonitorEvent
-                        )
-
-                        Category.GalaxyStore -> DetailPaneGalaxyStore(
-                            uiState = preference.galaxyStore,
-                            onEvent = viewModel::onGalaxyStoreEvent
-                        )
-
-                        Category.SPen -> DetailPaneSPen(
-                            uiState = preference.sPen,
-                            onEvent = viewModel::onSPenEvent
-                        )
-
-                        Category.WatchPairing -> DetailPaneWatchPairing(
-                            uiState = preference.watchPairing,
-                            onEvent = viewModel::onWatchPairingEvent
-                        )
-
                         Category.Bixby -> DetailPaneBixby(
                             uiState = preference.bixby,
                             onEvent = viewModel::onBixbyEvent
                         )
 
-                        Category.Other -> DetailPaneOther(
-                            uiState = preference.other,
-                            onEvent = viewModel::onOtherEvent
-                        )
                     }
                 }
             }

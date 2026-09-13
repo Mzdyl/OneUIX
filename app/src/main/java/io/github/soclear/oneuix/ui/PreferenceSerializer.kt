@@ -15,13 +15,11 @@ object PreferenceSerializer : Serializer<Preference> {
     override suspend fun readFrom(input: InputStream): Preference {
         return try {
             val jsonString = input.readBytes().decodeToString()
-            // 如果是空文件或无效 JSON，返回默认值
             if (jsonString.isBlank() || jsonString == "{}") {
                 return defaultValue
             }
             decodePreference(jsonString)
         } catch (e: Exception) {
-            // 记录错误但不打印堆栈（避免日志刷屏）
             android.util.Log.w("OneUIX", "PreferenceSerializer: ${e.message}")
             defaultValue
         }
@@ -36,7 +34,7 @@ object PreferenceSerializer : Serializer<Preference> {
         )
     }
 
-    override val defaultValue: Preference  = Preference()
+    override val defaultValue: Preference = Preference()
 }
 
 val Context.dataStore by dataStore(Preference.DATASTORE_SENTINEL_NAME, PreferenceSerializer)

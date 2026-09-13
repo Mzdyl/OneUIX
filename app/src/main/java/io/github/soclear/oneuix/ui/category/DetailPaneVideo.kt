@@ -1,9 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,15 +12,11 @@ import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
 fun DetailPaneVideo(
-    uiState: Preference.Video,
+    uiState: Preference.Other,
     onEvent: (VideoEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    PackagePane(modifier) {
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.fast_forward),
             title = stringResource(id = R.string.showMorePlaybackSpeeds_title),
@@ -44,7 +36,7 @@ fun SettingViewModel.onVideoEvent(event: VideoEvent) {
     updateData { preference ->
         when (event) {
             is VideoEvent.ShowMorePlaybackSpeeds -> preference.copy(
-                video = preference.video.copy(
+                other = preference.other.copy(
                     showMorePlaybackSpeeds = event.value
                 )
             )

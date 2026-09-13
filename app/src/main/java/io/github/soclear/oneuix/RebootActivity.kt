@@ -7,7 +7,7 @@ class RebootActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         intent.action?.let {
-            Runtime.getRuntime().exec("su -c reboot $it")
+            ProcessBuilder("su", "-c", "reboot", it).start()
         }
         finish()
     }

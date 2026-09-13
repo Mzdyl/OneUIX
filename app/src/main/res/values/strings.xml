@@ -3,7 +3,10 @@
     <string name="xposed_description">Samsung One UI Extension</string>
     <string name="other">Other</string>
     <string name="galaxy_store_label">Galaxy Store</string>
-
+    <string name="notification">Notification</string>
+    <string name="status_bar">Status Bar</string>
+    <string name="qs">Quick Settings</string>
+    <string name="aod">Always On Display</string>
     <string name="statusBarLeftPaddingDp_title">Modify status bar left padding</string>
     <string name="statusBarRightPaddingDp_title">Modify status bar right padding</string>
     <string name="hideBatteryPercentageSign_title">Hide battery percentage sign in status bar</string>
@@ -27,8 +30,14 @@
     <string name="turnOn5gQsTile_title">Enable 5G Quick Settings tile</string>
     <string name="turnOn5gQsTile_summary">Requires checking System UI and Call Settings</string>
     <string name="root5gQsTile_summary">Please grant root access to this app, then manually add the 5G tile</string>
+    <string name="immersiveModeQsTile_label">Immersive mode</string>
+    <string name="immersiveModeQsTile_title">Enable Immersive mode Quick Settings tile</string>
+    <string name="rootImmersiveModeQsTile_summary">Requires root access. Add the tile manually; tap it to hide or restore the status bar</string>
     <string name="setStatusBarClockFormat_title">Set status bar date and time format</string>
     <string name="setStatusBarClockFormat_summary">Supports time format and variables:\n{temp} = battery temp, {lunar} = lunar date, {rate} = refresh rate, {shichen} = Chinese hour, {sec} = seconds, {date} = system date\nExample: HH:mm {temp} → 12:30 25.0°C</string>
+    <string name="setStatusBarClockTextScale_title">Set status bar clock scale factor</string>
+    <string name="updateStatusBarClockEverySecond_title">Update status bar clock every second</string>
+    <string name="updateStatusBarClockEverySecond_summary">Also sets numbers to monospaced font</string>
     <string name="hideSecureFolderStatusBarIcon_title">Hide Secure Folder status bar icon</string>
     <string name="restoreBluetoothStatusBarIcon_title">Restore Bluetooth status bar icon</string>
     <string name="hideQsBarNearbyDevicesAndDeviceControl_title">Hide Nearby Devices and Device Control bar in QS panel</string>
@@ -99,6 +108,9 @@
     <string name="makeAllUserAppsAvailable_title">Make all user apps available for app cloning</string>
     <string name="supportAllGallerySettings_title">Show all Gallery settings</string>
     <string name="supportAllGallerySettings_summary">Audio eraser, Auto create stories, Identify contents in images, Trash, Convert HEIF images when sharing, Convert HDR10+ videos when sharing</string>
+    <string name="supportSharedAlbumsInHide_title">Allow hiding shared albums</string>
+    <string name="supportSharedAlbumsInHide_summary">More options in the upper-right corner -> Hide albums</string>
+    <string name="hideVideoEditorStudio_title">Hide Video Editor Studio</string>
     <string name="setBlockableNotificationChannel_title">Allow disabling system notification categories</string>
     <string name="setBlockableNotificationChannel_summary">Used to disable USB, charging, low battery, and other system notifications</string>
     <string name="supportAnyFont_title">Support any font</string>
@@ -119,6 +131,7 @@
     <string name="addBrightnessProgressToQsBar_title">Show brightness level in QS panel</string>
     <string name="addVolumeProgressToQsBar_title">Show volume level in QS panel</string>
     <string name="showMemoryUsageInRecents_title">Show memory usage in Recents page</string>
+    <string name="hideRecentsCloseAllButton_title">Hide Close all button in Recents</string>
     <string name="showForcePeakRefreshRatePreference_title">Show \'Force peak refresh rate\' in Developer options</string>
     <string name="showForcePeakRefreshRatePreference_summary">Search for \'Force peak refresh rate\' in Settings</string>
     <string name="disablePinVerifyPer72h_title">Disable PIN verification every 72 hours</string>
@@ -134,16 +147,17 @@
     <string name="supportAutoPowerOnOff_title">Support Auto power on/off</string>
     <string name="supportAutoPowerOnOff_summary">Settings -> Reset -> Auto power on/off</string>
     <string name="showNotificationCategory_title">Show notification category settings</string>
+    <string name="showNotificationCategory_summary">Enable hidden notification category options in Settings (requires root)</string>
     <string name="bixby_offline_title">Bypass offline and hands-free wakeup device limits</string>
     <string name="bixby_offline_summary">Inject the device model into the allowlist cache to unlock offline processing and hands-free conversations</string>
     <string name="bixby_custom_wakeup_title">Bypass custom wake word limits</string>
     <string name="bixby_custom_wakeup_summary">Bypass Labs feature checks to allow creating and using custom wake words</string>
     <string name="bixby_wwv_bypass_title">Bypass wake word text limits</string>
     <string name="bixby_wwv_bypass_summary">Bypass native library blocklists so arbitrary words can be used as wake words</string>
-    <string name="showNotificationCategory_summary">Enable hidden notification category options in Settings (requires root)</string>
     <string name="spoofPhoneStatusAsOfficial_title">Spoof phone status as Official</string>
     <string name="spoofPhoneStatusAsOfficial_summary">Settings -> About phone -> Status information</string>
-    <string name="noAIWatermark_title">Disable Photo Editor AI watermark</string>
+    <string name="noAIWatermark_title">Disable AI watermark</string>
+    <string name="noAIWatermark_summary">Includes Photo Editor and Creative Studio</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
     <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries</string>
     <string name="samsungHealthBypassAccountCountry_title">Bypass account region restrictions</string>
@@ -165,44 +179,37 @@
     <string name="hideNavigationBarGestureHint_summary">Hide the bottom gesture hint bar for full-screen experience (requires root)</string>
     <string name="enableSketch_title">Enable Sketch to Image</string>
     <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
+    <string name="useSPenGoogleTranslate_title">Use Google Translate for S Pen</string>
+    <string name="useSPenGoogleTranslate_summary">Switch S Pen translate source from Baidu to Google</string>
     <string name="supportCallAndTextOnOtherDevices_title">Support call &amp; text on other devices</string>
     <string name="supportCallAndTextOnOtherDevices_summary">Settings -> Connected devices -> Call &amp; text on other devices</string>
     <string name="hideAppsSearchBar_title">Hide search bar on app screen</string>
     <string name="removeShortcutBadge_title">Remove bottom-right shortcut badge</string>
     <string name="removeShortcutBadge_summary">Remove the original app badge from the bottom-right corner of home screen shortcuts</string>
-    
-    <!-- Watch Pairing -->
     <string name="watchPairing_label">Galaxy Wearable</string>
-    <string name="watchPairing_connectionMode_title">Connection Mode</string>
-    <string name="watchPairing_connectionMode_summary">Select connection method between watch and phone</string>
-    <string name="watchPairing_mode_auto">No modification (Default)</string>
+    <string name="watchPairing_connectionMode_title">Watch connection mode</string>
+    <string name="watchPairing_connectionMode_summary">Choose how Galaxy Wearable handles WearOS region mode</string>
+    <string name="watchPairing_mode_none">No modification (Default)</string>
     <string name="watchPairing_mode_wearos_cn">WearOS CN (China GMS)</string>
     <string name="watchPairing_mode_wearos_global">WearOS Global (Global GMS)</string>
-    <string name="watchPairing_bypassRegionCheck_title">Bypass region check</string>
-    <string name="watchPairing_bypassRegionCheck_summary">Bypass region, CSC, and unsupported-phone pairing checks</string>
-    <string name="watchPairing_forceChinaGmsCore_title">Supplement China WearOS GMS</string>
-    <string name="watchPairing_forceChinaGmsCore_summary">If WearOS CN does not add it automatically, add com.google.android.wearable.app.cn to the download list</string>
-    
-    <string name="restartSystemUI">Restart System UI</string>
-    <string name="restartSystemUI_title">Restart System UI</string>
-    <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
-    <string name="useGoogleTranslate_title">Use Google Translate</string>
-    <string name="useGoogleTranslate_summary">Use Google Translate for S Pen translation (default is Baidu Translate)</string>
+    <string name="bypassWatchPairingRegionCheck_title">Bypass watch pairing region checks</string>
+    <string name="bypassWatchPairingRegionCheck_summary">Bypass region, CSC, and unsupported-phone pairing checks</string>
+    <string name="supplementChinaWearOsGms_title">Supplement China WearOS GMS</string>
+    <string name="supplementChinaWearOsGms_summary">If WearOS CN does not add it automatically, add com.google.android.wearable.app.cn to the download list</string>
+    <string name="restartSystemUI">Reboot System UI</string>
     <string name="restartRecovery">Reboot to recovery</string>
     <string name="restartDownload">Reboot to download mode</string>
-
-    <string name="module_disabled_tip">Please enable this module in LSPosed</string>
-    <string name="close">Close</string>
-    <string name="confirm">Confirm</string>
-    <string name="status_bar">Status Bar</string>
-    <string name="qs">Quick Settings</string>
-    <string name="aod">Always On Display</string>
     <string name="sideKeySettings">Side button settings</string>
     <string name="allowAllRotation_title">Allow all rotation angles</string>
     <string name="allowAllRotation_summary">Enable 180° rotation on phones (normally only available on tablets)</string>
     <string name="liftFcmNetworkLimit_title">Lift FCM network limit</string>
     <string name="liftFcmNetworkLimit_summary">Remove the China (including Hong Kong) firmware restriction that throttles GMS/FCM push network access</string>
     <string name="disableScreenWakeOnPowerUnplugged_title">Keep screen off when unplugged</string>
+    <string name="disableWritingToolkitGlobally_title">Disable Writing Toolkit globally</string>
+    <string name="disableWritingToolkitGlobally_summary">Removes Samsung Writing Toolkit from text selection menus in all apps through the System Framework</string>
+    <string name="module_disabled_tip">Please enable this module in LSPosed</string>
+    <string name="close">Close</string>
+    <string name="confirm">Confirm</string>
     <string name="backup_config">Back up config</string>
     <string name="restore_config">Restore config</string>
     <string name="restore_failed">Restore failed, the file may be corrupted</string>

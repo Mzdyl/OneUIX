@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.data.PreferenceJson
 import io.github.soclear.oneuix.data.decodePreference
@@ -26,68 +25,25 @@ import java.io.InputStream
 import java.io.OutputStream
 
 class SettingViewModel(application: Application) : ViewModel() {
-    private val app = application
-
-    // 始终显示的分类（即使应用未安装）
-    private val alwaysShowCategories = setOf(
-        Category.GalaxyStore,
-        Category.Other,
-        Category.Gallery,
-        Category.Notes,
-        Category.Calendar,
-        Category.Messaging,
-        Category.Browser,
-        Category.Video,
-        Category.Weather,
-        Category.ThemeCenter,
-        Category.Launcher,
-        Category.DualApp,
-        Category.PhotoRetouching,
-        Category.SamsungHealth,
-        Category.HealthMonitor,
-        Category.SPen,
-        Category.Bixby
-    )
-
     val categoryAppInfoList: StateFlow<List<CategoryAppInfo>> = flow {
-        val packageManager = app.packageManager
-        val categoryAppInfoList = Category.entries.mapNotNull { category ->
-            // Hide the empty placeholder category until it has visible settings.
-            if (category == Category.Other) {
-                return@mapNotNull null
-            }
-
-            // 始终显示的分类
-            if (category in alwaysShowCategories) {
-                val label = when (category) {
-                    Category.GalaxyStore -> app.getString(R.string.galaxy_store_label)
-                    Category.Other -> app.getString(R.string.other)
-                    else -> try {
-                        packageManager.getApplicationInfo(category.packageName, 0)
-                            .loadLabel(packageManager).toString()
-                    } catch (_: Exception) {
-                        category.name
-                    }
-                }
-                val icon = try {
-                    packageManager.getApplicationInfo(category.packageName, 0)
-                        .loadIcon(packageManager).toBitmap().asImageBitmap()
-                } catch (_: Exception) {
-                    app.getDrawable(R.drawable.ic_launcher_foreground)!!
-                        .toBitmap().asImageBitmap()
-                }
-                return@mapNotNull CategoryAppInfo(category, label, icon)
-            }
-
+        val packageManager = application.packageManager
+        val fallbackIcon = application.applicationInfo
+            .loadIcon(packageManager)
+            .toBitmap()
+            .asImageBitmap()
+        val categoryAppInfoList = Category.entries.map { category ->
             val applicationInfo = try {
                 packageManager.getApplicationInfo(category.packageName, 0)
             } catch (_: PackageManager.NameNotFoundException) {
-                return@mapNotNull null
+                null
             }
-            val label = applicationInfo.loadLabel(packageManager).toString()
-            val icon = applicationInfo.loadIcon(packageManager).toBitmap().asImageBitmap()
-            CategoryAppInfo(category, label, icon)
-        }
+            val label = applicationInfo?.loadLabel(packageManager)?.toString()
+                ?: category.packageName
+            val icon = applicationInfo?.loadIcon(packageManager)?.toBitmap()?.asImageBitmap()
+                ?: fallbackIcon
+            (applicationInfo != null) to CategoryAppInfo(category, label, icon)
+        }.partition { it.first }
+            .let { (installed, missing) -> (installed + missing).map { it.second } }
         emit(categoryAppInfoList)
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 

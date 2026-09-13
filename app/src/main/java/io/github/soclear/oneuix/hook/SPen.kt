@@ -9,15 +9,8 @@ import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscString
 import io.github.soclear.oneuix.hook.util.log
 
 object SPen {
-    /**
-     * S Pen 翻译源切换
-     * 原理：
-     * 1. Hook Validation.isChinaModel 返回 false（伪装为非中国机型）
-     * 2. Hook Validation.getCountryCode 返回 "CN"（保持中国区特性）
-     * 3. Hook SemCscFeature.getString 返回相应的翻译源 CSC 特性值
-     */
     fun switchTranslateSource(loadPackageParam: LoadPackageParam, useGoogle: Boolean) {
-        if (loadPackageParam.packageName != Package.SPEN) return
+        if (loadPackageParam.packageName != Package.TRANSLATION) return
 
         val classLoader = loadPackageParam.classLoader
 

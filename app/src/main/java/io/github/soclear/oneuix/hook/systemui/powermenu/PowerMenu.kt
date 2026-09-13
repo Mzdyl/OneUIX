@@ -24,7 +24,7 @@ object PowerMenu {
         ViewType.CENTER_ICON_8P_VIEW,
     )
 
-    fun systemAction(actionName: String): (SamsungGlobalActions) -> ActionViewModel = { globalActions ->
+    private fun systemAction(actionName: String): (SamsungGlobalActions) -> ActionViewModel = { globalActions ->
         val viewModelFactory = XposedHelpers.getObjectField(globalActions, "mViewModelFactory")
         XposedHelpers.callMethod(
             viewModelFactory,

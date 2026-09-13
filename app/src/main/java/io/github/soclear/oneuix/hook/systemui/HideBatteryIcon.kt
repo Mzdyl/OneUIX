@@ -1,24 +1,21 @@
-package io.github.soclear.oneuix.hook
+package io.github.soclear.oneuix.hook.systemui
 
 import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isVisible
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedBridge.hookAllConstructors
-import de.robv.android.xposed.XposedBridge.hookAllMethods
-import de.robv.android.xposed.XposedHelpers.findClass
-import de.robv.android.xposed.XposedHelpers.findFieldIfExists
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import de.robv.android.xposed.XposedHelpers
+import de.robv.android.xposed.callbacks.XC_LoadPackage
 import io.github.soclear.oneuix.data.Package
 import java.lang.reflect.Field
 import java.util.Collections
 import java.util.WeakHashMap
-import androidx.core.view.isVisible
 
-internal object HideBatteryIconHook {
+internal object HideBatteryIcon {
     private const val STATUS_BAR_CHARGING_ICON = "stat_sys_battery_charging"
     private const val FALLBACK_CHARGING_ICON = "ic_icon_charging"
     private const val UNRESOLVED_CHARGING_ICON_ID = -1
@@ -37,7 +34,7 @@ internal object HideBatteryIconHook {
     private val originalBatteryPercentLayouts: MutableMap<TextView, BatteryIconLayout> =
         Collections.synchronizedMap(WeakHashMap())
 
-    fun apply(loadPackageParam: LoadPackageParam) {
+    fun apply(loadPackageParam: XC_LoadPackage.LoadPackageParam) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
 
         val callback = object : XC_MethodHook() {
@@ -47,8 +44,8 @@ internal object HideBatteryIconHook {
         }
 
         try {
-            hookAllConstructors(
-                findClass(
+            XposedBridge.hookAllConstructors(
+                XposedHelpers.findClass(
                     "com.android.systemui.battery.BatteryMeterView",
                     loadPackageParam.classLoader
                 ),
@@ -67,8 +64,8 @@ internal object HideBatteryIconHook {
             "scaleBatteryMeterViewsLegacy"
         ).forEach { methodName ->
             try {
-                hookAllMethods(
-                    findClass(
+                XposedBridge.hookAllMethods(
+                    XposedHelpers.findClass(
                         "com.android.systemui.battery.BatteryMeterView",
                         loadPackageParam.classLoader
                     ),
@@ -80,8 +77,8 @@ internal object HideBatteryIconHook {
         }
 
         try {
-            hookAllMethods(
-                findClass(
+            XposedBridge.hookAllMethods(
+                XposedHelpers.findClass(
                     $$"com.android.systemui.battery.BatteryMeterViewController$3",
                     loadPackageParam.classLoader
                 ),
@@ -92,8 +89,8 @@ internal object HideBatteryIconHook {
         }
 
         try {
-            hookAllMethods(
-                findClass(
+            XposedBridge.hookAllMethods(
+                XposedHelpers.findClass(
                     "com.android.systemui.battery.BatteryMeterView",
                     loadPackageParam.classLoader
                 ),
@@ -415,7 +412,7 @@ internal object HideBatteryIconHook {
 
     private fun findField(instance: Any, names: List<String>): Field? {
         names.forEach { name ->
-            findFieldIfExists(instance.javaClass, name)?.let { return it }
+            XposedHelpers.findFieldIfExists(instance.javaClass, name)?.let { return it }
         }
         return null
     }

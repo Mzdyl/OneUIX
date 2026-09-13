@@ -45,6 +45,29 @@
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
+    <queries>
+        <package android:name="com.android.settings" />
+        <package android:name="com.android.systemui" />
+        <package android:name="com.samsung.android.app.notes" />
+        <package android:name="com.samsung.android.app.sketchbook" />
+        <package android:name="com.samsung.android.app.watchmanager" />
+        <package android:name="com.samsung.android.calendar" />
+        <package android:name="com.samsung.android.da.daagent" />
+        <package android:name="com.samsung.android.dialer" />
+        <package android:name="com.samsung.android.messaging" />
+        <package android:name="com.samsung.android.service.airviewdictionary" />
+        <package android:name="com.samsung.android.shealthmonitor" />
+        <package android:name="com.samsung.android.themecenter" />
+        <package android:name="com.samsung.android.video" />
+        <package android:name="com.sec.android.app.camera" />
+        <package android:name="com.sec.android.app.launcher" />
+        <package android:name="com.sec.android.app.samsungapps" />
+        <package android:name="com.sec.android.app.sbrowser" />
+        <package android:name="com.sec.android.daemonapp" />
+        <package android:name="com.sec.android.gallery3d" />
+        <package android:name="com.sec.android.mimage.photoretouching" />
+    </queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -85,6 +108,16 @@
             android:exported="true"
             android:icon="@drawable/five_g"
             android:label="5G"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".ImmersiveModeTileService"
+            android:exported="true"
+            android:icon="@drawable/immersive_mode"
+            android:label="@string/immersiveModeQsTile_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />

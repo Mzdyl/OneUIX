@@ -9,24 +9,9 @@ data class Preference(
     val settings: Settings = Settings(),
     val call: Call = Call(),
     val camera: Camera = Camera(),
-    val gallery: Gallery = Gallery(),
-    val notes: Notes = Notes(),
-    val calendar: Calendar = Calendar(),
-    val messaging: Messaging = Messaging(),
-    val browser: Browser = Browser(),
-    val video: Video = Video(),
-    val weather: Weather = Weather(),
-    val themeCenter: ThemeCenter = ThemeCenter(),
-    val launcher: Launcher = Launcher(),
-    val dualApp: DualApp = DualApp(),
-    val photoRetouching: PhotoRetouching = PhotoRetouching(),
-    val watchPairing: WatchPairing = WatchPairing(),
-    val samsungHealth: SamsungHealth = SamsungHealth(),
-    val healthMonitor: HealthMonitor = HealthMonitor(),
-    val galaxyStore: GalaxyStore = GalaxyStore(),
-    val sPen: SPen = SPen(),
-    val bixby: Bixby = Bixby(),
     val other: Other = Other(),
+    val samsungHealth: SamsungHealth = SamsungHealth(),
+    val bixby: Bixby = Bixby(),
 ) {
     @Serializable
     data class Android(
@@ -41,6 +26,7 @@ data class Preference(
         val fcmFix: Boolean = false,
         val hideNavigationBarGestureHint: Boolean = false,
         val disableScreenWakeOnPowerUnplugged: Boolean = false,
+        val disableWritingToolkitGlobally: Boolean = false,
     )
 
     @Serializable
@@ -65,6 +51,8 @@ data class Preference(
             val showSeparateUpDownNetworkSpeeds: Boolean = false,
             val setStatusBarClockFormat: Boolean = false,
             val statusBarClockFormat: String = "HH:mm",
+            val setStatusBarClockTextScale: Boolean = false,
+            val statusBarClockTextScale: Float = 1f,
             val hideSecureFolderStatusBarIcon: Boolean = false,
             val doubleTapStatusBarToSleep: Boolean = false,
             val modifyStatusBarMaxNotificationIcons: Boolean = false,
@@ -152,70 +140,33 @@ data class Preference(
     )
 
     @Serializable
-    data class Gallery(
-        val supportAllGallerySettings: Boolean = true,
-    )
-
-    @Serializable
-    data class Notes(
-        val supportAllNotesFeatures: Boolean = true,
-    )
-
-    @Serializable
-    data class Calendar(
-        val enableChineseHolidayDisplay: Boolean = false,
-    )
-
-    @Serializable
-    data class Messaging(
-        val supportBlockMessage: Boolean = true,
-    )
-
-    @Serializable
-    data class Browser(
-        val showMorePlaybackSpeeds: Boolean = false,
-        val spoofBrowserCountryCodeToUS: Boolean = false,
-        val redirectCustomTab: Boolean = false,
-    )
-
-    @Serializable
-    data class Video(
-        val showMorePlaybackSpeeds: Boolean = false,
-    )
-
-    @Serializable
-    data class Weather(
-        val setWeatherProviderCN: Boolean = false,
-    )
-
-    @Serializable
-    data class ThemeCenter(
-        val setThemeTrialNeverExpired: Boolean = true,
-    )
-
-    @Serializable
-    data class Launcher(
-        val showMemoryUsageInRecents: Boolean = false,
-        val hideAppsSearchBar: Boolean = false,
-        val removeShortcutBadge: Boolean = false,
-    )
-
-    @Serializable
-    data class DualApp(
+    data class Other(
+        val blockGalaxyStoreAds: Boolean = true,
+        val changeRegion: Boolean = false,
+        val regionCode: String = "US",
         val makeAllUserAppsAvailable: Boolean = true,
-    )
-
-    @Serializable
-    data class PhotoRetouching(
+        val setWeatherProviderCN: Boolean = false,
+        val showMemoryUsageInRecents: Boolean = false,
+        val hideRecentsCloseAllButton: Boolean = false,
+        val showMorePlaybackSpeeds: Boolean = false,
+        val redirectCustomTab: Boolean = false,
+        val supportAllGallerySettings: Boolean = true,
+        val supportSharedAlbumsInHide: Boolean = false,
+        val hideVideoEditorStudio: Boolean = false,
+        val supportAllNotesFeatures: Boolean = true,
+        val enableChineseHolidayDisplay: Boolean = false,
+        val supportBlockMessage: Boolean = true,
+        val setThemeTrialNeverExpired: Boolean = true,
+        val spoofBrowserCountryCodeToUS: Boolean = false,
         val noAIWatermark: Boolean = true,
         val enableSketch: Boolean = false,
-    )
-
-    @Serializable
-    data class WatchPairing(
-        val bypassRegionCheck: Boolean = false,           // 绕过区域限制
-        val connectionMode: Int = 0,                       // 0=自动，1=WearOS CN，2=WearOS Global
-        val forceChinaGmsCore: Boolean = false,            // 补充国行 WearOS GMS
+        val bypassHealthMonitorCountryCheck: Boolean = false,
+        val useSPenGoogleTranslate: Boolean = false,
+        val hideAppsSearchBar: Boolean = false,
+        val removeShortcutBadge: Boolean = false,
+        val bypassWatchPairingRegionCheck: Boolean = false,
+        val watchPairingConnectionMode: Int = 0,
+        val supplementChinaWearOsGms: Boolean = false,
     )
 
     @Serializable
@@ -227,32 +178,10 @@ data class Preference(
     )
 
     @Serializable
-    data class HealthMonitor(
-        val bypassHealthMonitorCountryCheck: Boolean = false,
-    )
-
-    @Serializable
-    data class GalaxyStore(
-        val blockGalaxyStoreAds: Boolean = true,
-        val changeRegion: Boolean = false,
-        val regionCode: String = "US",
-    )
-
-    @Serializable
-    data class SPen(
-        val useGoogleTranslate: Boolean = false,
-    )
-
-    @Serializable
     data class Bixby(
         val injectModel: Boolean = false,
         val labsMgr: Boolean = false,
         val wwvBypass: Boolean = false,
-    )
-
-    @Serializable
-    data class Other(
-        val placeholder: Boolean = false
     )
 
     companion object {

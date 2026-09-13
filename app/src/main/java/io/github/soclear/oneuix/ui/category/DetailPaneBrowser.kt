@@ -1,9 +1,5 @@
 package io.github.soclear.oneuix.ui.category
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,15 +12,11 @@ import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
 fun DetailPaneBrowser(
-    uiState: Preference.Browser,
+    uiState: Preference.Other,
     onEvent: (BrowserEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    PackagePane(modifier) {
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.fast_forward),
             title = stringResource(id = R.string.showMorePlaybackSpeeds_title),
@@ -33,18 +25,18 @@ fun DetailPaneBrowser(
             onCheckedChange = { onEvent(BrowserEvent.ShowMorePlaybackSpeeds(it)) }
         )
         SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.language_us),
-            title = stringResource(id = R.string.spoofBrowserCountryCodeToUS_title),
-            summary = stringResource(id = R.string.spoofBrowserCountryCodeToUS_summary),
-            checked = uiState.spoofBrowserCountryCodeToUS,
-            onCheckedChange = { onEvent(BrowserEvent.SpoofBrowserCountryCodeToUS(it)) }
-        )
-        SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.tab_move),
             title = stringResource(id = R.string.redirect_custom_tab_title),
             summary = stringResource(id = R.string.redirect_custom_tab_summary),
             checked = uiState.redirectCustomTab,
             onCheckedChange = { onEvent(BrowserEvent.RedirectCustomTab(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.language_us),
+            title = stringResource(id = R.string.spoofBrowserCountryCodeToUS_title),
+            summary = stringResource(id = R.string.spoofBrowserCountryCodeToUS_summary),
+            checked = uiState.spoofBrowserCountryCodeToUS,
+            onCheckedChange = { onEvent(BrowserEvent.SpoofBrowserCountryCodeToUS(it)) }
         )
     }
 }
@@ -54,30 +46,30 @@ sealed interface BrowserEvent {
     value class ShowMorePlaybackSpeeds(val value: Boolean) : BrowserEvent
 
     @JvmInline
-    value class SpoofBrowserCountryCodeToUS(val value: Boolean) : BrowserEvent
+    value class RedirectCustomTab(val value: Boolean) : BrowserEvent
 
     @JvmInline
-    value class RedirectCustomTab(val value: Boolean) : BrowserEvent
+    value class SpoofBrowserCountryCodeToUS(val value: Boolean) : BrowserEvent
 }
 
 fun SettingViewModel.onBrowserEvent(event: BrowserEvent) {
     updateData { preference ->
         when (event) {
             is BrowserEvent.ShowMorePlaybackSpeeds -> preference.copy(
-                browser = preference.browser.copy(
+                other = preference.other.copy(
                     showMorePlaybackSpeeds = event.value
                 )
             )
 
-            is BrowserEvent.SpoofBrowserCountryCodeToUS -> preference.copy(
-                browser = preference.browser.copy(
-                    spoofBrowserCountryCodeToUS = event.value
+            is BrowserEvent.RedirectCustomTab -> preference.copy(
+                other = preference.other.copy(
+                    redirectCustomTab = event.value
                 )
             )
 
-            is BrowserEvent.RedirectCustomTab -> preference.copy(
-                browser = preference.browser.copy(
-                    redirectCustomTab = event.value
+            is BrowserEvent.SpoofBrowserCountryCodeToUS -> preference.copy(
+                other = preference.other.copy(
+                    spoofBrowserCountryCodeToUS = event.value
                 )
             )
         }

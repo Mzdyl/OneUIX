@@ -11,32 +11,33 @@ import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
-fun DetailPaneCalendar(
+fun DetailPaneSketchBook(
     uiState: Preference.Other,
-    onEvent: (CalendarEvent) -> Unit,
+    onEvent: (SketchBookEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     PackagePane(modifier) {
         SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.today),
-            title = stringResource(id = R.string.enableChineseHolidayDisplay_title),
-            checked = uiState.enableChineseHolidayDisplay,
-            onCheckedChange = { onEvent(CalendarEvent.EnableChineseHolidayDisplay(it)) }
+            icon = ImageVector.vectorResource(id = R.drawable.branding_watermark),
+            title = stringResource(id = R.string.noAIWatermark_title),
+            summary = stringResource(id = R.string.noAIWatermark_summary),
+            checked = uiState.noAIWatermark,
+            onCheckedChange = { onEvent(SketchBookEvent.NoAIWatermark(it)) }
         )
     }
 }
 
-sealed interface CalendarEvent {
+sealed interface SketchBookEvent {
     @JvmInline
-    value class EnableChineseHolidayDisplay(val value: Boolean) : CalendarEvent
+    value class NoAIWatermark(val value: Boolean) : SketchBookEvent
 }
 
-fun SettingViewModel.onCalendarEvent(event: CalendarEvent) {
+fun SettingViewModel.onSketchBookEvent(event: SketchBookEvent) {
     updateData { preference ->
         when (event) {
-            is CalendarEvent.EnableChineseHolidayDisplay -> preference.copy(
+            is SketchBookEvent.NoAIWatermark -> preference.copy(
                 other = preference.other.copy(
-                    enableChineseHolidayDisplay = event.value
+                    noAIWatermark = event.value
                 )
             )
         }

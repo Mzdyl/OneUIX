@@ -10,43 +10,22 @@ import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 
 class FiveGTileService : TileService() {
-    private var permissionsGranted = false
     private lateinit var subscriptionManager: SubscriptionManager
     private lateinit var telephonyManager: TelephonyManager
 
     override fun onCreate() {
-        permissionsGranted = ensurePermissions()
-        if (!permissionsGranted) {
-            return
-        }
         subscriptionManager = getSystemService(SubscriptionManager::class.java)
         telephonyManager = getSystemService(TelephonyManager::class.java)
     }
 
-    private fun ensurePermissions(): Boolean {
-        val granted = getRequiredPermissions().all {
-            checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
-        }
-        return granted || grantPermissions()
-    }
-
-    private fun updateTileState() {
-        setTileState(if (dataTelephonyManager().has5G()) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE)
-    }
-
     override fun onClick() {
-        if (!permissionsGranted) {
-            setTileState(Tile.STATE_UNAVAILABLE)
-            return
-        }
         val enable5G = !dataTelephonyManager().has5G()
-        setTileState(Tile.STATE_UNAVAILABLE)
         activeTelephonyManagers().forEach { it.set5GEnabled(enable5G) }
         updateTileState()
     }
 
     override fun onStartListening() {
-        if (!permissionsGranted) {
+        if (!havePermissions() && !grantPermissions()) {
             setTileState(Tile.STATE_UNAVAILABLE)
             return
         }
@@ -117,6 +96,20 @@ class FiveGTileService : TileService() {
     private fun setTileState(state: Int) {
         qsTile.state = state
         qsTile.updateTile()
+    }
+
+    private fun updateTileState() {
+        setTileState(
+            if (dataTelephonyManager().has5G()) {
+                Tile.STATE_ACTIVE
+            } else {
+                Tile.STATE_INACTIVE
+            }
+        )
+    }
+
+    private fun havePermissions(): Boolean = getRequiredPermissions().all {
+        checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
     }
 
     companion object {

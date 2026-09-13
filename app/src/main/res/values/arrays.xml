@@ -6,6 +6,7 @@
         <item>com.android.settings</item>
         <item>com.android.systemui</item>
         <item>com.samsung.android.app.notes</item>
+        <item>com.samsung.android.app.sketchbook</item>
         <item>com.samsung.android.app.telephonyui</item>
         <item>com.samsung.android.app.watchmanager</item>
         <item>com.samsung.android.bixby.agent</item>
