@@ -32,4 +32,5 @@ object Package {
     const val BIXBY_WAKEUP = "com.samsung.android.bixby.wakeup"
     const val BIXBY_AGENT_RUNTIME = "com.samsung.android.bixby.agent.runtime"
     const val BIXBY_VISION = "com.samsung.android.bixby.vision"
+    const val SHARE_LIVE = "com.samsung.android.app.sharelive"
 }

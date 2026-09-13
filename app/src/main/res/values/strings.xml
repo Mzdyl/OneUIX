@@ -215,4 +215,6 @@
     <string name="backup_config">Back up config</string>
     <string name="restore_config">Restore config</string>
     <string name="restore_failed">Restore failed, the file may be corrupted</string>
+    <string name="enableGoogleQuickShare_title">Enable Google Quick Share</string>
+    <string name="enableGoogleQuickShare_summary">Enable Google Quick Share in S-Transfer. Allows transferring with Google Pixel, Android devices, and Windows PCs alongside China MTA.</string>
 </resources>

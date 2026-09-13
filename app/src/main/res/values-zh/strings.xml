@@ -215,4 +215,6 @@
     <string name="backup_config">备份配置</string>
     <string name="restore_config">恢复配置</string>
     <string name="restore_failed">恢复失败，文件可能已损坏</string>
+    <string name="enableGoogleQuickShare_title">开启 Google 快速分享支持</string>
+    <string name="enableGoogleQuickShare_summary">在 S 互传中解除对 Google 快速分享能力的限制，实现国内互传联盟（小米/OPPO/vivo）与 Google Quick Share（Pixel/电脑等）双向并存。</string>
 </resources>

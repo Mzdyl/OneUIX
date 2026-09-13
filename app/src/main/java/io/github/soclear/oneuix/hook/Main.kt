@@ -280,6 +280,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 }
             }
 
+            Package.SHARE_LIVE -> {
+                if (preference.other.enableGoogleQuickShare) {
+                    QuickShare.enableGoogleQuickShare(lpparam)
+                }
+            }
+
             Package.STORE -> {
                 if (preference.other.blockGalaxyStoreAds) {
                     GalaxyStore.blockGalaxyStoreAds(lpparam)

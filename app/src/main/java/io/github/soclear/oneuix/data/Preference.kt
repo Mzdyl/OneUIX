@@ -167,6 +167,7 @@ data class Preference(
         val bypassWatchPairingRegionCheck: Boolean = false,
         val watchPairingConnectionMode: Int = 0,
         val supplementChinaWearOsGms: Boolean = false,
+        val enableGoogleQuickShare: Boolean = false,
     )
 
     @Serializable

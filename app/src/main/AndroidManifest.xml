@@ -7,6 +7,7 @@
         <package android:name="com.android.settings" />
         <package android:name="com.android.systemui" />
         <package android:name="com.samsung.android.app.notes" />
+        <package android:name="com.samsung.android.app.sharelive" />
         <package android:name="com.samsung.android.app.sketchbook" />
         <package android:name="com.samsung.android.app.telephonyui" />
         <package android:name="com.samsung.android.app.watchmanager" />
