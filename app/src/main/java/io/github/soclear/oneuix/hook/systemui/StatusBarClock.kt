@@ -1,6 +1,10 @@
 package io.github.soclear.oneuix.hook.systemui
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
@@ -14,13 +18,15 @@ import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
 import io.github.soclear.oneuix.hook.util.log
 import io.github.soclear.oneuix.hook.util.logError
-import java.lang.ref.WeakReference
+import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.Collections
 import java.util.Locale
+import java.util.WeakHashMap
 
 object StatusBarClock {
     fun updateStatusBarClockEverySecond(loadPackageParam: LoadPackageParam) {
@@ -35,11 +41,10 @@ object StatusBarClock {
     ) {
         if (loadPackageParam.packageName != Package.SYSTEMUI) return
 
+        // Note: {temp} is intentionally event-driven (via battery receiver) and does NOT force a 1-second polling loop
         val autoDetectSecondUpdate = format.contains("ss") ||
             format.contains("SS") ||
-            format.contains("{sec}") ||
-            format.contains("{temp}") ||
-            format.contains("{rate}")
+            format.contains("{sec}")
 
         val shouldEnableSecondUpdate = needsSecondUpdate || autoDetectSecondUpdate
 
@@ -53,15 +58,22 @@ object StatusBarClock {
                     val clockTextView = param.thisObject as TextView
                     val context = clockTextView.context
 
+                    registerClockView(clockTextView)
+                    clockFormat = format
+
+                    if (format.contains("{temp}")) {
+                        ensureBatteryReceiver(context)
+                    }
+
                     if (shouldEnableSecondUpdate) {
-                        clockIndicatorViewRef = WeakReference(clockTextView)
-                        clockFormat = format
-                        ensureSecondUpdateRunning()
+                        ensureSecondUpdateRunning(context)
                     }
 
                     val text = formatClockText(format, context)
-                    clockTextView.text = text
-                    clockTextView.contentDescription = text
+                    if (clockTextView.text != text) {
+                        clockTextView.text = text
+                        clockTextView.contentDescription = text
+                    }
                     param.result = null
                 } catch (t: Throwable) {
                     logError("setStatusBarClockStyle callback error", t)
@@ -85,7 +97,34 @@ object StatusBarClock {
 
     private var secondUpdateHandler: Handler? = null
     private var secondUpdateRunnable: Runnable? = null
-    private var clockIndicatorViewRef: WeakReference<TextView>? = null
+    private val clockViews: MutableSet<TextView> = Collections.newSetFromMap(WeakHashMap())
+
+    private fun registerClockView(view: TextView) {
+        synchronized(clockViews) {
+            clockViews.add(view)
+        }
+    }
+
+    private fun updateAllClockViews() {
+        if (clockFormat.isEmpty()) return
+        synchronized(clockViews) {
+            val iterator = clockViews.iterator()
+            while (iterator.hasNext()) {
+                val view = iterator.next()
+                if (!view.isAttachedToWindow) {
+                    iterator.remove()
+                    continue
+                }
+                try {
+                    val text = formatClockText(clockFormat, view.context)
+                    if (view.text != text) {
+                        view.text = text
+                        view.contentDescription = text
+                    }
+                } catch (_: Throwable) {}
+            }
+        }
+    }
 
     @Volatile
     private var secondUpdateHooksInstalled = false
@@ -108,6 +147,56 @@ object StatusBarClock {
     @Volatile
     private var cachedSimpleDateDay: Int = -1
 
+    @Volatile
+    private var cachedTempText: String = ""
+    @Volatile
+    private var isBatteryReceiverRegistered = false
+
+    private val batteryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (Intent.ACTION_BATTERY_CHANGED == intent.action) {
+                updateTempFromIntent(intent)
+            }
+        }
+    }
+
+    private fun ensureBatteryReceiver(context: Context) {
+        if (isBatteryReceiverRegistered) return
+        synchronized(this) {
+            if (isBatteryReceiverRegistered) return
+            try {
+                val appContext = context.applicationContext ?: context
+                val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+                val stickyIntent = appContext.registerReceiver(batteryReceiver, filter)
+                isBatteryReceiverRegistered = true
+                if (stickyIntent != null) {
+                    updateTempFromIntent(stickyIntent)
+                } else if (cachedTempText.isEmpty()) {
+                    cachedTempText = readSysTemp() ?: ""
+                }
+            } catch (t: Throwable) {
+                logError("Failed to register battery receiver", t)
+                if (cachedTempText.isEmpty()) {
+                    cachedTempText = readSysTemp() ?: ""
+                }
+            }
+        }
+    }
+
+    private fun updateTempFromIntent(intent: Intent) {
+        val tempRaw = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0)
+        if (tempRaw > 0) {
+            val tempCelsius = tempRaw / 10.0f
+            val newTemp = String.format(Locale.getDefault(), "%.1f°C", tempCelsius)
+            if (newTemp != cachedTempText) {
+                cachedTempText = newTemp
+                if (clockFormat.contains("{temp}")) {
+                    updateAllClockViews()
+                }
+            }
+        }
+    }
+
     @Synchronized
     private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
         if (secondUpdateHooksInstalled) return
@@ -122,6 +211,7 @@ object StatusBarClock {
                     override fun afterHookedMethod(param: MethodHookParam) {
                         val clockTextView = getObjectField(param.thisObject, "view") as TextView
                         clockTextView.fontFeatureSettings = "tnum"
+                        registerClockView(clockTextView)
                     }
                 }
             )
@@ -158,34 +248,39 @@ object StatusBarClock {
                 "onViewDetached",
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
-                        stopSecondUpdate()
-                        clockIndicatorViewRef = null
+                        val clockTextView = param.thisObject as? TextView
+                        if (clockTextView != null) {
+                            synchronized(clockViews) {
+                                clockViews.remove(clockTextView)
+                                if (clockViews.isEmpty()) {
+                                    stopSecondUpdate()
+                                }
+                            }
+                        }
                     }
                 }
             )
         } catch (_: Throwable) {}
     }
 
-    private fun ensureSecondUpdateRunning() {
+    private fun ensureSecondUpdateRunning(context: Context) {
         if (secondUpdateHandler != null) return
 
-        secondUpdateHandler = Handler(Looper.getMainLooper())
+        val mainHandler = Handler(Looper.getMainLooper())
+        secondUpdateHandler = mainHandler
         secondUpdateRunnable = object : Runnable {
             override fun run() {
-                clockIndicatorViewRef?.get()?.let { view ->
-                    try {
-                        val powerManager = view.context.getSystemService(PowerManager::class.java)
-                        if (powerManager?.isInteractive == true && clockFormat.isNotEmpty()) {
-                            val text = formatClockText(clockFormat, view.context)
-                            view.text = text
-                            view.contentDescription = text
-                        }
-                    } catch (_: Throwable) {}
-                }
-                secondUpdateHandler?.postDelayed(this, 1000)
+                val handler = secondUpdateHandler ?: return
+                try {
+                    val powerManager = context.getSystemService(PowerManager::class.java)
+                    if (powerManager?.isInteractive == true && clockFormat.isNotEmpty()) {
+                        updateAllClockViews()
+                    }
+                } catch (_: Throwable) {}
+                handler.postDelayed(this, 1000)
             }
         }
-        secondUpdateHandler?.post(secondUpdateRunnable!!)
+        mainHandler.post(secondUpdateRunnable!!)
         log("ensureSecondUpdateRunning: started")
     }
 
@@ -196,59 +291,56 @@ object StatusBarClock {
         log("stopSecondUpdate: stopped")
     }
 
-    private val clockPlaceholders = mapOf(
-        "{temp}" to "\u0001TEMP\u0001",
-        "{lunar}" to "\u0002LUNAR\u0002",
-        "{rate}" to "\u0003RATE\u0003",
-        "{shichen}" to "\u0004SHICHEN\u0004",
-        "{sec}" to "\u0005SEC\u0005",
-        "{date}" to "\u0006DATE\u0006"
-    )
-
     private fun formatClockText(format: String, context: Context): String {
-        var processedFormat = format
-        for ((variable, placeholder) in clockPlaceholders) {
-            processedFormat = processedFormat.replace(variable, placeholder)
-        }
-        
-        val timeFormat = processedFormat
-            .replace("\u0001TEMP\u0001", "")
-            .replace("\u0002LUNAR\u0002", "")
-            .replace("\u0003RATE\u0003", "")
-            .replace("\u0004SHICHEN\u0004", "")
-            .replace("\u0005SEC\u0005", "")
-            .replace("\u0006DATE\u0006", "")
-            .trim()
-        
-        val now = LocalDateTime.now()
-        var result = processedFormat
-        if (timeFormat.isNotEmpty()) {
+        var result = format
+
+        var timePattern = format
+        if (timePattern.contains("{temp}")) timePattern = timePattern.replace("{temp}", "")
+        if (timePattern.contains("{lunar}")) timePattern = timePattern.replace("{lunar}", "")
+        if (timePattern.contains("{rate}")) timePattern = timePattern.replace("{rate}", "")
+        if (timePattern.contains("{shichen}")) timePattern = timePattern.replace("{shichen}", "")
+        if (timePattern.contains("{sec}")) timePattern = timePattern.replace("{sec}", "")
+        if (timePattern.contains("{date}")) timePattern = timePattern.replace("{date}", "")
+        timePattern = timePattern.trim()
+
+        if (timePattern.isNotEmpty()) {
             try {
-                val formatter = if (cachedTimeFormat == timeFormat) {
+                val formatter = if (cachedTimeFormat == timePattern) {
                     cachedTimeFormatter
                 } else {
-                    val newFormatter = DateTimeFormatter.ofPattern(timeFormat)
+                    val newFormatter = DateTimeFormatter.ofPattern(timePattern)
                     cachedTimeFormatter = newFormatter
-                    cachedTimeFormat = timeFormat
+                    cachedTimeFormat = timePattern
                     newFormatter
                 }
-                val formattedTime = formatter?.format(now) ?: timeFormat
-                result = result.replace(timeFormat, formattedTime)
-            } catch (_: Throwable) {
-            }
+                val now = LocalDateTime.now()
+                val formattedTime = formatter?.format(now) ?: timePattern
+                result = result.replace(timePattern, formattedTime)
+            } catch (_: Throwable) {}
         }
-        
-        result = result
-            .replace(clockPlaceholders.getValue("{temp}"), getBatteryTempText(context).orEmpty())
-            .replace(clockPlaceholders.getValue("{lunar}"), getLunarDateCached())
-            .replace(clockPlaceholders.getValue("{rate}"), getRefreshRate(context))
-            .replace(clockPlaceholders.getValue("{shichen}"), getChineseTimeHour())
-            .replace(clockPlaceholders.getValue("{sec}"), getSeconds())
-            .replace(clockPlaceholders.getValue("{date}"), getSimpleDateCached())
+
+        if (result.contains("{temp}")) {
+            result = result.replace("{temp}", getBatteryTempText(context))
+        }
+        if (result.contains("{lunar}")) {
+            result = result.replace("{lunar}", getLunarDateCached())
+        }
+        if (result.contains("{rate}")) {
+            result = result.replace("{rate}", getRefreshRate(context))
+        }
+        if (result.contains("{shichen}")) {
+            result = result.replace("{shichen}", getChineseTimeHour())
+        }
+        if (result.contains("{sec}")) {
+            result = result.replace("{sec}", getSeconds())
+        }
+        if (result.contains("{date}")) {
+            result = result.replace("{date}", getSimpleDateCached())
+        }
 
         return result
     }
-    
+
     private fun getLunarDateCached(): String {
         val today = LocalDate.now().dayOfYear
         if (cachedLunarDateDay != today) {
@@ -257,7 +349,7 @@ object StatusBarClock {
         }
         return cachedLunarDate
     }
-    
+
     private fun getSimpleDateCached(): String {
         val today = LocalDate.now().dayOfYear
         if (cachedSimpleDateDay != today) {
@@ -267,49 +359,11 @@ object StatusBarClock {
         return cachedSimpleDate
     }
 
-    @Volatile
-    private var lastTempText: String? = null
-    @Volatile
-    private var lastTempTime: Long = 0
-    
-    private fun getBatteryTempText(context: Context): String? {
-        val now = System.currentTimeMillis()
-        
-        if (lastTempText != null && (now - lastTempTime) < 1000) {
-            return lastTempText
+    private fun getBatteryTempText(context: Context): String {
+        if (cachedTempText.isEmpty()) {
+            ensureBatteryReceiver(context)
         }
-        
-        val sysTemp = readSysTemp()
-        if (sysTemp != null) {
-            lastTempText = sysTemp
-            lastTempTime = now
-            return sysTemp
-        }
-        
-        return try {
-            val appContext = context.applicationContext
-            val batteryIntent = appContext.registerReceiver(
-                null,
-                android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
-            )
-            
-            if (batteryIntent != null) {
-                val tempRaw = batteryIntent.getIntExtra("temperature", 0)
-                if (tempRaw > 0) {
-                    val tempCelsius = tempRaw / 10.0f
-                    val tempText = String.format(Locale.getDefault(), "%.1f°C", tempCelsius)
-                    lastTempText = tempText
-                    lastTempTime = now
-                    tempText
-                } else {
-                    lastTempText
-                }
-            } else {
-                lastTempText
-            }
-        } catch (_: Throwable) {
-            lastTempText
-        }
+        return cachedTempText
     }
 
     private val tempFilePaths = listOf(
@@ -319,7 +373,7 @@ object StatusBarClock {
     private fun readSysTemp(): String? {
         for (path in tempFilePaths) {
             try {
-                val file = java.io.File(path)
+                val file = File(path)
                 if (file.exists()) {
                     val content = file.readText().trim()
                     val tempRaw = content.toIntOrNull() ?: continue
