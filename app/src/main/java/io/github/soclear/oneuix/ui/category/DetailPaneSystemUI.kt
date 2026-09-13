@@ -848,6 +848,19 @@ fun DetailPaneSystemUI(
                 onEvent(SystemUIEvent.Other.DisableScreenshotCaptureSound(it))
             }
         )
+        ListItem(
+            headlineContent = { Text(stringResource(id = R.string.restartSystemUI_title)) },
+            supportingContent = { Text(stringResource(id = R.string.restartSystemUI_summary)) },
+            leadingContent = {
+                Icon(
+                    ImageVector.vectorResource(id = R.drawable.power_settings_new),
+                    stringResource(id = R.string.restartSystemUI_title)
+                )
+            },
+            modifier = Modifier
+                .animateContentSize()
+                .clickable(role = Role.Button) { restartSystemUI() }
+        )
     }
 }
 

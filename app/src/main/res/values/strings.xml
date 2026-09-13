@@ -197,6 +197,8 @@
     <string name="supplementChinaWearOsGms_title">Supplement China WearOS GMS</string>
     <string name="supplementChinaWearOsGms_summary">If WearOS CN does not add it automatically, add com.google.android.wearable.app.cn to the download list</string>
     <string name="restartSystemUI">Reboot System UI</string>
+    <string name="restartSystemUI_title">Restart System UI</string>
+    <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
     <string name="restartRecovery">Reboot to recovery</string>
     <string name="restartDownload">Reboot to download mode</string>
     <string name="sideKeySettings">Side button settings</string>

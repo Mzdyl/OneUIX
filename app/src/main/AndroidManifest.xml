@@ -6,17 +6,10 @@
     <queries>
         <package android:name="com.android.settings" />
         <package android:name="com.android.systemui" />
-        <package android:name="com.sec.android.app.samsungapps" />
-        <package android:name="com.sec.android.daemonapp" />
-        <package android:name="com.sec.android.app.camera" />
-        <package android:name="com.sec.android.app.launcher" />
-        <package android:name="com.sec.android.app.sbrowser" />
-        <package android:name="com.sec.android.app.shealth" />
-        <package android:name="com.sec.android.gallery3d" />
-        <package android:name="com.sec.android.mimage.photoretouching" />
+        <package android:name="com.samsung.android.app.notes" />
+        <package android:name="com.samsung.android.app.sketchbook" />
         <package android:name="com.samsung.android.app.telephonyui" />
         <package android:name="com.samsung.android.app.watchmanager" />
-        <package android:name="com.samsung.android.app.notes" />
         <package android:name="com.samsung.android.bixby.agent" />
         <package android:name="com.samsung.android.bixby.wakeup" />
         <package android:name="com.samsung.android.calendar" />
@@ -29,6 +22,14 @@
         <package android:name="com.samsung.android.shealthmonitor" />
         <package android:name="com.samsung.android.themecenter" />
         <package android:name="com.samsung.android.video" />
+        <package android:name="com.sec.android.app.camera" />
+        <package android:name="com.sec.android.app.launcher" />
+        <package android:name="com.sec.android.app.samsungapps" />
+        <package android:name="com.sec.android.app.sbrowser" />
+        <package android:name="com.sec.android.app.shealth" />
+        <package android:name="com.sec.android.daemonapp" />
+        <package android:name="com.sec.android.gallery3d" />
+        <package android:name="com.sec.android.mimage.photoretouching" />
     </queries>
 
     <uses-feature
@@ -44,29 +45,6 @@
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
-
-    <queries>
-        <package android:name="com.android.settings" />
-        <package android:name="com.android.systemui" />
-        <package android:name="com.samsung.android.app.notes" />
-        <package android:name="com.samsung.android.app.sketchbook" />
-        <package android:name="com.samsung.android.app.watchmanager" />
-        <package android:name="com.samsung.android.calendar" />
-        <package android:name="com.samsung.android.da.daagent" />
-        <package android:name="com.samsung.android.dialer" />
-        <package android:name="com.samsung.android.messaging" />
-        <package android:name="com.samsung.android.service.airviewdictionary" />
-        <package android:name="com.samsung.android.shealthmonitor" />
-        <package android:name="com.samsung.android.themecenter" />
-        <package android:name="com.samsung.android.video" />
-        <package android:name="com.sec.android.app.camera" />
-        <package android:name="com.sec.android.app.launcher" />
-        <package android:name="com.sec.android.app.samsungapps" />
-        <package android:name="com.sec.android.app.sbrowser" />
-        <package android:name="com.sec.android.daemonapp" />
-        <package android:name="com.sec.android.gallery3d" />
-        <package android:name="com.sec.android.mimage.photoretouching" />
-    </queries>
 
     <application
         android:allowBackup="true"

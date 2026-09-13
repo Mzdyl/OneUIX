@@ -11,57 +11,79 @@ class PreferenceCodecTest {
         val preference = decodePreference(
             """
             {
-              "other": {
+              "galaxyStore": {
                 "blockGalaxyStoreAds": false,
-                "makeAllUserAppsAvailable": false,
-                "setWeatherProviderCN": true,
+                "changeRegion": true,
+                "regionCode": "HK"
+              },
+              "dualApp": { "makeAllUserAppsAvailable": false },
+              "weather": { "setWeatherProviderCN": true },
+              "launcher": {
                 "showMemoryUsageInRecents": true,
+                "hideRecentsCloseAllButton": true,
+                "hideAppsSearchBar": true,
+                "removeShortcutBadge": true
+              },
+              "browser": {
                 "showMorePlaybackSpeeds": true,
                 "redirectCustomTab": true,
+                "spoofBrowserCountryCodeToUS": true
+              },
+              "video": { "showMorePlaybackSpeeds": true },
+              "gallery": {
                 "supportAllGallerySettings": false,
-                "supportAllNotesFeatures": false,
-                "enableChineseHolidayDisplay": true,
-                "supportBlockMessage": false,
-                "setThemeTrialNeverExpired": false,
-                "spoofBrowserCountryCodeToUS": true,
+                "supportSharedAlbumsInHide": true,
+                "hideVideoEditorStudio": true
+              },
+              "notes": { "supportAllNotesFeatures": false },
+              "calendar": { "enableChineseHolidayDisplay": true },
+              "messaging": { "supportBlockMessage": false },
+              "themeCenter": { "setThemeTrialNeverExpired": false },
+              "photoRetouching": {
                 "noAIWatermark": false,
-                "bypassHealthMonitorCountryCheck": true,
-                "useSPenGoogleTranslate": true,
-                "hideAppsSearchBar": true,
-                "removeShortcutBadge": true,
-                "bypassWatchPairingRegionCheck": true,
-                "watchPairingConnectionMode": 2,
-                "supplementChinaWearOsGms": true
+                "enableSketch": true
+              },
+              "healthMonitor": { "bypassHealthMonitorCountryCheck": true },
+              "sPen": { "useGoogleTranslate": true },
+              "watchPairing": {
+                "bypassRegionCheck": true,
+                "connectionMode": 2,
+                "forceChinaGmsCore": true
               }
             }
             """.trimIndent()
         )
 
-        assertFalse(preference.galaxyStore.blockGalaxyStoreAds)
-        assertFalse(preference.dualApp.makeAllUserAppsAvailable)
-        assertTrue(preference.weather.setWeatherProviderCN)
-        assertTrue(preference.launcher.showMemoryUsageInRecents)
-        assertTrue(preference.browser.showMorePlaybackSpeeds)
-        assertTrue(preference.video.showMorePlaybackSpeeds)
-        assertTrue(preference.browser.redirectCustomTab)
-        assertFalse(preference.gallery.supportAllGallerySettings)
-        assertFalse(preference.notes.supportAllNotesFeatures)
-        assertTrue(preference.calendar.enableChineseHolidayDisplay)
-        assertFalse(preference.messaging.supportBlockMessage)
-        assertFalse(preference.themeCenter.setThemeTrialNeverExpired)
-        assertTrue(preference.browser.spoofBrowserCountryCodeToUS)
-        assertFalse(preference.photoRetouching.noAIWatermark)
-        assertTrue(preference.healthMonitor.bypassHealthMonitorCountryCheck)
-        assertTrue(preference.sPen.useGoogleTranslate)
-        assertTrue(preference.launcher.hideAppsSearchBar)
-        assertTrue(preference.launcher.removeShortcutBadge)
-        assertTrue(preference.watchPairing.bypassRegionCheck)
-        assertEquals(2, preference.watchPairing.connectionMode)
-        assertTrue(preference.watchPairing.forceChinaGmsCore)
+        assertFalse(preference.other.blockGalaxyStoreAds)
+        assertTrue(preference.other.changeRegion)
+        assertEquals("HK", preference.other.regionCode)
+        assertFalse(preference.other.makeAllUserAppsAvailable)
+        assertTrue(preference.other.setWeatherProviderCN)
+        assertTrue(preference.other.showMemoryUsageInRecents)
+        assertTrue(preference.other.hideRecentsCloseAllButton)
+        assertTrue(preference.other.hideAppsSearchBar)
+        assertTrue(preference.other.removeShortcutBadge)
+        assertTrue(preference.other.showMorePlaybackSpeeds)
+        assertTrue(preference.other.redirectCustomTab)
+        assertTrue(preference.other.spoofBrowserCountryCodeToUS)
+        assertFalse(preference.other.supportAllGallerySettings)
+        assertTrue(preference.other.supportSharedAlbumsInHide)
+        assertTrue(preference.other.hideVideoEditorStudio)
+        assertFalse(preference.other.supportAllNotesFeatures)
+        assertTrue(preference.other.enableChineseHolidayDisplay)
+        assertFalse(preference.other.supportBlockMessage)
+        assertFalse(preference.other.setThemeTrialNeverExpired)
+        assertFalse(preference.other.noAIWatermark)
+        assertTrue(preference.other.enableSketch)
+        assertTrue(preference.other.bypassHealthMonitorCountryCheck)
+        assertTrue(preference.other.useSPenGoogleTranslate)
+        assertTrue(preference.other.bypassWatchPairingRegionCheck)
+        assertEquals(2, preference.other.watchPairingConnectionMode)
+        assertTrue(preference.other.supplementChinaWearOsGms)
     }
 
     @Test
-    fun currentFieldsTakePriorityOverLegacyFields() {
+    fun otherFieldsTakePriorityOverLegacyFields() {
         val preference = decodePreference(
             """
             {
@@ -71,7 +93,6 @@ class PreferenceCodecTest {
             """.trimIndent()
         )
 
-        assertFalse(preference.browser.showMorePlaybackSpeeds)
-        assertTrue(preference.video.showMorePlaybackSpeeds)
+        assertTrue(preference.other.showMorePlaybackSpeeds)
     }
 }
