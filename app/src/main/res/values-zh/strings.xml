@@ -183,6 +183,11 @@
     <string name="useSPenGoogleTranslate_summary">将 S Pen 翻译源从百度切换为谷歌</string>
     <string name="supportCallAndTextOnOtherDevices_title">支持跨设备接打电话和收发短信</string>
     <string name="supportCallAndTextOnOtherDevices_summary">设置 -> 已连接的设备 -> 跨设备接打电话和收发短信</string>
+    <string name="mdecDeviceType_title">设备工作模式</string>
+    <string name="mdecDeviceType_summary">切换本机在跨设备接打电话和收发短信中的角色</string>
+    <string name="mdecDeviceType_default">默认（跟随系统）</string>
+    <string name="mdecDeviceType_phone">手机（主设备 - 共享本机通话和短信）</string>
+    <string name="mdecDeviceType_tablet">平板（副设备 - 接打其他手机上的电话）</string>
     <string name="hideAppsSearchBar_title">隐藏应用屏幕搜索栏</string>
     <string name="removeShortcutBadge_title">移除快捷方式图标右下角小角标</string>
     <string name="removeShortcutBadge_summary">去掉桌面快捷方式图标右下角的原 APP 小角标</string>

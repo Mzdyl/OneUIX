@@ -129,6 +129,7 @@ data class Preference(
         val showGeocodedLocationInRecentCall: Boolean = false,
         val isOpStyleCHN: Boolean = false,
         val supportCallAndTextOnOtherDevices: Boolean = false,
+        val mdecDeviceType: Int = 0,
     )
 
     @Serializable

@@ -12,6 +12,7 @@ import androidx.compose.ui.res.vectorResource
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.ui.SettingViewModel
+import io.github.soclear.oneuix.ui.component.SelectItem
 import io.github.soclear.oneuix.ui.component.SwitchItem
 
 @Composable
@@ -55,6 +56,19 @@ fun DetailPaneCall(
             checked = uiState.supportCallAndTextOnOtherDevices,
             onCheckedChange = { onEvent(CallEvent.SupportCallAndTextOnOtherDevices(it)) }
         )
+        if (uiState.supportCallAndTextOnOtherDevices) {
+            SelectItem(
+                title = stringResource(id = R.string.mdecDeviceType_title),
+                summary = stringResource(id = R.string.mdecDeviceType_summary),
+                entries = listOf(
+                    stringResource(id = R.string.mdecDeviceType_default),
+                    stringResource(id = R.string.mdecDeviceType_phone),
+                    stringResource(id = R.string.mdecDeviceType_tablet),
+                ),
+                selectedIndex = uiState.mdecDeviceType,
+                onSelectedIndexChange = { onEvent(CallEvent.SetMdecDeviceType(it)) }
+            )
+        }
     }
 }
 
@@ -74,6 +88,9 @@ sealed interface CallEvent {
 
     @JvmInline
     value class SupportCallAndTextOnOtherDevices(val value: Boolean) : CallEvent
+
+    @JvmInline
+    value class SetMdecDeviceType(val value: Int) : CallEvent
 }
 
 fun SettingViewModel.onCallEvent(event: CallEvent) {
@@ -97,6 +114,10 @@ fun SettingViewModel.onCallEvent(event: CallEvent) {
 
             is CallEvent.SupportCallAndTextOnOtherDevices -> {
                 it.copy(call = it.call.copy(supportCallAndTextOnOtherDevices = event.value))
+            }
+
+            is CallEvent.SetMdecDeviceType -> {
+                it.copy(call = it.call.copy(mdecDeviceType = event.value))
             }
         }
     }

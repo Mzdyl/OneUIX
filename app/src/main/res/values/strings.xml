@@ -183,6 +183,11 @@
     <string name="useSPenGoogleTranslate_summary">Switch S Pen translate source from Baidu to Google</string>
     <string name="supportCallAndTextOnOtherDevices_title">Support call &amp; text on other devices</string>
     <string name="supportCallAndTextOnOtherDevices_summary">Settings -> Connected devices -> Call &amp; text on other devices</string>
+    <string name="mdecDeviceType_title">Device role</string>
+    <string name="mdecDeviceType_summary">Choose role for Call &amp; text on other devices</string>
+    <string name="mdecDeviceType_default">Default (System)</string>
+    <string name="mdecDeviceType_phone">Phone (Primary - share calls &amp; texts)</string>
+    <string name="mdecDeviceType_tablet">Tablet (Secondary - relay calls &amp; texts)</string>
     <string name="hideAppsSearchBar_title">Hide search bar on app screen</string>
     <string name="removeShortcutBadge_title">Remove bottom-right shortcut badge</string>
     <string name="removeShortcutBadge_summary">Remove the original app badge from the bottom-right corner of home screen shortcuts</string>
