@@ -4,6 +4,8 @@
 
     <!-- Android 11+ 包可见性 -->
     <queries>
+        <package android:name="com.android.phone" />
+        <package android:name="com.android.server.telecom" />
         <package android:name="com.android.settings" />
         <package android:name="com.android.systemui" />
         <package android:name="com.samsung.android.app.notes" />

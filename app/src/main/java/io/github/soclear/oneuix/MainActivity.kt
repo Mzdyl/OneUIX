@@ -38,6 +38,11 @@ class MainActivity : ComponentActivity() {
         setWorldReadable()
     }
 
+    override fun onResume() {
+        super.onResume()
+        setWorldReadable()
+    }
+
     @OptIn(ExperimentalMaterial3AdaptiveApi::class)
     private fun setScreen() {
         if (preferenceFile.name == Preference.FILE_NAME) {
@@ -48,7 +53,23 @@ class MainActivity : ComponentActivity() {
     }
 
     @SuppressLint("SetWorldReadable")
-    private fun setWorldReadable(): Boolean = preferenceFile.setReadable(true, false)
+    private fun setWorldReadable(): Boolean {
+        try {
+            applicationContext.dataDir?.let { dir ->
+                dir.setReadable(true, false)
+                dir.setExecutable(true, false)
+            }
+            preferenceFile.parentFile?.let { dir ->
+                dir.setReadable(true, false)
+                dir.setExecutable(true, false)
+                dir.parentFile?.let { parent ->
+                    parent.setReadable(true, false)
+                    parent.setExecutable(true, false)
+                }
+            }
+        } catch (_: Throwable) {}
+        return preferenceFile.setReadable(true, false)
+    }
 
     private fun setSettingScreen() {
         val viewModel: SettingViewModel by viewModels {
