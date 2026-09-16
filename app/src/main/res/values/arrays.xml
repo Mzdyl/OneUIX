@@ -3,6 +3,9 @@
     <string-array name="xposed_scope" >
         <!-- 这里填写模块的作用域应用的包名，可以填多个。 -->
         <item>android</item>
+        <item>com.android.server.telecom</item>
+        <item>com.android.phone</item>
+        <item>com.sec.imsservice</item>
         <item>com.android.settings</item>
         <item>com.android.systemui</item>
         <item>com.samsung.android.app.notes</item>

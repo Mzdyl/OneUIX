@@ -14,6 +14,7 @@ object Package {
     const val MDEC_SERVICE = "com.samsung.android.mdecservice"
     const val MESSAGING = "com.samsung.android.messaging"
     const val NOTES = "com.samsung.android.app.notes"
+    const val PHONE = "com.android.phone"
     const val PHOTO_RETOUCHING = "com.sec.android.mimage.photoretouching"
     const val SETTINGS = "com.android.settings"
     const val SAMSUNG_HEALTH = "com.sec.android.app.shealth"
@@ -33,4 +34,6 @@ object Package {
     const val BIXBY_AGENT_RUNTIME = "com.samsung.android.bixby.agent.runtime"
     const val BIXBY_VISION = "com.samsung.android.bixby.vision"
     const val SHARE_LIVE = "com.samsung.android.app.sharelive"
+    const val TELECOM = "com.android.server.telecom"
+    const val IMS_SERVICE = "com.sec.imsservice"
 }

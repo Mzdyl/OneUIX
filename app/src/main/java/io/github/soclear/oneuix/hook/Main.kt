@@ -77,6 +77,16 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.android.disableScreenWakeOnPowerUnplugged) {
                     Android.disableScreenWakeOnPowerUnplugged(lpparam)
                 }
+
+                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                }
+            }
+
+            Package.TELECOM -> {
+                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                }
             }
 
             Package.BROWSER -> {
@@ -130,6 +140,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.call.isOpStyleCHN) {
                     Call.isOpStyleCHN(lpparam)
                 }
+
+                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                }
             }
 
             Package.DUAL_APP -> {
@@ -174,6 +188,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                         preference.call.preferRecordingButton
                     )
                 }
+
+                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                }
             }
 
             Package.LAUNCHER -> {
@@ -196,7 +214,19 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
 
             Package.MDEC_SERVICE -> {
                 if (preference.call.supportCallAndTextOnOtherDevices) {
-                    MdecService.supportCallAndTextOnOtherDevices(lpparam)
+                    MdecService.supportCallAndTextOnOtherDevices(lpparam, preference.call.mdecDeviceType)
+                }
+            }
+
+            Package.PHONE -> {
+                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                }
+            }
+
+            Package.IMS_SERVICE -> {
+                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
                 }
             }
 
