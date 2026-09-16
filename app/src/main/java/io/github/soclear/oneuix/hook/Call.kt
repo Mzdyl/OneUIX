@@ -190,59 +190,7 @@ object Call {
                                 }
                             }
 
-                            // 2.2 伪装设备类型为平板模式（解除双卡下禁用 CMC 切换器的限制）
-                            val deviceSpecClassData = bridge.findClass {
-                                matcher {
-                                    usingStrings("DeviceSpecUtil", "isTabletUi method")
-                                }
-                            }.firstOrNull() ?: bridge.findClass {
-                                matcher {
-                                    usingStrings("winner", "zodiac")
-                                }
-                            }.firstOrNull()
-                            val deviceSpecClass = deviceSpecClassData?.getInstance(classLoader)
-                                ?: XposedHelpers.findClassIfExists("Eh.g", classLoader)
-
-                            if (deviceSpecClass != null) {
-                                XposedBridge.hookAllConstructors(deviceSpecClass, object : XC_MethodHook() {
-                                    override fun afterHookedMethod(param: MethodHookParam) {
-                                        try {
-                                            val booleanField = deviceSpecClass.declaredFields.firstOrNull { it.type == java.lang.Boolean.TYPE }
-                                            booleanField?.let {
-                                                it.isAccessible = true
-                                                it.setBoolean(param.thisObject, true)
-                                            }
-                                        } catch (_: Throwable) {}
-                                    }
-                                })
-                            }
-
-                            val deviceSpecHolderData = bridge.findClass {
-                                matcher {
-                                    usingStrings("winner", "zodiac", "tablet")
-                                }
-                            }.firstOrNull()
-                            val deviceSpecHolderClass = deviceSpecHolderData?.getInstance(classLoader)
-                                ?: XposedHelpers.findClassIfExists("Eh.f", classLoader)
-                            if (deviceSpecHolderClass != null && deviceSpecClass != null) {
-                                try {
-                                    for (f in deviceSpecHolderClass.declaredFields) {
-                                        if (Modifier.isStatic(f.modifiers) && f.type == deviceSpecClass) {
-                                            f.isAccessible = true
-                                            val instance = f.get(null)
-                                            if (instance != null) {
-                                                val booleanField = deviceSpecClass.declaredFields.firstOrNull { it.type == java.lang.Boolean.TYPE }
-                                                booleanField?.let {
-                                                    it.isAccessible = true
-                                                    it.setBoolean(instance, true)
-                                                }
-                                            }
-                                        }
-                                    }
-                                } catch (_: Throwable) {}
-                            }
-
-                            // 2.3 动态查找 CMC 切换器 (DialPadBottomToggleCmc)
+                            // 2.2 动态查找 CMC 切换器 (DialPadBottomToggleCmc) 并放开双卡限制
                             val cmcToggleClassData = bridge.findClass {
                                 matcher {
                                     usingStrings("DialPadBottomToggleCmc", "isShowBottomToggle ")
@@ -265,35 +213,25 @@ object Call {
                                         usingStrings("isShowBottomToggle ")
                                     }
                                 }.firstOrNull()
+                                val qMethodName = qMethodData?.name ?: "q"
 
-                                if (qMethodData != null) {
-                                    findAndHookMethod(cmcClass, qMethodData.name, object : XC_MethodHook() {
-                                        override fun beforeHookedMethod(param: MethodHookParam) {
-                                            try {
-                                                dMethod?.invoke(param.thisObject)
-                                            } catch (_: Throwable) {}
-                                            param.result = true
-                                        }
-                                    })
-                                } else {
-                                    for (m in cmcClass.declaredMethods) {
-                                        if (m.name != "k" && m.returnType == java.lang.Boolean.TYPE && m.parameterTypes.isEmpty()) {
-                                            findAndHookMethod(cmcClass, m.name, object : XC_MethodHook() {
-                                                override fun beforeHookedMethod(param: MethodHookParam) {
-                                                    if (dMethod != null) {
-                                                        try {
-                                                            dMethod.invoke(param.thisObject)
-                                                        } catch (_: Throwable) {}
-                                                    }
-                                                    param.result = true
+                                for (m in cmcClass.declaredMethods) {
+                                    if (m.name != "k" && m.returnType == java.lang.Boolean.TYPE && m.parameterTypes.isEmpty()) {
+                                        findAndHookMethod(cmcClass, m.name, object : XC_MethodHook() {
+                                            override fun beforeHookedMethod(param: MethodHookParam) {
+                                                if (m.name == qMethodName) {
+                                                    try {
+                                                        dMethod?.invoke(param.thisObject)
+                                                    } catch (_: Throwable) {}
                                                 }
-                                            })
-                                        }
+                                                param.result = true
+                                            }
+                                        })
                                     }
                                 }
                             }
 
-                            // 2.4 动态查找 DialPadBottomToggleHelper，兜底确保选用 CMC 切换器
+                            // 2.3 动态查找 DialPadBottomToggleHelper，兜底确保选用 CMC 切换器
                             val helperClassData = bridge.findClass {
                                 matcher {
                                     usingStrings("DialPadBottomToggleHelper", "changeVisibility : ")
