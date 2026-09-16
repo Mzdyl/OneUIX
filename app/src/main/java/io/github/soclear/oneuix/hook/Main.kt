@@ -234,6 +234,10 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.other.supportBlockMessage) {
                     Messaging.isSupportBlock(lpparam)
                 }
+                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                    Messaging.preventCmcRestart(lpparam)
+                    Messaging.showCmcMessageIndicator(lpparam)
+                }
             }
 
             Package.NOTES -> {
