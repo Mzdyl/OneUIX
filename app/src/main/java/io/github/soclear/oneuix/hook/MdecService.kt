@@ -41,6 +41,70 @@ object MdecService {
         } catch (ignored: Throwable) {
         }
 
+        try {
+            XposedHelpers.findAndHookMethod(
+                "com.samsung.android.mdeccommon.utils.CountryUtils",
+                classLoader,
+                "isChinaDevice",
+                XC_MethodReplacement.returnConstant(false)
+            )
+        } catch (t: Throwable) {
+            logError("supportCallAndTextOnOtherDevices: isChinaDevice hook failed", t)
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(
+                "com.samsung.android.mdeccommon.utils.CommonUtils",
+                classLoader,
+                "isSameWifiRequiredForCall",
+                Context::class.java,
+                XC_MethodReplacement.returnConstant(false)
+            )
+        } catch (t: Throwable) {
+            logError("supportCallAndTextOnOtherDevices: isSameWifiRequiredForCall hook failed", t)
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(
+                "com.samsung.android.mdeccommon.utils.CommonUtils",
+                classLoader,
+                "setSameWifiNetworkStatus",
+                Context::class.java,
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        val ctx = param.args[0] as? Context ?: return
+                        Settings.Global.putInt(ctx.contentResolver, "cmc_same_wifi_network_status", 0)
+                        param.result = null
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            logError("supportCallAndTextOnOtherDevices: setSameWifiNetworkStatus hook failed", t)
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(
+                "com.samsung.android.mdeccommon.utils.SimUtils",
+                classLoader,
+                "isWifiOnlyDevice",
+                Context::class.java,
+                XC_MethodReplacement.returnConstant(false)
+            )
+        } catch (t: Throwable) {
+            logError("supportCallAndTextOnOtherDevices: isWifiOnlyDevice hook failed", t)
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(
+                "com.samsung.android.cmcsettings.view.connectedNetwork.ConnectedNetworkPreference",
+                classLoader,
+                "isEnablePreference",
+                XC_MethodReplacement.returnConstant(true)
+            )
+        } catch (t: Throwable) {
+            logError("supportCallAndTextOnOtherDevices: isEnablePreference hook failed", t)
+        }
+
         if (mdecDeviceType != 0) {
             hookDeviceType(classLoader, mdecDeviceType)
         }
@@ -103,6 +167,7 @@ object MdecService {
                             if (current != deviceTypeStr) {
                                 Settings.Global.putString(context.contentResolver, "cmc_device_type", deviceTypeStr)
                             }
+                            Settings.Global.putInt(context.contentResolver, "cmc_same_wifi_network_status", 0)
                         } catch (t: Throwable) {
                             logError("hookDeviceType: sync Settings.Global failed", t)
                         }
@@ -217,7 +282,7 @@ object MdecService {
                     object : XC_MethodHook() {
                         override fun beforeHookedMethod(param: MethodHookParam) {
                             val ctx = param.args[0] as? Context
-                            param.result = if (ctx == null) 0 else if (isTablet) 0 else 1
+                            param.result = if (ctx == null) 0 else if (isTablet) 2 else 1
                         }
                     }
                 )
