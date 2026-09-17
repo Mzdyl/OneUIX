@@ -26,8 +26,18 @@ object MdecService {
                 Context::class.java,
                 XC_MethodReplacement.returnConstant(false)
             )
-        } catch (t: Throwable) {
-            logError("supportCallAndTextOnOtherDevices: isChinaSIMActive hook failed", t)
+        } catch (ignored: Throwable) {
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(
+                "com.samsung.android.mdeccommon.utils.SimUtils",
+                classLoader,
+                "isChinaSimInserted",
+                Context::class.java,
+                XC_MethodReplacement.returnConstant(false)
+            )
+        } catch (ignored: Throwable) {
         }
 
         try {

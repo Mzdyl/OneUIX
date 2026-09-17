@@ -185,31 +185,40 @@ object Messaging {
                         oMethod,
                         object : XC_MethodHook() {
                             override fun afterHookedMethod(param: MethodHookParam) {
-                                val item = XposedHelpers.getObjectField(param.thisObject, "messagePartsItem") ?: return
-                                var isCmc = false
-                                for (f in item.javaClass.declaredFields) {
-                                    if (f.type == String::class.java) {
-                                        f.isAccessible = true
-                                        val v = f.get(item) as? String ?: continue
-                                        if (v.contains("relayMessage") || v.contains("syncedMessage")) {
-                                            isCmc = true
-                                            break
+                                try {
+                                    val item = runCatching {
+                                        XposedHelpers.callMethod(param.thisObject, "getMessagePartsItem")
+                                    }.getOrNull() ?: runCatching {
+                                        XposedHelpers.getObjectField(param.thisObject, "messagePartsItem")
+                                    }.getOrNull() ?: runCatching {
+                                        XposedHelpers.getObjectField(param.thisObject, "w")
+                                    }.getOrNull() ?: return
+                                    var isCmc = false
+                                    for (f in item.javaClass.declaredFields) {
+                                        if (f.type == String::class.java) {
+                                            f.isAccessible = true
+                                            val v = f.get(item) as? String ?: continue
+                                            if (v.contains("relayMessage") || v.contains("syncedMessage")) {
+                                                isCmc = true
+                                                break
+                                            }
                                         }
                                     }
-                                }
-                                if (isCmc) {
-                                    val container = param.thisObject as? LinearLayout ?: return
-                                    val res = container.resources
-                                    val slotId = res.getIdentifier("announcement_list_item_divider_sim_slot", "id", loadPackageParam.packageName)
-                                    val devIconId = res.getIdentifier("orc_ic_device_cmc", "drawable", loadPackageParam.packageName)
-                                    if (slotId != 0 && devIconId != 0) {
-                                        val imageView = container.findViewById<ImageView>(slotId)
-                                            ?: (XposedHelpers.getObjectField(param.thisObject, "l") as? View)?.findViewById(slotId)
-                                        if (imageView != null) {
-                                            imageView.visibility = View.VISIBLE
-                                            imageView.setImageResource(devIconId)
+                                    if (isCmc) {
+                                        val container = param.thisObject as? LinearLayout ?: return
+                                        val res = container.resources
+                                        val slotId = res.getIdentifier("announcement_list_item_divider_sim_slot", "id", loadPackageParam.packageName)
+                                        val devIconId = res.getIdentifier("orc_ic_device_cmc", "drawable", loadPackageParam.packageName)
+                                        if (slotId != 0 && devIconId != 0) {
+                                            val imageView = container.findViewById<ImageView>(slotId)
+                                                ?: (runCatching { XposedHelpers.getObjectField(param.thisObject, "l") as? View }.getOrNull())?.findViewById(slotId)
+                                            if (imageView != null) {
+                                                imageView.visibility = View.VISIBLE
+                                                imageView.setImageResource(devIconId)
+                                            }
                                         }
                                     }
+                                } catch (_: Throwable) {
                                 }
                             }
                         }

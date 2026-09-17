@@ -2,7 +2,7 @@ package io.github.soclear.oneuix.hook
 
 import de.robv.android.xposed.XC_MethodReplacement.returnConstant
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
-import de.robv.android.xposed.XposedHelpers.findClass
+import de.robv.android.xposed.XposedHelpers.findClassIfExists
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
 import io.github.soclear.oneuix.hook.util.SamsungFeature.overrideCscString
@@ -14,29 +14,30 @@ object SPen {
 
         val classLoader = loadPackageParam.classLoader
 
-        // Hook Validation 类
+        // Hook Validation 类（若存在）
         try {
-            val validationClass = findClass(
+            val validationClass = findClassIfExists(
                 "com.samsung.sdk.clickstreamanalytics.internal.policy.Validation",
                 classLoader
             )
+            if (validationClass != null) {
+                // Hook isChinaModel - 返回 false（伪装为非中国机型）
+                findAndHookMethod(
+                    validationClass,
+                    "isChinaModel",
+                    returnConstant(false)
+                )
+                log("SPen: Hooked Validation.isChinaModel -> false")
 
-            // Hook isChinaModel - 返回 false（伪装为非中国机型）
-            findAndHookMethod(
-                validationClass,
-                "isChinaModel",
-                returnConstant(false)
-            )
-            log("SPen: Hooked Validation.isChinaModel -> false")
-
-            // Hook getCountryCode - 返回 "CN"
-            findAndHookMethod(
-                validationClass,
-                "getCountryCode",
-                String::class.java,
-                returnConstant("CN")
-            )
-            log("SPen: Hooked Validation.getCountryCode -> CN")
+                // Hook getCountryCode - 返回 "CN"
+                findAndHookMethod(
+                    validationClass,
+                    "getCountryCode",
+                    String::class.java,
+                    returnConstant("CN")
+                )
+                log("SPen: Hooked Validation.getCountryCode -> CN")
+            }
         } catch (t: Throwable) {
             log("SPen: Failed to hook Validation - ${t.message}")
         }
