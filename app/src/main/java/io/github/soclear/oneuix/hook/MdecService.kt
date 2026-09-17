@@ -43,17 +43,6 @@ object MdecService {
 
         try {
             XposedHelpers.findAndHookMethod(
-                "com.samsung.android.mdeccommon.utils.CountryUtils",
-                classLoader,
-                "isChinaDevice",
-                XC_MethodReplacement.returnConstant(false)
-            )
-        } catch (t: Throwable) {
-            logError("supportCallAndTextOnOtherDevices: isChinaDevice hook failed", t)
-        }
-
-        try {
-            XposedHelpers.findAndHookMethod(
                 "com.samsung.android.mdeccommon.utils.CommonUtils",
                 classLoader,
                 "isSameWifiRequiredForCall",
@@ -103,6 +92,32 @@ object MdecService {
             )
         } catch (t: Throwable) {
             logError("supportCallAndTextOnOtherDevices: isEnablePreference hook failed", t)
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(
+                Application::class.java,
+                "onCreate",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        try {
+                            val context = param.thisObject as? Context ?: return
+                            Settings.Global.putInt(context.contentResolver, "cmc_same_wifi_network_status", 0)
+                            if (mdecDeviceType != 0) {
+                                val targetStr = if (mdecDeviceType == 2) "sd" else "pd"
+                                val current = Settings.Global.getString(context.contentResolver, "cmc_device_type")
+                                if (current != targetStr) {
+                                    Settings.Global.putString(context.contentResolver, "cmc_device_type", targetStr)
+                                }
+                            }
+                        } catch (t: Throwable) {
+                            logError("supportCallAndTextOnOtherDevices: sync Settings.Global failed", t)
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            logError("supportCallAndTextOnOtherDevices: Application.onCreate hook failed", t)
         }
 
         if (mdecDeviceType != 0) {
@@ -155,25 +170,6 @@ object MdecService {
                 )
             } catch (ignored: Throwable) {
             }
-
-            XposedHelpers.findAndHookMethod(
-                Application::class.java,
-                "onCreate",
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        try {
-                            val context = param.thisObject as? Context ?: return
-                            val current = Settings.Global.getString(context.contentResolver, "cmc_device_type")
-                            if (current != deviceTypeStr) {
-                                Settings.Global.putString(context.contentResolver, "cmc_device_type", deviceTypeStr)
-                            }
-                            Settings.Global.putInt(context.contentResolver, "cmc_same_wifi_network_status", 0)
-                        } catch (t: Throwable) {
-                            logError("hookDeviceType: sync Settings.Global failed", t)
-                        }
-                    }
-                }
-            )
 
             try {
                 XposedHelpers.findAndHookMethod(
