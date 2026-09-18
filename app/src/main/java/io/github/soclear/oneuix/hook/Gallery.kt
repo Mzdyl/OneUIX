@@ -355,4 +355,94 @@ object Gallery {
             findAndHookMethod(accountStatusClass, "isSupportedCountry", Context::class.java, returnTrue)
         } catch (_: Throwable) {}
     }
+
+    fun applyFeatureOverrides(loadPackageParam: LoadPackageParam, other: Preference.Other) {
+        if (loadPackageParam.packageName != Package.GALLERY) return
+        val classLoader = loadPackageParam.classLoader
+        val returnTrue = returnConstant(true)
+
+        // 0. Safety fallback: prevent AppResources.getAppContext() NPE before Application.onCreate
+        try {
+            val appResourcesClass = findClass(
+                "com.samsung.android.gallery.support.utils.AppResources",
+                classLoader
+            )
+            findAndHookMethod(appResourcesClass, "getAppContext", object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    if (param.result == null) {
+                        param.result = AndroidAppHelper.currentApplication()
+                    }
+                }
+            })
+        } catch (t: Throwable) {
+            logError("applyFeatureOverrides: hook AppResources.getAppContext fallback failed", t)
+        }
+
+        // 1. Cloud Sync Toolbar Menu (SUPPORT_CLOUD_SYNC_MENU_ON_TOOL_BAR)
+        if (other.supportGalleryCloudSyncToolbar) {
+            try {
+                val featureClass = findClass(
+                    "com.samsung.android.gallery.support.utils.Features",
+                    classLoader
+                )
+                val syncToolbar = getStaticObjectField(featureClass, "SUPPORT_CLOUD_SYNC_MENU_ON_TOOL_BAR")
+                findAndHookMethod(syncToolbar.javaClass, "getEnabling", returnTrue)
+            } catch (t: Throwable) {
+                logError("applyFeatureOverrides: hook SUPPORT_CLOUD_SYNC_MENU_ON_TOOL_BAR failed", t)
+            }
+        }
+
+        // 2. Location POI (SUPPORT_POI)
+        if (other.enableGalleryPoi) {
+            try {
+                val featureClass = findClass(
+                    "com.samsung.android.gallery.support.utils.Features",
+                    classLoader
+                )
+                val supportPoi = getStaticObjectField(featureClass, "SUPPORT_POI")
+                findAndHookMethod(supportPoi.javaClass, "getEnabling", returnTrue)
+            } catch (t: Throwable) {
+                logError("applyFeatureOverrides: hook SUPPORT_POI failed", t)
+            }
+        }
+
+        // 3. PocFeatures overrides (Developer Labs, UndoDelete, CompareImages, QuickSeek, HDR Thumbnail, etc.)
+        val pocNeedsHook = other.unlockGalleryDeveloperLabs ||
+                other.enableGalleryUndoDelete ||
+                other.enableGalleryDualPhotoPreview ||
+                other.enableGalleryQuickSeek ||
+                other.enableGalleryHdrThumbnail ||
+                other.enableGalleryPhotoStripHighQuality ||
+                other.enableGalleryUnmuteAlways ||
+                other.enableGalleryFullAddress
+
+        if (pocNeedsHook) {
+            try {
+                val pocFeaturesClass = findClass(
+                    "com.samsung.android.gallery.support.utils.PocFeatures",
+                    classLoader
+                )
+
+                findAndHookMethod(pocFeaturesClass, "isEnabled", object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        val name = (param.thisObject as? Enum<*>)?.name
+                            ?: try { callMethod(param.thisObject, "name") as? String } catch (_: Throwable) { null }
+                            ?: return
+                        when (name) {
+                            "GalleryLabsDev" -> if (other.unlockGalleryDeveloperLabs) param.result = true
+                            "UndoDelete" -> if (other.enableGalleryUndoDelete) param.result = true
+                            "DualPhotoPreview", "CompareImages" -> if (other.enableGalleryDualPhotoPreview) param.result = true
+                            "DoubleTapSeek" -> if (other.enableGalleryQuickSeek) param.result = true
+                            "ThumbnailPreviewHdr" -> if (other.enableGalleryHdrThumbnail) param.result = true
+                            "PhotoStripHighQualityPreview" -> if (other.enableGalleryPhotoStripHighQuality) param.result = true
+                            "SetAudioUnMuteAlways" -> if (other.enableGalleryUnmuteAlways) param.result = true
+                            "FullAddressDisplay" -> if (other.enableGalleryFullAddress) param.result = true
+                        }
+                    }
+                })
+            } catch (t: Throwable) {
+                logError("applyFeatureOverrides: hook PocFeatures failed", t)
+            }
+        }
+    }
 }

@@ -165,6 +165,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.other.supportGalleryGoogleSync) {
                     Gallery.supportGoogleSync(lpparam)
                 }
+                Gallery.applyFeatureOverrides(lpparam, preference.other)
             }
 
             Package.STORAGE_AGENT -> {
