@@ -15,8 +15,11 @@ import de.robv.android.xposed.XposedHelpers.findClass
 import de.robv.android.xposed.XposedHelpers.getStaticObjectField
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.XposedHelpers.setIntField
+import de.robv.android.xposed.XposedHelpers.setBooleanField
+import de.robv.android.xposed.XposedHelpers.setStaticBooleanField
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.data.Package
+import io.github.soclear.oneuix.data.Preference
 import io.github.soclear.oneuix.hook.util.logError
 import java.util.Collections
 import java.util.LinkedHashMap
@@ -279,5 +282,77 @@ object Gallery {
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }
+    }
+
+    fun supportGoogleSync(loadPackageParam: LoadPackageParam) {
+        if (loadPackageParam.packageName != Package.GALLERY) return
+        val classLoader = loadPackageParam.classLoader
+        val returnTrue = returnConstant(true)
+
+        // 1. Enable Features.SUPPORT_GCLOUD
+        try {
+            val featureClass = findClass(
+                "com.samsung.android.gallery.support.utils.Features",
+                classLoader
+            )
+            val supportGCloud = getStaticObjectField(featureClass, "SUPPORT_GCLOUD")
+            findAndHookMethod(supportGCloud.javaClass, "getEnabling", returnTrue)
+        } catch (t: Throwable) {
+            logError("supportGoogleSync: hook SUPPORT_GCLOUD failed", t)
+        }
+
+        // 2. Enable SettingPreference.GoogleCloudSync
+        try {
+            val settingPreferenceClass = findClass(
+                "com.samsung.android.gallery.module.settings.SettingPreference",
+                classLoader
+            )
+            val googleCloudSync = getStaticObjectField(settingPreferenceClass, "GoogleCloudSync").javaClass
+            findAndHookMethod(googleCloudSync, "support", Context::class.java, returnTrue)
+        } catch (t: Throwable) {
+            logError("supportGoogleSync: hook GoogleCloudSync.support failed", t)
+        }
+
+        // 3. Ensure SettingCloud.SUPPORT_CLOUD is true (bypasses !IS_CHINESE_DEVICE)
+        try {
+            val settingCloudClass = findClass(
+                "com.samsung.android.gallery.settings.ui.SettingCloud",
+                classLoader
+            )
+            hookAllConstructors(settingCloudClass, object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam) {
+                    try {
+                        setBooleanField(param.thisObject, "SUPPORT_CLOUD", true)
+                    } catch (_: Throwable) {}
+                }
+            })
+        } catch (t: Throwable) {
+            logError("supportGoogleSync: hook SettingCloud constructors failed", t)
+        }
+
+        // 4. CloudCompat / CloudStateCompat UI and country support
+        try {
+            val cloudStateCompatClass = findClass(
+                "com.samsung.android.gallery.module.cloud.CloudStateCompat",
+                classLoader
+            )
+            findAndHookMethod(cloudStateCompatClass, "isGCloudUISupported", returnTrue)
+        } catch (_: Throwable) {}
+
+        try {
+            val cloudCompatClass = findClass(
+                "com.samsung.android.gallery.module.cloud.CloudCompat",
+                classLoader
+            )
+            findAndHookMethod(cloudCompatClass, "isGCloudUISupported", returnTrue)
+        } catch (_: Throwable) {}
+
+        try {
+            val accountStatusClass = findClass(
+                "com.samsung.android.gallery.module.cloud.CloudCompat\$AccountStatus",
+                classLoader
+            )
+            findAndHookMethod(accountStatusClass, "isSupportedCountry", Context::class.java, returnTrue)
+        } catch (_: Throwable) {}
     }
 }

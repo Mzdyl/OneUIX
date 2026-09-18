@@ -37,6 +37,13 @@ fun DetailPaneGallery(
             checked = uiState.hideVideoEditorStudio,
             onCheckedChange = { onEvent(GalleryEvent.HideVideoEditorStudio(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.photo_library),
+            title = stringResource(id = R.string.supportGalleryGoogleSync_title),
+            summary = stringResource(id = R.string.supportGalleryGoogleSync_summary),
+            checked = uiState.supportGalleryGoogleSync,
+            onCheckedChange = { onEvent(GalleryEvent.SupportGalleryGoogleSync(it)) }
+        )
     }
 }
 
@@ -49,6 +56,10 @@ sealed interface GalleryEvent {
 
     @JvmInline
     value class HideVideoEditorStudio(val value: Boolean) : GalleryEvent
+
+    @JvmInline
+    value class SupportGalleryGoogleSync(val value: Boolean) : GalleryEvent
+
 }
 
 fun SettingViewModel.onGalleryEvent(event: GalleryEvent) {
@@ -71,6 +82,13 @@ fun SettingViewModel.onGalleryEvent(event: GalleryEvent) {
                     hideVideoEditorStudio = event.value
                 )
             )
+
+            is GalleryEvent.SupportGalleryGoogleSync -> preference.copy(
+                other = preference.other.copy(
+                    supportGalleryGoogleSync = event.value
+                )
+            )
+
         }
     }
 }

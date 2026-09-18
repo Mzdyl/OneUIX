@@ -36,4 +36,5 @@ object Package {
     const val SHARE_LIVE = "com.samsung.android.app.sharelive"
     const val TELECOM = "com.android.server.telecom"
     const val IMS_SERVICE = "com.sec.imsservice"
+    const val STORAGE_AGENT = "com.samsung.android.agent.storage"
 }

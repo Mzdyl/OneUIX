@@ -154,6 +154,7 @@ data class Preference(
         val supportAllGallerySettings: Boolean = true,
         val supportSharedAlbumsInHide: Boolean = false,
         val hideVideoEditorStudio: Boolean = false,
+        val supportGalleryGoogleSync: Boolean = true,
         val supportAllNotesFeatures: Boolean = true,
         val enableChineseHolidayDisplay: Boolean = false,
         val supportBlockMessage: Boolean = true,

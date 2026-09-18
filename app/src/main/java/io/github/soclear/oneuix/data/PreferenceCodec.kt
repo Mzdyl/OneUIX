@@ -46,6 +46,7 @@ private fun migrateLegacyOtherFields(root: JsonObject): JsonObject {
     copyToOther("gallery", "supportAllGallerySettings")
     copyToOther("gallery", "supportSharedAlbumsInHide")
     copyToOther("gallery", "hideVideoEditorStudio")
+    copyToOther("gallery", "supportGalleryGoogleSync")
     copyToOther("notes", "supportAllNotesFeatures")
     copyToOther("calendar", "enableChineseHolidayDisplay")
     copyToOther("messaging", "supportBlockMessage")

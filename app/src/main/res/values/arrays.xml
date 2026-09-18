@@ -34,5 +34,6 @@
         <item>com.sec.android.daemonapp</item>
         <item>com.sec.android.gallery3d</item>
         <item>com.sec.android.mimage.photoretouching</item>
+        <item>com.samsung.android.agent.storage</item>
     </string-array>
 </resources>

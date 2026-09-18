@@ -111,6 +111,8 @@
     <string name="supportSharedAlbumsInHide_title">允许隐藏共享相册</string>
     <string name="supportSharedAlbumsInHide_summary">右上角更多选项->隐藏相册</string>
     <string name="hideVideoEditorStudio_title">隐藏视频编辑器工作室</string>
+    <string name="supportGalleryGoogleSync_title">开启与 Google 相册同步</string>
+    <string name="supportGalleryGoogleSync_summary">绕过国行 CSC 限制，开启三星相册与 Google Photos 的云同步选项（需安装三星云存储服务组件）</string>
     <string name="setBlockableNotificationChannel_title">允许关闭系统通知分类</string>
     <string name="setBlockableNotificationChannel_summary">用于关闭 USB、充电、低电量等系统通知</string>
     <string name="supportAnyFont_title">支持任意字体</string>

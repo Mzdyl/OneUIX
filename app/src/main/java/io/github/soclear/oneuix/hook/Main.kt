@@ -162,6 +162,15 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.other.hideVideoEditorStudio) {
                     Gallery.hideVideoEditorStudio(lpparam)
                 }
+                if (preference.other.supportGalleryGoogleSync) {
+                    Gallery.supportGoogleSync(lpparam)
+                }
+            }
+
+            Package.STORAGE_AGENT -> {
+                if (preference.other.supportGalleryGoogleSync) {
+                    StorageAgent.bypassCountryCheck(lpparam)
+                }
             }
 
             Package.HEALTH_MONITOR -> {

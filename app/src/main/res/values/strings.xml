@@ -111,6 +111,8 @@
     <string name="supportSharedAlbumsInHide_title">Allow hiding shared albums</string>
     <string name="supportSharedAlbumsInHide_summary">More options in the upper-right corner -> Hide albums</string>
     <string name="hideVideoEditorStudio_title">Hide Video Editor Studio</string>
+    <string name="supportGalleryGoogleSync_title">Enable Google Photos sync</string>
+    <string name="supportGalleryGoogleSync_summary">Bypass China CSC restriction to enable Samsung Gallery cloud sync with Google Photos (requires Samsung Cloud Storage Agent)</string>
     <string name="setBlockableNotificationChannel_title">Allow disabling system notification categories</string>
     <string name="setBlockableNotificationChannel_summary">Used to disable USB, charging, low battery, and other system notifications</string>
     <string name="supportAnyFont_title">Support any font</string>
