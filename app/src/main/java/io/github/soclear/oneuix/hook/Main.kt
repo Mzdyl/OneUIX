@@ -78,13 +78,13 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Android.disableScreenWakeOnPowerUnplugged(lpparam)
                 }
 
-                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
                 }
             }
 
             Package.TELECOM -> {
-                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
                 }
             }
@@ -141,7 +141,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Call.isOpStyleCHN(lpparam)
                 }
 
-                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
                 }
             }
@@ -199,7 +199,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     )
                 }
 
-                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
                 }
             }
@@ -223,19 +223,29 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.MDEC_SERVICE -> {
-                if (preference.call.supportCallAndTextOnOtherDevices) {
-                    MdecService.supportCallAndTextOnOtherDevices(lpparam, preference.call.mdecDeviceType)
+                if (preference.call.bypassSameWifiRestriction ||
+                    preference.call.unlockCmcMobileNetwork ||
+                    preference.call.bypassChinaSimRestriction ||
+                    preference.call.mdecDeviceType != 0
+                ) {
+                    MdecService.handleHooks(
+                        lpparam,
+                        bypassSameWifi = preference.call.bypassSameWifiRestriction,
+                        unlockMobileNetwork = preference.call.unlockCmcMobileNetwork,
+                        bypassChinaSim = preference.call.bypassChinaSimRestriction,
+                        mdecDeviceType = preference.call.mdecDeviceType
+                    )
                 }
             }
 
             Package.PHONE -> {
-                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
                 }
             }
 
             Package.IMS_SERVICE -> {
-                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
                 }
             }
@@ -244,7 +254,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                 if (preference.other.supportBlockMessage) {
                     Messaging.isSupportBlock(lpparam)
                 }
-                if (preference.call.supportCallAndTextOnOtherDevices && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Messaging.preventCmcRestart(lpparam)
                     Messaging.showCmcMessageIndicator(lpparam)
                 }

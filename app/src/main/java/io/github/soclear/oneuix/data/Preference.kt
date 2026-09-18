@@ -128,8 +128,11 @@ data class Preference(
         val preferRecordingButton: Boolean = true,
         val showGeocodedLocationInRecentCall: Boolean = false,
         val isOpStyleCHN: Boolean = false,
-        val supportCallAndTextOnOtherDevices: Boolean = false,
+        val bypassSameWifiRestriction: Boolean = false,
+        val unlockCmcMobileNetwork: Boolean = false,
+        val bypassChinaSimRestriction: Boolean = false,
         val mdecDeviceType: Int = 0,
+        val supportCallAndTextOnOtherDevices: Boolean = false,
     )
 
     @Serializable

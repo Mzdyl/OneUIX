@@ -2,6 +2,8 @@ package io.github.soclear.oneuix.data
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonObject
 
 val PreferenceJson = Json {
@@ -15,8 +17,28 @@ fun decodePreference(string: String): Preference {
     val root = PreferenceJson.parseToJsonElement(string).jsonObject
     return PreferenceJson.decodeFromJsonElement(
         Preference.serializer(),
-        migrateLegacyOtherFields(root)
+        migrateLegacyCallFields(migrateLegacyOtherFields(root))
     )
+}
+
+private fun migrateLegacyCallFields(root: JsonObject): JsonObject {
+    val call = root["call"] as? JsonObject ?: return root
+    val legacySupport = (call["supportCallAndTextOnOtherDevices"] as? JsonPrimitive)?.booleanOrNull ?: false
+    if (!legacySupport) return root
+
+    val callMap = call.toMutableMap()
+    if ("bypassSameWifiRestriction" !in callMap) {
+        callMap["bypassSameWifiRestriction"] = JsonPrimitive(true)
+    }
+    if ("unlockCmcMobileNetwork" !in callMap) {
+        callMap["unlockCmcMobileNetwork"] = JsonPrimitive(true)
+    }
+    if ("bypassChinaSimRestriction" !in callMap) {
+        callMap["bypassChinaSimRestriction"] = JsonPrimitive(true)
+    }
+    val migrated = root.toMutableMap()
+    migrated["call"] = JsonObject(callMap)
+    return JsonObject(migrated)
 }
 
 private fun migrateLegacyOtherFields(root: JsonObject): JsonObject {

@@ -51,24 +51,38 @@ fun DetailPaneCall(
             onCheckedChange = { onEvent(CallEvent.IsOpStyleCHN(it)) }
         )
         SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
-            title = stringResource(id = R.string.supportCallAndTextOnOtherDevices_title),
-            checked = uiState.supportCallAndTextOnOtherDevices,
-            onCheckedChange = { onEvent(CallEvent.SupportCallAndTextOnOtherDevices(it)) }
+            icon = ImageVector.vectorResource(id = R.drawable.wifi_link_speed),
+            title = stringResource(id = R.string.bypassSameWifiRestriction_title),
+            summary = stringResource(id = R.string.bypassSameWifiRestriction_summary),
+            checked = uiState.bypassSameWifiRestriction,
+            onCheckedChange = { onEvent(CallEvent.BypassSameWifiRestriction(it)) }
         )
-        if (uiState.supportCallAndTextOnOtherDevices) {
-            SelectItem(
-                title = stringResource(id = R.string.mdecDeviceType_title),
-                summary = stringResource(id = R.string.mdecDeviceType_summary),
-                entries = listOf(
-                    stringResource(id = R.string.mdecDeviceType_default),
-                    stringResource(id = R.string.mdecDeviceType_phone),
-                    stringResource(id = R.string.mdecDeviceType_tablet),
-                ),
-                selectedIndex = uiState.mdecDeviceType,
-                onSelectedIndexChange = { onEvent(CallEvent.SetMdecDeviceType(it)) }
-            )
-        }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.net_speed),
+            title = stringResource(id = R.string.unlockCmcMobileNetwork_title),
+            summary = stringResource(id = R.string.unlockCmcMobileNetwork_summary),
+            checked = uiState.unlockCmcMobileNetwork,
+            onCheckedChange = { onEvent(CallEvent.UnlockCmcMobileNetwork(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.sim_card),
+            title = stringResource(id = R.string.bypassChinaSimRestriction_title),
+            summary = stringResource(id = R.string.bypassChinaSimRestriction_summary),
+            checked = uiState.bypassChinaSimRestriction,
+            onCheckedChange = { onEvent(CallEvent.BypassChinaSimRestriction(it)) }
+        )
+        SelectItem(
+            icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
+            title = stringResource(id = R.string.mdecDeviceType_title),
+            summary = stringResource(id = R.string.mdecDeviceType_summary),
+            entries = listOf(
+                stringResource(id = R.string.mdecDeviceType_default),
+                stringResource(id = R.string.mdecDeviceType_phone),
+                stringResource(id = R.string.mdecDeviceType_tablet),
+            ),
+            selectedIndex = uiState.mdecDeviceType,
+            onSelectedIndexChange = { onEvent(CallEvent.SetMdecDeviceType(it)) }
+        )
     }
 }
 
@@ -87,7 +101,13 @@ sealed interface CallEvent {
     value class IsOpStyleCHN(val value: Boolean) : CallEvent
 
     @JvmInline
-    value class SupportCallAndTextOnOtherDevices(val value: Boolean) : CallEvent
+    value class BypassSameWifiRestriction(val value: Boolean) : CallEvent
+
+    @JvmInline
+    value class UnlockCmcMobileNetwork(val value: Boolean) : CallEvent
+
+    @JvmInline
+    value class BypassChinaSimRestriction(val value: Boolean) : CallEvent
 
     @JvmInline
     value class SetMdecDeviceType(val value: Int) : CallEvent
@@ -112,8 +132,16 @@ fun SettingViewModel.onCallEvent(event: CallEvent) {
                 it.copy(call = it.call.copy(isOpStyleCHN = event.value))
             }
 
-            is CallEvent.SupportCallAndTextOnOtherDevices -> {
-                it.copy(call = it.call.copy(supportCallAndTextOnOtherDevices = event.value))
+            is CallEvent.BypassSameWifiRestriction -> {
+                it.copy(call = it.call.copy(bypassSameWifiRestriction = event.value))
+            }
+
+            is CallEvent.UnlockCmcMobileNetwork -> {
+                it.copy(call = it.call.copy(unlockCmcMobileNetwork = event.value))
+            }
+
+            is CallEvent.BypassChinaSimRestriction -> {
+                it.copy(call = it.call.copy(bypassChinaSimRestriction = event.value))
             }
 
             is CallEvent.SetMdecDeviceType -> {
