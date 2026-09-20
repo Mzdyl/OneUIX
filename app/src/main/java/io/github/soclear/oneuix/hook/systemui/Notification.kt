@@ -142,7 +142,7 @@ object Notification {
             // Only change visibility for Samsung's synthetic MediaOngoingActivity notification.
             // Keep the shared media pipeline and all player instances intact for QS playback.
             findAndHookMethod(
-                "com.android.systemui.statusbar.phone.ongoingactivity.OngoingActivityController\$mediaPanelVisibilityListener\$1",
+                $$"com.android.systemui.statusbar.phone.ongoingactivity.OngoingActivityController$mediaPanelVisibilityListener$1",
                 loadPackageParam.classLoader,
                 "onMediaVisibilityChanged",
                 Boolean::class.javaPrimitiveType,
@@ -150,7 +150,7 @@ object Notification {
                     override fun beforeHookedMethod(param: MethodHookParam) {
                         try {
                             if (param.args[0] != true) return
-                            val controller = getObjectField(param.thisObject, "this\$0")
+                            val controller = getObjectField(param.thisObject, $$"this$0")
                             val mediaHost = getObjectField(controller, "mediaHost")
                             val mediaData = if (ONE_UI_VERSION >= 80500) {
                                 // 8.5 shares and sorts media data across surfaces. The latest
