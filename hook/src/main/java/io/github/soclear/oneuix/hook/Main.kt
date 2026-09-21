@@ -107,6 +107,10 @@ class Main : XposedModule() {
                     Launcher.showMemoryUsageInRecents()
                 }
 
+                if (preference.other.recentsGridThreeRows) {
+                    Launcher.enableThreeRowsRecentsGrid()
+                }
+
                 if (preference.other.hideRecentsCloseAllButton) {
                     Launcher.hideRecentsCloseAllButton()
                 }

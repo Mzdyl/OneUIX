@@ -114,6 +114,8 @@
     <string name="addBrightnessProgressToQsBar_title">Показывать уровень яркости в панели быстрых настроек</string>
     <string name="addVolumeProgressToQsBar_title">Показывать уровень громкости в панели быстрых настроек</string>
     <string name="showMemoryUsageInRecents_title">Использование памяти в меню запущенных приложений</string>
+    <string name="recentsGridThreeRows_title">Три ряда в сетке недавних приложений</string>
+    <string name="recentsGridThreeRows_summary">Отображать стиль «Сетка» в меню недавних приложений в 3 ряда</string>
     <string name="hideRecentsCloseAllButton_title">Скрыть кнопку «Закрыть все» в меню недавних приложений</string>
     <string name="showForcePeakRefreshRatePreference_title">Пункт «Частота обновления экрана» в параметрах разработчика</string>
     <string name="showForcePeakRefreshRatePreference_summary">Появится в поиске настроек как «Частота обновления экрана»</string>

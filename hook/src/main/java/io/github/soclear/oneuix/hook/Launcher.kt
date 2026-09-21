@@ -4,7 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
@@ -12,14 +15,21 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.util.HookConfig
+import io.github.soclear.oneuix.hook.util.afterAttach
+import io.github.soclear.oneuix.hook.util.getHookConfig
+import io.github.soclear.oneuix.hook.util.longVersionCode
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
+import kotlinx.serialization.Serializable
+import org.luckypray.dexkit.DexKitBridge
 import java.io.File
 import java.lang.ref.WeakReference
 import java.lang.reflect.Constructor
@@ -446,6 +456,172 @@ object Launcher {
             }
         } catch (t: Throwable) {
             xlog(t)
+        }
+    }
+
+    @Serializable
+    private data class LauncherHookConfig(
+        override val versionCode: Long,
+        val gridItemDecorationClass: String,
+        val stylerFieldName: String,
+    ) : HookConfig
+
+    private fun Context.getHookConfigFromDexKit(): LauncherHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val decorClassData = bridge.findClass {
+                excludePackages(listOf("android", "androidx", "com", "kotlin", "kotlinx"))
+                matcher {
+                    methods {
+                        add { name = "getItemOffsets" }
+                    }
+                    fields {
+                        count(2..20)
+                        add { type("com.honeyspace.common.recentstyler.RecentStylerV2") }
+                    }
+                }
+            }.singleOrNull() ?: return null
+
+            val stylerField = decorClassData.findField {
+                matcher {
+                    type("com.honeyspace.common.recentstyler.RecentStylerV2")
+                }
+            }.singleOrNull() ?: return null
+
+            return LauncherHookConfig(
+                versionCode = longVersionCode,
+                gridItemDecorationClass = decorClassData.name,
+                stylerFieldName = stylerField.name,
+            )
+        }
+    }
+
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun enableThreeRowsRecentsGrid() {
+        if (param.packageName != Package.LAUNCHER) return
+
+        afterAttach {
+            val hookConfig = getHookConfig {
+                getHookConfigFromDexKit()
+            } ?: return@afterAttach
+
+            try {
+                val glmClass = classLoader.loadClass(
+                    "com.honeyspace.ui.honeypots.tasklist.presentation.layoutmanager.RecentsGridLayoutManager"
+                )
+                val glmBase = classLoader.loadClass("androidx.recyclerview.widget.GridLayoutManager")
+                val rvClass = classLoader.loadClass("androidx.recyclerview.widget.RecyclerView")
+                val recyclerClass = classLoader.loadClass($$"androidx.recyclerview.widget.RecyclerView$Recycler")
+                val stateClass = classLoader.loadClass($$"androidx.recyclerview.widget.RecyclerView$State")
+                val lmBaseClass = classLoader.loadClass($$"androidx.recyclerview.widget.RecyclerView$LayoutManager")
+                val decorClass = classLoader.loadClass(hookConfig.gridItemDecorationClass)
+                val stylerFieldName = hookConfig.stylerFieldName
+
+                fun isPortrait(v: View?) =
+                    v?.resources?.configuration?.orientation == Configuration.ORIENTATION_PORTRAIT
+
+                fun updateSpan(lm: Any?, view: View?) {
+                    if (lm != null && glmClass.isInstance(lm)) {
+                        val target = if (isPortrait(view)) 3 else 2
+                        if (lm.reflect.call("getSpanCount") != target) lm.reflect.call("setSpanCount", target)
+                    }
+                }
+
+                // 1. 边距与位置对齐（拦截动态解析出的 ItemDecoration getItemOffsets）
+                decorClass.declaredMethods
+                    .filter { it.name == "getItemOffsets" && it.parameterTypes.firstOrNull() == Rect::class.java }
+                    .forEach { method ->
+                        xposedModule.hook(method).intercept { chain ->
+                            try {
+                                val outRect = chain.args[0] as? Rect ?: return@intercept chain.proceed()
+                                val view = chain.args.getOrNull(1) as? View
+                                val parent = chain.args.getOrNull(2) as? View ?: return@intercept chain.proceed()
+                                if (!isPortrait(parent)) return@intercept chain.proceed()
+
+                                val lm = (parent as? ViewGroup)?.reflect?.call("getLayoutManager")
+                                if (lm?.reflect?.call("getSpanCount") != 3 || !glmClass.isInstance(lm)) {
+                                    return@intercept chain.proceed()
+                                }
+
+                                val styler = chain.thisObject.reflect[stylerFieldName]
+                                val styleData =
+                                    styler?.reflect?.call("getStyleData") ?: return@intercept chain.proceed()
+
+                                val actualPos = (chain.args.getOrNull(1) as? Int)
+                                    ?: (view?.let { lm.reflect.call("getPosition", it) as? Int }
+                                        ?: -1).takeIf { it != -1 }
+                                    ?: (view?.let { parent.reflect.call("getChildAdapterPosition", it) as? Int } ?: 0)
+
+                                val row = actualPos % 3
+                                val col = actualPos / 3
+                                val cardHeight = (styleData.reflect.call("getTaskViewCoordinate") as RectF).height()
+                                val pageSpacing = (styleData.reflect.call("getPageSpacing") as Number).toInt()
+                                val pageSideMargin = (styleData.reflect.call("getPageSideMargin") as Number).toInt()
+
+                                val topInset = parent.rootWindowInsets?.getInsetsIgnoringVisibility(
+                                    WindowInsets.Type.statusBars() or WindowInsets.Type.displayCutout()
+                                )?.top?.toFloat() ?: 128f
+                                val targetTop = (topInset + 6f).coerceAtLeast(134f)
+
+                                val decor = parent.rootView as? ViewGroup
+                                val memHeight =
+                                    (0 until (decor?.childCount
+                                        ?: 0)).firstNotNullOfOrNull { decor?.getChildAt(it) as? TextView }?.height?.toFloat()
+                                        ?: 0f
+                                val bottomReserved = if (memHeight > 0) memHeight + 15f else 138f
+                                val gap = ((parent.height - bottomReserved - targetTop - 3 * cardHeight) / 2)
+                                    .coerceIn(0f, (styleData.reflect.call("getRowGap") as Number).toFloat())
+
+                                val borders = lm.reflect["mCachedBorders"] as? IntArray
+                                val laneStart = borders?.getOrNull(row) ?: (row * parent.height / 3)
+                                val topOffset = (targetTop + row * (cardHeight + gap) - laneStart).roundToInt()
+
+                                val isRtl = parent.layoutDirection == View.LAYOUT_DIRECTION_RTL
+                                val side = if (col == 0) pageSideMargin else pageSpacing / 2
+                                val halfGap = pageSpacing / 2
+
+                                outRect.set(if (isRtl) side else halfGap, topOffset, if (isRtl) halfGap else side, 0)
+                                null
+                            } catch (_: Throwable) {
+                                chain.proceed()
+                            }
+                        }
+                    }
+
+                // 2. 绑定 LayoutManager 与布局时动态同步 spanCount
+                xposedModule.hook(rvClass.getDeclaredMethod("setLayoutManager", lmBaseClass)).intercept { chain ->
+                    chain.proceed().also { updateSpan(chain.args[0], chain.thisObject as? View) }
+                }
+
+                xposedModule.hook(glmBase.getDeclaredMethod("onLayoutChildren", recyclerClass, stateClass))
+                    .intercept { chain ->
+                        val lm = chain.thisObject
+                        val rv = lm?.reflect?.get("mRecyclerView") as? View
+                        updateSpan(lm, rv)
+                        if (isPortrait(rv)) runCatching { rv?.reflect?.call("markItemDecorInsetsDirty") }
+                        chain.proceed()
+                    }
+
+                // 3. 划掉卡片或列表项变动时通知刷新 ItemDecoration
+                glmBase.declaredMethods
+                    .filter {
+                        it.name in setOf("onItemsRemoved", "onItemsAdded", "onItemsMoved", "onItemsChanged") &&
+                                it.parameterTypes.firstOrNull() == rvClass
+                    }
+                    .forEach { method ->
+                        xposedModule.hook(method).intercept { chain ->
+                            chain.proceed().also {
+                                val rv = chain.args[0] as? View
+                                if (isPortrait(rv)) {
+                                    runCatching { rv?.reflect?.call("markItemDecorInsetsDirty") }
+                                    rv?.post { runCatching { rv.reflect.call("invalidateItemDecorations") } }
+                                }
+                            }
+                        }
+                    }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
         }
     }
 }

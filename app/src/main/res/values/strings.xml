@@ -114,6 +114,8 @@
     <string name="addBrightnessProgressToQsBar_title">Show brightness level in QS panel</string>
     <string name="addVolumeProgressToQsBar_title">Show volume level in QS panel</string>
     <string name="showMemoryUsageInRecents_title">Show memory usage in Recents page</string>
+    <string name="recentsGridThreeRows_title">Three rows in Recents grid</string>
+    <string name="recentsGridThreeRows_summary">Display Recents Grid style in 3 rows</string>
     <string name="hideRecentsCloseAllButton_title">Hide Close all button in Recents</string>
     <string name="showForcePeakRefreshRatePreference_title">Show \'Force peak refresh rate\' in Developer options</string>
     <string name="showForcePeakRefreshRatePreference_summary">Search for \'Force peak refresh rate\' in Settings</string>
