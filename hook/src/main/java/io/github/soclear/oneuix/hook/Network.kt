@@ -145,7 +145,7 @@ object Network {
             if (!shouldDisplayNetworkSpeed(txBytesPerSecond, rxBytesPerSecond, thresholdKb)) {
                 return ""
             }
-            return "${formatSpeed(txBytesPerSecond)}\n${formatSpeed(rxBytesPerSecond)}"
+            return "${formatSpeed(txBytesPerSecond)}\u00A0\n${formatSpeed(rxBytesPerSecond)}\u00A0"
         }
 
         try {
