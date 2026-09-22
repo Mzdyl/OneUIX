@@ -9,6 +9,7 @@ import android.widget.TextView
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 
@@ -17,44 +18,46 @@ object Settings {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun showPackageInfo() {
         if (param.packageName != Package.SETTINGS) return
-        try {
-            val controllerClass = param.classLoader.loadClass(
-                "com.android.settings.applications.appinfo.AppHeaderViewPreferenceController"
-            )
-            val appEntryClass = param.classLoader.loadClass(
-                $$"com.android.settingslib.applications.ApplicationsState$AppEntry"
-            )
-            val method = controllerClass.getDeclaredMethod(
-                "setAppLabelAndIcon",
-                PackageInfo::class.java,
-                appEntryClass
-            )
-            xposedModule.hook(method).intercept { chain ->
-                val result = chain.proceed()
-                try {
-                    val header = chain.thisObject.reflect["mHeader"]
-                    val mRootView = header?.reflect?.get("mRootView") as? View ?: return@intercept result
+        afterAttach {
+            try {
+                val controllerClass = param.classLoader.loadClass(
+                    "com.android.settings.applications.appinfo.AppHeaderViewPreferenceController"
+                )
+                val appEntryClass = param.classLoader.loadClass(
+                    $$"com.android.settingslib.applications.ApplicationsState$AppEntry"
+                )
+                val method = controllerClass.getDeclaredMethod(
+                    "setAppLabelAndIcon",
+                    PackageInfo::class.java,
+                    appEntryClass
+                )
+                xposedModule.hook(method).intercept { chain ->
+                    val result = chain.proceed()
+                    try {
+                        val header = chain.thisObject.reflect["mHeader"]
+                        val mRootView = header?.reflect?.get("mRootView") as? View ?: return@intercept result
 
-                    @SuppressLint("DiscouragedApi")
-                    val identifier = mRootView.resources.getIdentifier(
-                        "entity_header_summary", "id", Package.SETTINGS
-                    )
-                    val packageInfo = chain.args[0] as PackageInfo
-                    val versionName = packageInfo.versionName
-                    val versionCode = packageInfo.longVersionCode
-                    val packageName = packageInfo.packageName
-                    mRootView.findViewById<TextView>(identifier)?.apply {
-                        @SuppressLint("SetTextI18n")
-                        text = "$text $versionName ($versionCode)\n$packageName"
-                        setTextIsSelectable(true)
+                        @SuppressLint("DiscouragedApi")
+                        val identifier = mRootView.resources.getIdentifier(
+                            "entity_header_summary", "id", Package.SETTINGS
+                        )
+                        val packageInfo = chain.args[0] as PackageInfo
+                        val versionName = packageInfo.versionName
+                        val versionCode = packageInfo.longVersionCode
+                        val packageName = packageInfo.packageName
+                        mRootView.findViewById<TextView>(identifier)?.apply {
+                            @SuppressLint("SetTextI18n")
+                            text = "$text $versionName ($versionCode)\n$packageName"
+                            setTextIsSelectable(true)
+                        }
+                    } catch (t: Throwable) {
+                        xlog(t)
                     }
-                } catch (t: Throwable) {
-                    xlog(t)
+                    result
                 }
-                result
+            } catch (t: Throwable) {
+                xlog(t)
             }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 
@@ -62,14 +65,16 @@ object Settings {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun supportAnyFont() {
         if (param.packageName != Package.SETTINGS) return
-        try {
-            val clazz = param.classLoader.loadClass(
-                "com.samsung.android.settings.display.SecDisplayUtils"
-            )
-            val method = clazz.getDeclaredMethod("isInvalidFont", Context::class.java, String::class.java)
-            xposedModule.hook(method).intercept { false }
-        } catch (t: Throwable) {
-            xlog(t)
+        afterAttach {
+            try {
+                val clazz = param.classLoader.loadClass(
+                    "com.samsung.android.settings.display.SecDisplayUtils"
+                )
+                val method = clazz.getDeclaredMethod("isInvalidFont", Context::class.java, String::class.java)
+                xposedModule.hook(method).intercept { false }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
         }
     }
 
@@ -78,28 +83,32 @@ object Settings {
         // res/xml/sec_battery_info_settings.xml
         // com.samsung.android.settings.deviceinfo.batteryinfo
         if (param.packageName != Package.SETTINGS) return
-        try {
-            val clazz = param.classLoader.loadClass(
-                "com.samsung.android.settings.deviceinfo.batteryinfo.BatteryRegulatoryPreferenceController"
-            )
-            val method = clazz.getDeclaredMethod("getAvailabilityStatus")
-            xposedModule.hook(method).intercept { 0 }
-        } catch (t: Throwable) {
-            xlog(t)
+        afterAttach {
+            try {
+                val clazz = param.classLoader.loadClass(
+                    "com.samsung.android.settings.deviceinfo.batteryinfo.BatteryRegulatoryPreferenceController"
+                )
+                val method = clazz.getDeclaredMethod("getAvailabilityStatus")
+                xposedModule.hook(method).intercept { 0 }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
         }
     }
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun showForcePeakRefreshRatePreference() {
         if (param.packageName != Package.SETTINGS) return
-        try {
-            val clazz = param.classLoader.loadClass(
-                "com.android.settings.development.ForcePeakRefreshRatePreferenceController"
-            )
-            val method = clazz.getDeclaredMethod("isAvailable")
-            xposedModule.hook(method).intercept { true }
-        } catch (t: Throwable) {
-            xlog(t)
+        afterAttach {
+            try {
+                val clazz = param.classLoader.loadClass(
+                    "com.android.settings.development.ForcePeakRefreshRatePreferenceController"
+                )
+                val method = clazz.getDeclaredMethod("isAvailable")
+                xposedModule.hook(method).intercept { true }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
         }
     }
 

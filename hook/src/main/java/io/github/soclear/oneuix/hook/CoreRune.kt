@@ -6,6 +6,7 @@ import android.os.Build
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 
@@ -45,22 +46,24 @@ object CoreRune {
             } else {
                 "privacy"
             }
-        try {
-            xposedModule.hook(
-                param.classLoader
-                    .loadClass("com.samsung.android.settings.$infix.AppRedirectInterceptionPreferenceController")
-                    .getDeclaredMethod("getAvailabilityStatus")
-            ).intercept { chain ->
-                try {
+        afterAttach {
+            try {
+                xposedModule.hook(
                     param.classLoader
-                        .loadClass("com.samsung.android.rune.CoreRune").reflect["SUPPORT_APP_JUMP_BLOCK"] = true
-                } catch (t: Throwable) {
-                    xlog(t)
+                        .loadClass("com.samsung.android.settings.$infix.AppRedirectInterceptionPreferenceController")
+                        .getDeclaredMethod("getAvailabilityStatus")
+                ).intercept { chain ->
+                    try {
+                        param.classLoader
+                            .loadClass("com.samsung.android.rune.CoreRune").reflect["SUPPORT_APP_JUMP_BLOCK"] = true
+                    } catch (t: Throwable) {
+                        xlog(t)
+                    }
+                    chain.proceed()
                 }
-                chain.proceed()
+            } catch (t: Throwable) {
+                xlog(t)
             }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 

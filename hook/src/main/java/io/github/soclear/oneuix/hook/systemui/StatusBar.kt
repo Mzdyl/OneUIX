@@ -374,24 +374,26 @@ object StatusBar {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun setCustomCarrierName(carrierName: String) {
         if (param.packageName != Package.SYSTEMUI) return
-        try {
-            val managerClass = param.classLoader.loadClass(
-                "com.android.keyguard.CarrierTextManager"
-            )
-            val callbackInfoClass = param.classLoader.loadClass(
-                $$"com.android.keyguard.CarrierTextManager$CarrierTextCallbackInfo"
-            )
-            val method = managerClass.getDeclaredMethod("postToCallback", callbackInfoClass)
-            xposedModule.hook(method).intercept { chain ->
-                val carrierTextCallbackInfo = chain.args[0]
-                if (carrierTextCallbackInfo != null) {
-                    runCatching { carrierTextCallbackInfo.reflect["carrierText"] = carrierName }
-                    runCatching { carrierTextCallbackInfo.reflect["carrierTextShort"] = carrierName }
+        afterAttach {
+            try {
+                val managerClass = param.classLoader.loadClass(
+                    "com.android.keyguard.CarrierTextManager"
+                )
+                val callbackInfoClass = param.classLoader.loadClass(
+                    $$"com.android.keyguard.CarrierTextManager$CarrierTextCallbackInfo"
+                )
+                val method = managerClass.getDeclaredMethod("postToCallback", callbackInfoClass)
+                xposedModule.hook(method).intercept { chain ->
+                    val carrierTextCallbackInfo = chain.args[0]
+                    if (carrierTextCallbackInfo != null) {
+                        runCatching { carrierTextCallbackInfo.reflect["carrierText"] = carrierName }
+                        runCatching { carrierTextCallbackInfo.reflect["carrierTextShort"] = carrierName }
+                    }
+                    chain.proceed()
                 }
-                chain.proceed()
+            } catch (t: Throwable) {
+                xlog(t)
             }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 
