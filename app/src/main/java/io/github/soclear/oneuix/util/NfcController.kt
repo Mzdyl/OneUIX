@@ -115,11 +115,23 @@ EOF
 
     private fun runSuCommand(command: String): SuResult {
         return try {
-            val process = ProcessBuilder("su", "-c", command).start()
+            val process = try {
+                ProcessBuilder("su", "-mm", "-c", command).start()
+            } catch (_: Throwable) {
+                ProcessBuilder("su", "-c", command).start()
+            }
             val stdout = process.inputStream.bufferedReader().readText()
             val stderr = process.errorStream.bufferedReader().readText()
             val exit = process.waitFor()
-            SuResult(isSuccess = exit == 0, output = stdout.ifEmpty { stderr })
+            if (exit == 0) {
+                SuResult(isSuccess = true, output = stdout.ifEmpty { stderr })
+            } else {
+                val fallbackProcess = ProcessBuilder("su", "-c", command).start()
+                val fbStdout = fallbackProcess.inputStream.bufferedReader().readText()
+                val fbStderr = fallbackProcess.errorStream.bufferedReader().readText()
+                val fbExit = fallbackProcess.waitFor()
+                SuResult(isSuccess = fbExit == 0, output = fbStdout.ifEmpty { fbStderr })
+            }
         } catch (e: Throwable) {
             SuResult(isSuccess = false, output = e.message ?: "Execution error")
         }
