@@ -274,6 +274,7 @@
     <string name="nfc_dialog_rename_title">重命名卡片</string>
     <string name="nfc_toast_need_root">执行失败，请确保已授予 Root 权限！</string>
     <string name="nfc_toast_sim_success">卡片已激活模拟：%1$s</string>
+    <string name="nfc_toast_applying_sim">正在应用卡片模拟...</string>
     <string name="nfc_toast_reset_success">已恢复默认 NFC 模式</string>
     <string name="nfc_toast_invalid_uid">无效的 UID 格式！请输入 4 字节（8 位）或 7 字节（14 位）十六进制卡号</string>
     <string name="nfc_status_title">NFC 状态看板</string>

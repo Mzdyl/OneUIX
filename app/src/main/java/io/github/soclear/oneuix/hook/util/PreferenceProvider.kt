@@ -24,9 +24,19 @@ object PreferenceProvider {
 
         return try {
             val parentPath = XSharedPreferences(BuildConfig.APPLICATION_ID).file?.parent
-            if (parentPath.isNullOrBlank()) return null
+            if (!parentPath.isNullOrBlank()) {
+                val file = File(parentPath, Preference.FILE_NAME)
+                if (file.exists() && file.canRead()) {
+                    return file.also { cachedFile = it }
+                }
+            }
 
-            File(parentPath, Preference.FILE_NAME).also { cachedFile = it }
+            listOf(
+                "/data/user_de/0/${BuildConfig.APPLICATION_ID}/shared_prefs/${Preference.FILE_NAME}",
+                "/data/user/0/${BuildConfig.APPLICATION_ID}/shared_prefs/${Preference.FILE_NAME}",
+                "/data/user_de/0/${BuildConfig.APPLICATION_ID}/files/datastore/preference",
+                "/data/user/0/${BuildConfig.APPLICATION_ID}/files/datastore/preference"
+            ).map { File(it) }.firstOrNull { it.exists() && it.canRead() }?.also { cachedFile = it }
         } catch (_: Throwable) {
             null
         }

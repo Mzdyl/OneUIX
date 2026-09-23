@@ -605,9 +605,7 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
             }
 
             Package.NFC -> {
-                if (preference.nfc.enableSimulation) {
-                    Nfc.init(lpparam)
-                }
+                Nfc.init(lpparam, preference.nfc.enableSimulation)
             }
         }
     }

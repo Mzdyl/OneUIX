@@ -274,6 +274,7 @@
     <string name="nfc_dialog_rename_title">Rename Card</string>
     <string name="nfc_toast_need_root">Execution failed. Please ensure Root access is granted!</string>
     <string name="nfc_toast_sim_success">Card simulation activated: %1$s</string>
+    <string name="nfc_toast_applying_sim">Applying card simulation...</string>
     <string name="nfc_toast_reset_success">Default NFC mode restored</string>
     <string name="nfc_toast_invalid_uid">Invalid UID format! Please enter 4-byte (8 hex) or 7-byte (14 hex) card number</string>
     <string name="nfc_status_title">NFC Status Dashboard</string>

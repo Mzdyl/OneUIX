@@ -36,5 +36,7 @@
         <item>com.sec.android.mimage.photoretouching</item>
         <item>com.samsung.android.agent.storage</item>
         <item>com.android.nfc</item>
+        <item>io.github.soclear.oneuix</item>
+        <item>io.github.mzdyl.oneuix</item>
     </string-array>
 </resources>
