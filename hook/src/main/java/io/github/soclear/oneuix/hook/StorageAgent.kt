@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Bundle
+import android.webkit.WebView
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
@@ -97,31 +98,37 @@ object StorageAgent {
 
         // 6. User-Agent Spoofing to prevent Google OAuth from blocking embedded WebView
         try {
-            val webSettingsClass = classLoader.loadClass("android.webkit.WebSettings")
-            val setUserAgentMethod = webSettingsClass.getDeclaredMethod("setUserAgentString", String::class.java)
-            xposedModule.hook(setUserAgentMethod).intercept { chain ->
-                val ua = chain.args[0] as? String
-                if (ua != null) {
+            val controllerClass = classLoader.loadClass(
+                "com.samsung.android.agent.storage.ui.onboarding.controller.OAuthWebViewController"
+            )
+            val applyMethod = controllerClass.getDeclaredMethod("applyInlineUserAgent")
+            xposedModule.hook(applyMethod).intercept { chain ->
+                val controller = chain.thisObject
+                val webViewField = controllerClass.getDeclaredField("mWebView").apply { isAccessible = true }
+                val webView = webViewField.get(controller) as? WebView
+                if (webView != null) {
+                    val settings = webView.settings
+                    val ua = settings.userAgentString
                     val cleanUa = ua.replace("; wv", "")
                         .replace(Regex("Version/\\d+\\.\\d+\\s?"), "")
                         .replace(" WebViewInline", "")
-                    val newArgs = chain.args.toTypedArray()
-                    newArgs[0] = cleanUa
-                    chain.proceed(newArgs)
-                } else {
-                    chain.proceed()
+                    settings.userAgentString = cleanUa
+                    try {
+                        WebView.setWebContentsDebuggingEnabled(true)
+                    } catch (_: Throwable) {}
                 }
+                null
             }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
 
+        try {
             val zzerClass = classLoader.loadClass("com.google.android.gms.internal.media_sync.zzer")
             val zzcMethod = zzerClass.getDeclaredMethod("zzc", String::class.java)
             xposedModule.hook(zzcMethod).intercept { chain ->
                 if (chain.args.firstOrNull() == "gsdktest.spoofuseragent") "true" else chain.proceed()
             }
-
-            val webViewClass = classLoader.loadClass("android.webkit.WebView")
-            val debugMethod = webViewClass.getDeclaredMethod("setWebContentsDebuggingEnabled", Boolean::class.javaPrimitiveType)
-            debugMethod.invoke(null, true)
         } catch (t: Throwable) {
             xlog(t)
         }
