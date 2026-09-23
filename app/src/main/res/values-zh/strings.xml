@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">One UI X</string>
     <string name="xposed_description">三星 One UI 扩展</string>
+    <string name="module_disabled_tip">请在 LSPosed 中启用本模块</string>
+    <string name="confirm">确认</string>
     <string name="other">其他</string>
     <string name="galaxy_store_label">Galaxy Store</string>
     <string name="notification">通知</string>
@@ -27,6 +29,8 @@
     <string name="supportRealTimeNetworkSpeed_summary">设置->通知->高级设置->显示实时网速</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">状态栏显示上传下载网速</string>
     <string name="showSeparateUpDownNetworkSpeeds_summary">上行为上传速度，下行为下载速度</string>
+    <string name="networkSpeedThreshold_title">网速显示阈值</string>
+    <string name="networkSpeedThreshold_label">阈值（KB/s）</string>
     <string name="turnOn5gQsTile_title">开启快捷设置 5G 磁贴</string>
     <string name="turnOn5gQsTile_summary">需要勾选系统 UI 和通话设置</string>
     <string name="root5gQsTile_summary">请授予本应用 root 权限后手动添加 5G 磁贴</string>
@@ -141,6 +145,8 @@
     <string name="preferRecordingButton_title">通话界面优先显示“录音”按钮，而非“添加通话”</string>
     <string name="showMoreBatteryInfo_title">显示更多电池信息</string>
     <string name="showMoreBatteryInfo_summary">设置->关于手机->电池信息</string>
+    <string name="recentsGridThreeRows_title">最近任务网格显示三行</string>
+    <string name="recentsGridThreeRows_summary">网格（Grid）样式由两行扩展为三行</string>
     <string name="supportOutdoorMode_title">解锁户外模式</string>
     <string name="supportAppJumpBlock_title">支持应用跳转拦截</string>
     <string name="supportAppJumpBlock_summary">设置->安全和隐私->更多安全设置->阻止应用跳转</string>
@@ -227,11 +233,8 @@
     <string name="bypassWatchPairingRegionCheck_summary">绕过区域、CSC 和不支持手机的配对检查</string>
     <string name="supplementChinaWearOsGms_title">补充国行 WearOS GMS</string>
     <string name="supplementChinaWearOsGms_summary">当 WearOS CN 未自动加入时，将 com.google.android.wearable.app.cn 加入下载列表</string>
-    <string name="restartSystemUI">重启系统 UI</string>
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>
-    <string name="restartRecovery">重启到 Recovery</string>
-    <string name="restartDownload">重启到下载模式</string>
     <string name="sideKeySettings">侧面按钮设置</string>
     <string name="allowAllRotation_title">允许所有旋转角度</string>
     <string name="allowAllRotation_summary">在手机上启用 180° 旋转（通常仅平板可用）</string>

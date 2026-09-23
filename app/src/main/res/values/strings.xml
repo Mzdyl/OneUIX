@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">One UI X</string>
     <string name="xposed_description">Samsung One UI Extension</string>
+    <string name="module_disabled_tip">Please enable this module in LSPosed</string>
+    <string name="confirm">Confirm</string>
     <string name="other">Other</string>
     <string name="galaxy_store_label">Galaxy Store</string>
     <string name="notification">Notification</string>
@@ -27,6 +29,8 @@
     <string name="supportRealTimeNetworkSpeed_summary">Settings -> Notifications -> Advanced settings -> Show real-time network speed</string>
     <string name="showSeparateUpDownNetworkSpeeds_title">Show separate upload/download speeds in status bar</string>
     <string name="showSeparateUpDownNetworkSpeeds_summary">Top is upload speed, bottom is download speed</string>
+    <string name="networkSpeedThreshold_title">Network speed display threshold</string>
+    <string name="networkSpeedThreshold_label">Threshold (KB/s)</string>
     <string name="turnOn5gQsTile_title">Enable 5G Quick Settings tile</string>
     <string name="turnOn5gQsTile_summary">Requires checking System UI and Call Settings</string>
     <string name="root5gQsTile_summary">Please grant root access to this app, then manually add the 5G tile</string>
@@ -153,6 +157,8 @@
     <string name="addBrightnessProgressToQsBar_title">Show brightness level in QS panel</string>
     <string name="addVolumeProgressToQsBar_title">Show volume level in QS panel</string>
     <string name="showMemoryUsageInRecents_title">Show memory usage in Recents page</string>
+    <string name="recentsGridThreeRows_title">Three rows in Recents grid</string>
+    <string name="recentsGridThreeRows_summary">Display Recents Grid style in 3 rows</string>
     <string name="hideRecentsCloseAllButton_title">Hide Close all button in Recents</string>
     <string name="showForcePeakRefreshRatePreference_title">Show \'Force peak refresh rate\' in Developer options</string>
     <string name="showForcePeakRefreshRatePreference_summary">Search for \'Force peak refresh rate\' in Settings</string>
@@ -227,11 +233,8 @@
     <string name="bypassWatchPairingRegionCheck_summary">Bypass region, CSC, and unsupported-phone pairing checks</string>
     <string name="supplementChinaWearOsGms_title">Supplement China WearOS GMS</string>
     <string name="supplementChinaWearOsGms_summary">If WearOS CN does not add it automatically, add com.google.android.wearable.app.cn to the download list</string>
-    <string name="restartSystemUI">Reboot System UI</string>
     <string name="restartSystemUI_title">Restart System UI</string>
     <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
-    <string name="restartRecovery">Reboot to recovery</string>
-    <string name="restartDownload">Reboot to download mode</string>
     <string name="sideKeySettings">Side button settings</string>
     <string name="allowAllRotation_title">Allow all rotation angles</string>
     <string name="allowAllRotation_summary">Enable 180° rotation on phones (normally only available on tablets)</string>

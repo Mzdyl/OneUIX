@@ -16,9 +16,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.github.soclear.oneuix.data.Preference
-import io.github.soclear.oneuix.data.PreferenceJson
-import io.github.soclear.oneuix.data.decodePreference
+import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
+import io.github.soclear.oneuix.common.Preference
+import io.github.soclear.oneuix.common.decodePreference
 import io.github.soclear.oneuix.ui.category.Category
 import io.github.soclear.oneuix.ui.category.CategoryAppInfo
 import java.io.InputStream
@@ -63,7 +63,7 @@ class SettingViewModel(val application: Application) : ViewModel() {
 
     suspend fun backupTo(output: OutputStream) = withContext(Dispatchers.IO) {
         output.write(
-            PreferenceJson.encodeToString(
+            IgnoreUnknownKeysJson.encodeToString(
                 Preference.serializer(), dataStore.data.first()
             ).encodeToByteArray()
         )

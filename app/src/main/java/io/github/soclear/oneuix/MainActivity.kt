@@ -1,6 +1,5 @@
 package io.github.soclear.oneuix
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
@@ -17,24 +16,17 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.ui.Modifier
-import androidx.datastore.dataStoreFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import io.github.soclear.oneuix.data.Preference
-import io.github.soclear.oneuix.ui.ModuleDisabledScreen
+import android.widget.Toast
 import io.github.soclear.oneuix.ui.SettingScreen
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.category.NfcScanChannel
 import io.github.soclear.oneuix.ui.theme.OneUIXTheme
-import kotlin.system.exitProcess
-
 
 class MainActivity : ComponentActivity() {
-    private val preferenceFile by lazy { dataStoreFile(Preference.DATASTORE_SENTINEL_NAME) }
     private val nfcAdapter by lazy { NfcAdapter.getDefaultAdapter(this) }
-
     private var nfcPendingIntent: PendingIntent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +39,10 @@ class MainActivity : ComponentActivity() {
             intent,
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        setScreen()
+        setSettingScreen()
+        if (!XposedServiceManager.isModuleActive) {
+            Toast.makeText(this, R.string.module_disabled_tip, Toast.LENGTH_LONG).show()
+        }
         handleNfcIntent(getIntent())
     }
 
@@ -57,16 +52,13 @@ class MainActivity : ComponentActivity() {
         handleNfcIntent(intent)
     }
 
-    @SuppressLint("SetWorldReadable")
     override fun onPause() {
         super.onPause()
         disableNfcReader()
-        setWorldReadable()
     }
 
     override fun onResume() {
         super.onResume()
-        setWorldReadable()
         enableNfcReader()
     }
 
@@ -158,33 +150,6 @@ class MainActivity : ComponentActivity() {
         } catch (_: Throwable) {}
     }
 
-    @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-    private fun setScreen() {
-        if (preferenceFile.name == Preference.FILE_NAME) {
-            setSettingScreen()
-        } else {
-            setModuleDisabledScreen()
-        }
-    }
-
-    @SuppressLint("SetWorldReadable")
-    private fun setWorldReadable(): Boolean {
-        try {
-            applicationContext.dataDir?.let { dir ->
-                dir.setReadable(true, false)
-                dir.setExecutable(true, false)
-            }
-            preferenceFile.parentFile?.let { dir ->
-                dir.setReadable(true, false)
-                dir.setExecutable(true, false)
-                dir.parentFile?.let { parent ->
-                    parent.setReadable(true, false)
-                    parent.setExecutable(true, false)
-                }
-            }
-        } catch (_: Throwable) {}
-        return preferenceFile.setReadable(true, false)
-    }
 
     private fun setSettingScreen() {
         val viewModel: SettingViewModel by viewModels {
@@ -195,19 +160,6 @@ class MainActivity : ComponentActivity() {
             OneUIXTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     SettingScreen(viewModel = viewModel, modifier = Modifier.padding(innerPadding))
-                }
-            }
-        }
-    }
-
-    private fun setModuleDisabledScreen() {
-        setContent {
-            OneUIXTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ModuleDisabledScreen(
-                        onClickClose = { exitProcess(0) },
-                        modifier = Modifier.padding(innerPadding)
-                    )
                 }
             }
         }

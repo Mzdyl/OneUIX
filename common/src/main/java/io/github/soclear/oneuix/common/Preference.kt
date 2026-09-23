@@ -1,0 +1,233 @@
+package io.github.soclear.oneuix.common
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class Preference(
+    val android: Android = Android(),
+    val systemUI: SystemUI = SystemUI(),
+    val settings: Settings = Settings(),
+    val call: Call = Call(),
+    val camera: Camera = Camera(),
+    val other: Other = Other(),
+    val samsungHealth: SamsungHealth = SamsungHealth(),
+    val bixby: Bixby = Bixby(),
+    val nfc: Nfc = Nfc(),
+) {
+    @Serializable
+    data class Android(
+        val disablePinVerifyPer72h: Boolean = false,
+        val modifyMaxNeverKilledAppNum: Boolean = false,
+        val maxNeverKilledAppNum: Int = 5,
+        val setBlockableNotificationChannel: Boolean = false,
+        val supportAppJumpBlock: Boolean = false,
+        val allowAllRotation: Boolean = false,
+        val liftFcmNetworkLimit: Boolean = false,
+        val disableAsksRestriction: Boolean = false,
+        val fcmFix: Boolean = false,
+        val hideNavigationBarGestureHint: Boolean = false,
+        val disableScreenWakeOnPowerUnplugged: Boolean = false,
+        val disableWritingToolkitGlobally: Boolean = false,
+    )
+
+    @Serializable
+    data class SystemUI(
+        val statusBar: StatusBar = StatusBar(),
+        val qs: QS = QS(),
+        val aod: AOD = AOD(),
+        val notification: Notification = Notification(),
+        val other: Other = Other(),
+    ) {
+        @Serializable
+        data class StatusBar(
+            val modifyStatusBarLeftPadding: Boolean = false,
+            val statusBarLeftPaddingDp: Float = 0f,
+            val modifyStatusBarRightPadding: Boolean = false,
+            val statusBarRightPaddingDp: Float = 0f,
+            val hideBatteryPercentageSign: Boolean = false,
+            val hideBatteryIcon: Boolean = false,
+            val addBatteryLevelText: Boolean = false,
+            val hideBatteryLevelTextPercentageSign: Boolean = false,
+            val hideBatteryLevelTextChargingIcon: Boolean = false,
+            val supportRealTimeNetworkSpeed: Boolean = true,
+            val showSeparateUpDownNetworkSpeeds: Boolean = false,
+            val networkSpeedThresholdKb: Int = 0,
+            val setStatusBarClockFormat: Boolean = false,
+            val statusBarClockFormat: String = "HH:mm",
+            val setStatusBarClockTextScale: Boolean = false,
+            val statusBarClockTextScale: Float = 1f,
+            val hideSecureFolderStatusBarIcon: Boolean = false,
+            val doubleTapStatusBarToSleep: Boolean = false,
+            val modifyStatusBarMaxNotificationIcons: Boolean = false,
+            val statusBarMaxNotificationIcons: Int = 4,
+            val setBatteryIconWidthScale: Boolean = false,
+            val batteryIconWidthScale: Float = 1f,
+            val setBatteryIconHeightScale: Boolean = false,
+            val batteryIconHeightScale: Float = 1f,
+            val setCustomCarrierName: Boolean = false,
+            val customCarrierName: String = "",
+            val hideLockscreenStatusBar: Boolean = false,
+            val updateStatusBarClockEverySecond: Boolean = false,
+            val physicalEsimAdapterWorkaround: Boolean = false,
+            val physicalEsimAdapterSimSlot: Int = 1,
+            val restoreBluetoothStatusBarIcon: Boolean = false,
+        )
+
+        @Serializable
+        data class QS(
+            val setQsClockMonospaced: Boolean = false,
+            val hideDeviceControlQsTile: Boolean = false,
+            val hideSmartViewQsTile: Boolean = false,
+            val turnOn5gQsTile: Boolean = false,
+            val hideQsBarMediaPlayer: Boolean = false,
+            val hideQsBarNearbyDevicesAndDeviceControl: Boolean = false,
+            val hideQsBarSecurityFooter: Boolean = false,
+            val hideQsBarDataUsage: Boolean = false,
+            val hideQsBarSmartViewAndModes: Boolean = false,
+            val alwaysExpandQsTileChunk: Boolean = false,
+            val alwaysShowTimeDateOnQs: Boolean = false,
+            val addBrightnessProgressToQsBar: Boolean = false,
+            val addVolumeProgressToQsBar: Boolean = false,
+            val showTraditionalChineseDateOnQS: Boolean = false,
+            val modifyQSClockTextSize: Boolean = false,
+            val qsClockTextSize: Float = 32f,
+        )
+
+        @Serializable
+        data class AOD(
+            val hideAODStatusBar: Boolean = false,
+            val aodLockSupportLunar: Boolean = false,
+        )
+
+        @Serializable
+        data class Notification(
+            val hideOngoingActivityMedia: Boolean = false,
+            val hideOngoingActivityMediaPackages: String = "",
+            val disableNotificationGrouping: Boolean = false,
+            val autoExpandNotifications: Boolean = false
+        )
+
+        @Serializable
+        data class Other(
+            val disableScreenshotCaptureSound: Boolean = false,
+            val customPowerMenu: Boolean = false,
+            val powerMenuActions: List<PowerMenuAction> = PowerMenuAction.defaultPreferences()
+        )
+    }
+
+    @Serializable
+    data class Settings(
+        val showForcePeakRefreshRatePreference: Boolean = true,
+        val supportOutdoorMode: Boolean = false,
+        val showMoreBatteryInfo: Boolean = true,
+        val showPackageInfo: Boolean = true,
+        val showWiFiLinkSpeed: Boolean = false,
+        val supportAnyFont: Boolean = true,
+        val supportAutoPowerOnOff: Boolean = false,
+        val showNotificationCategory: Boolean = false,
+        val spoofPhoneStatusAsOfficial: Boolean = false,
+    )
+
+    @Serializable
+    data class Call(
+        val supportVoiceCallRecording: Boolean = true,
+        val preferRecordingButton: Boolean = true,
+        val showGeocodedLocationInRecentCall: Boolean = false,
+        val isOpStyleCHN: Boolean = false,
+        val bypassSameWifiRestriction: Boolean = false,
+        val unlockCmcMobileNetwork: Boolean = false,
+        val bypassChinaSimRestriction: Boolean = false,
+        val mdecDeviceType: Int = 0,
+        val supportCallAndTextOnOtherDevices: Boolean = false,
+    )
+
+    @Serializable
+    data class Camera(
+        val supportAllCameraMenu: Boolean = true,
+        val disableCameraTemperatureCheck: Boolean = false,
+        val supportFrameWatermark: Boolean = false,
+        val supportBodyBeauty: Boolean = false,
+    )
+
+    @Serializable
+    data class Other(
+        val blockGalaxyStoreAds: Boolean = true,
+        val changeRegion: Boolean = false,
+        val regionCode: String = "US",
+        val makeAllUserAppsAvailable: Boolean = true,
+        val setWeatherProviderCN: Boolean = false,
+        val showMemoryUsageInRecents: Boolean = false,
+        val recentsGridThreeRows: Boolean = false,
+        val hideRecentsCloseAllButton: Boolean = false,
+        val showMorePlaybackSpeeds: Boolean = false,
+        val redirectCustomTab: Boolean = false,
+        val supportAllGallerySettings: Boolean = true,
+        val supportSharedAlbumsInHide: Boolean = false,
+        val hideVideoEditorStudio: Boolean = false,
+        val supportGalleryGoogleSync: Boolean = true,
+        val supportGalleryCloudSyncToolbar: Boolean = true,
+        val enableGalleryPoi: Boolean = true,
+        val enableGalleryFullAddress: Boolean = true,
+        val unlockGalleryDeveloperLabs: Boolean = true,
+        val enableGalleryUndoDelete: Boolean = true,
+        val enableGalleryDualPhotoPreview: Boolean = true,
+        val enableGalleryQuickSeek: Boolean = true,
+        val enableGalleryHdrThumbnail: Boolean = true,
+        val enableGalleryPhotoStripHighQuality: Boolean = false,
+        val enableGalleryUnmuteAlways: Boolean = false,
+        val supportAllNotesFeatures: Boolean = true,
+        val enableChineseHolidayDisplay: Boolean = false,
+        val supportBlockMessage: Boolean = true,
+        val setThemeTrialNeverExpired: Boolean = true,
+        val spoofBrowserCountryCodeToUS: Boolean = false,
+        val noAIWatermark: Boolean = true,
+        val enableSketch: Boolean = false,
+        val bypassHealthMonitorCountryCheck: Boolean = false,
+        val useSPenGoogleTranslate: Boolean = false,
+        val hideAppsSearchBar: Boolean = false,
+        val removeShortcutBadge: Boolean = false,
+        val bypassWatchPairingRegionCheck: Boolean = false,
+        val watchPairingConnectionMode: Int = 0,
+        val supplementChinaWearOsGms: Boolean = false,
+        val enableGoogleQuickShare: Boolean = true,
+    )
+
+    @Serializable
+    data class SamsungHealth(
+        val bypassAccountCountryCheck: Boolean = false,
+        val serverRegion: Int = 0,
+        val unlockCountryFeatures: Boolean = false,
+        val unlockAccessoryProfiles: Boolean = false,
+    )
+
+    @Serializable
+    data class Bixby(
+        val injectModel: Boolean = false,
+        val labsMgr: Boolean = false,
+        val wwvBypass: Boolean = false,
+    )
+
+    @Serializable
+    data class Nfc(
+        val enableSimulation: Boolean = false,
+        val activeUid: String = "",
+        val activeCardName: String = "",
+        val activeSak: String = "04",
+        val activeAtqa: String = "00",
+        val cards: List<NfcCard> = emptyList(),
+    )
+
+    @Serializable
+    data class NfcCard(
+        val id: String = "",
+        val name: String = "",
+        val uid: String = "",
+        val sak: String = "04",
+        val atqa: String = "00",
+    )
+
+    companion object {
+        const val FILE_NAME = "preference.json"
+        const val DATASTORE_SENTINEL_NAME = "whatever"
+    }
+}
