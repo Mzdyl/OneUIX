@@ -243,9 +243,7 @@
     <string name="disableScreenWakeOnPowerUnplugged_title">Keep screen off when unplugged</string>
     <string name="disableWritingToolkitGlobally_title">Disable Writing Toolkit globally</string>
     <string name="disableWritingToolkitGlobally_summary">Removes Samsung Writing Toolkit from text selection menus in all apps through the System Framework</string>
-    <string name="module_disabled_tip">Please enable this module in LSPosed</string>
     <string name="close">Close</string>
-    <string name="confirm">Confirm</string>
     <string name="backup_config">Back up config</string>
     <string name="restore_config">Restore config</string>
     <string name="restore_failed">Restore failed, the file may be corrupted</string>

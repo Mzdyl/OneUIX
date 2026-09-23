@@ -1,25 +1,23 @@
 package io.github.soclear.oneuix.hook
 
 import android.content.Context
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.getHookConfig
-import io.github.soclear.oneuix.hook.util.log
-import io.github.soclear.oneuix.hook.util.logError
 import io.github.soclear.oneuix.hook.util.longVersionCode
+import io.github.soclear.oneuix.hook.util.xlog
 import kotlinx.serialization.Serializable
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.wrap.DexMethod
 import java.io.File
 
 object QuickShare {
-    fun enableGoogleQuickShare(loadPackageParam: LoadPackageParam) {
-        if (loadPackageParam.packageName != Package.SHARE_LIVE) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun enableGoogleQuickShare() {
+        if (param.packageName != Package.SHARE_LIVE) {
             return
         }
 
@@ -35,35 +33,33 @@ object QuickShare {
             try {
                 val nearbyMethod =
                     DexMethod(hookConfig.nearbyShareSupportedMethod).getMethodInstance(classLoader)
-                XposedBridge.hookMethod(nearbyMethod, XC_MethodReplacement.returnConstant(true))
+                xposedModule.hook(nearbyMethod).intercept { true }
 
                 val moseyMethod =
                     DexMethod(hookConfig.isMoseySupportedMethod).getMethodInstance(classLoader)
-                XposedBridge.hookMethod(moseyMethod, XC_MethodReplacement.returnConstant(true))
+                xposedModule.hook(moseyMethod).intercept { true }
 
                 hookConfig.sepGlobalCheckMethod?.let { methodStr ->
                     val sepGlobalMethod = DexMethod(methodStr).getMethodInstance(classLoader)
-                    XposedBridge.hookMethod(sepGlobalMethod, object : XC_MethodHook() {
-                        override fun beforeHookedMethod(param: MethodHookParam) {
-                            val arg0 = param.args.getOrNull(0) as? String
-                            val arg1 = param.args.getOrNull(1) as? String
-                            if ((arg0 == "sepChinaPublic" && arg1 == "sepGlobal") ||
-                                (arg0 == "sepGlobal" && arg1 == "sepChinaPublic")
-                            ) {
-                                param.result = true
-                            }
+                    xposedModule.hook(sepGlobalMethod).intercept { chain ->
+                        val arg0 = chain.args.getOrNull(0) as? String
+                        val arg1 = chain.args.getOrNull(1) as? String
+                        if ((arg0 == "sepChinaPublic" && arg1 == "sepGlobal") ||
+                            (arg0 == "sepGlobal" && arg1 == "sepChinaPublic")
+                        ) {
+                            true
+                        } else {
+                            chain.proceed()
                         }
-                    })
+                    }
                 }
 
                 hookConfig.temporaryModeMethod?.let { methodStr ->
                     val tempMethod = DexMethod(methodStr).getMethodInstance(classLoader)
-                    XposedBridge.hookMethod(tempMethod, XC_MethodReplacement.returnConstant(false))
+                    xposedModule.hook(tempMethod).intercept { false }
                 }
-
-                log("enableGoogleQuickShare hooks applied successfully (sepGlobal=${hookConfig.sepGlobalCheckMethod != null}, tempMode=${hookConfig.temporaryModeMethod != null})")
             } catch (t: Throwable) {
-                logError("enableGoogleQuickShare failed", t)
+                xlog(t)
             }
         }
     }

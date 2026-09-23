@@ -1,5 +1,7 @@
 package io.github.soclear.oneuix.data
 
+import io.github.soclear.oneuix.common.Preference
+import io.github.soclear.oneuix.common.decodePreference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

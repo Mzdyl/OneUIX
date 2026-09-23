@@ -2,8 +2,6 @@ package io.github.soclear.oneuix.hook.util
 
 import android.annotation.SuppressLint
 import android.os.SystemClock
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.soclear.oneuix.hook.BuildConfig
 import java.io.File
 import java.text.SimpleDateFormat
@@ -35,9 +33,9 @@ object DebugFileLogger {
 
     val isEnabled = BuildConfig.DEBUG
 
-    fun attachToProcess(lpparam: LoadPackageParam) {
+    fun attachToProcess(pkgName: String) {
         if (!isEnabled) return
-        processName = lpparam.packageName
+        processName = pkgName
         bindLogDir()
     }
 
@@ -62,7 +60,7 @@ object DebugFileLogger {
         synchronized(lock) {
             logDir = resolveLogDir()
             if (logDir == null) {
-                XposedBridge.log("[OneUIX-Bixby] DebugFileLogger failed to resolve log dir")
+                android.util.Log.e("OneUIX-Bixby", "DebugFileLogger failed to resolve log dir")
                 return
             }
             pendingLines += formatLine("Logger", "attached dir=${logDir?.absolutePath}")
@@ -81,8 +79,7 @@ object DebugFileLogger {
                 if (dir.canWrite()) return dir
             }
         } catch (t: Throwable) {
-            XposedBridge.log("[OneUIX-Bixby] DebugFileLogger mkdir failed for ${dir.absolutePath}")
-            XposedBridge.log(t)
+            android.util.Log.e("OneUIX-Bixby", "DebugFileLogger mkdir failed for ${dir.absolutePath}", t)
         }
         ensureLogDirWithRoot(dir)
         return if (dir.exists()) dir else null
@@ -129,8 +126,7 @@ object DebugFileLogger {
             if (appendWithRoot(File(dir, LOG_FILE_NAME), content)) {
                 return true
             } else {
-                XposedBridge.log("[OneUIX-Bixby] DebugFileLogger write failed for ${dir.absolutePath}")
-                XposedBridge.log(t)
+                android.util.Log.e("OneUIX-Bixby", "DebugFileLogger write failed for ${dir.absolutePath}", t)
             }
         }
         return false
@@ -171,8 +167,7 @@ object DebugFileLogger {
             process.outputStream.bufferedWriter().use { it.write(content) }
             process.waitFor() == 0
         } catch (t: Throwable) {
-            XposedBridge.log("[OneUIX-Bixby] DebugFileLogger root append failed for ${file.absolutePath}")
-            XposedBridge.log(t)
+            android.util.Log.e("OneUIX-Bixby", "DebugFileLogger root append failed for ${file.absolutePath}", t)
             false
         }
     }
@@ -182,8 +177,7 @@ object DebugFileLogger {
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
             process.waitFor() == 0
         } catch (t: Throwable) {
-            XposedBridge.log("[OneUIX-Bixby] DebugFileLogger root command failed: $command")
-            XposedBridge.log(t)
+            android.util.Log.e("OneUIX-Bixby", "DebugFileLogger root command failed: $command", t)
             false
         }
     }

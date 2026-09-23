@@ -65,11 +65,12 @@ fun addAssetPath(modulePath: String) {
         if (context is Application) {
             try {
                 val moduleApk = File(modulePath)
-                val parcelFileDescriptor = ParcelFileDescriptor.open(moduleApk, ParcelFileDescriptor.MODE_READ_ONLY)
-                val resourcesProvider = ResourcesProvider.loadFromApk(parcelFileDescriptor)
-                val resourcesLoader = ResourcesLoader()
-                resourcesLoader.addProvider(resourcesProvider)
-                context.resources.addLoaders(resourcesLoader)
+                ParcelFileDescriptor.open(moduleApk, ParcelFileDescriptor.MODE_READ_ONLY)?.use { parcelFileDescriptor ->
+                    val resourcesProvider = ResourcesProvider.loadFromApk(parcelFileDescriptor)
+                    val resourcesLoader = ResourcesLoader()
+                    resourcesLoader.addProvider(resourcesProvider)
+                    context.resources.addLoaders(resourcesLoader)
+                }
             } catch (t: Throwable) {
                 xposedModule.log(Log.ERROR, "Util", "addAssetPath", t)
             }
@@ -154,12 +155,13 @@ fun xlog(
 }
 
 fun log(message: Any?) {
-    de.robv.android.xposed.XposedBridge.log(message?.toString() ?: "null")
+    android.util.Log.d("OneUIX", message?.toString() ?: "null")
 }
 
 fun logError(message: Any?, throwable: Throwable? = null) {
-    de.robv.android.xposed.XposedBridge.log(message?.toString() ?: "null")
     if (throwable != null) {
-        de.robv.android.xposed.XposedBridge.log(throwable)
+        android.util.Log.e("OneUIX", message?.toString() ?: "null", throwable)
+    } else {
+        android.util.Log.e("OneUIX", message?.toString() ?: "null")
     }
 }

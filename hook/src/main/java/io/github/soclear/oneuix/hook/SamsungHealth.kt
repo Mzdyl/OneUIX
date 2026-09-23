@@ -1,18 +1,15 @@
 package io.github.soclear.oneuix.hook
 
 import android.content.Context
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
 import io.github.soclear.oneuix.hook.util.getHookConfig
 import io.github.soclear.oneuix.hook.util.longVersionCode
-import io.github.soclear.oneuix.hook.util.log
-import io.github.soclear.oneuix.hook.util.logError
+import io.github.soclear.oneuix.hook.util.xlog
 import kotlinx.serialization.Serializable
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.wrap.DexMethod
@@ -47,8 +44,9 @@ object SamsungHealth {
     private const val LEGACY_BLOCKED_ACCOUNT_KEY = "sam_is_not_allowed_account_state"
     private const val GLOBAL_ACCOUNT_COUNTRY = "US"
 
-    fun init(loadPackageParam: LoadPackageParam, preference: Preference.SamsungHealth) {
-        if (loadPackageParam.packageName != Package.SAMSUNG_HEALTH) return
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun init(preference: Preference.SamsungHealth) {
+        if (param.packageName != Package.SAMSUNG_HEALTH) return
         afterAttach {
             if (preference.bypassAccountCountryCheck) {
                 hookAccountCountryCheck(this, classLoader)
@@ -65,19 +63,17 @@ object SamsungHealth {
         }
     }
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun hookAccountCountryCheck(context: Context, classLoader: ClassLoader) {
         try {
             val clazz = classLoader.loadClass(ACCOUNT_OPERATION_CLASS)
             setOf("isValidSync", "isLegalCountry", "isSyncLegal").forEach { methodName ->
-                XposedBridge.hookAllMethods(
-                    clazz,
-                    methodName,
-                    XC_MethodReplacement.returnConstant(true)
-                )
+                clazz.declaredMethods.filter { it.name == methodName }.forEach { method ->
+                    xposedModule.hook(method).intercept { true }
+                }
             }
-            log("SamsungHealth account country checks bypassed")
         } catch (t: Throwable) {
-            logError("SamsungHealth account country bypass failed", t)
+            xlog(t)
         }
 
         try {
@@ -89,17 +85,17 @@ object SamsungHealth {
                         it.parameterTypes.contentEquals(arrayOf(Context::class.java))
                 }
                 .forEach { method ->
-                    XposedBridge.hookMethod(method, object : XC_MethodHook() {
-                        override fun afterHookedMethod(param: MethodHookParam) {
-                            if ((param.result as? String).equals("CN", ignoreCase = true)) {
-                                param.result = GLOBAL_ACCOUNT_COUNTRY
-                            }
+                    xposedModule.hook(method).intercept { chain ->
+                        val result = chain.proceed() as? String
+                        if (result.equals("CN", ignoreCase = true)) {
+                            GLOBAL_ACCOUNT_COUNTRY
+                        } else {
+                            result
                         }
-                    })
+                    }
                 }
-            log("SamsungHealth China account country treated as global")
         } catch (t: Throwable) {
-            logError("SamsungHealth China account country hook failed", t)
+            xlog(t)
         }
 
         try {
@@ -110,21 +106,23 @@ object SamsungHealth {
                 getAllowedAccountHookConfig()
             } ?: error("Allowed-account result class not found")
             val clazz = classLoader.loadClass(config.allowedAccountResultClass)
-            XposedBridge.hookAllConstructors(clazz, object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    if (param.args.size != 3 || param.args[0] !is Boolean ||
-                        param.args[1] !is Boolean || param.args[2] !is Boolean
+            clazz.declaredConstructors.forEach { constructor ->
+                xposedModule.hook(constructor).intercept { chain ->
+                    if (chain.args.size == 3 && chain.args[0] is Boolean &&
+                        chain.args[1] is Boolean && chain.args[2] is Boolean
                     ) {
-                        return
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[0] = true
+                        newArgs[1] = true
+                        newArgs[2] = false
+                        chain.proceed(newArgs)
+                    } else {
+                        chain.proceed()
                     }
-                    param.args[0] = true
-                    param.args[1] = true
-                    param.args[2] = false
                 }
-            })
-            log("SamsungHealth blocked China account state bypassed")
+            }
         } catch (t: Throwable) {
-            logError("SamsungHealth blocked China account bypass failed", t)
+            xlog(t)
         }
 
         try {
@@ -136,7 +134,7 @@ object SamsungHealth {
                 hookRestrictedChinaDialog(classLoader, it)
             }
         } catch (t: Throwable) {
-            logError("SamsungHealth restricted China dialog hook failed", t)
+            xlog(t)
         }
     }
 
@@ -162,25 +160,28 @@ object SamsungHealth {
         val restrictedChinaHandlerMethod: String?,
     ) : HookConfig
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun hookRestrictedChinaDialog(
         classLoader: ClassLoader,
         methodData: String,
     ) {
-        val method = DexMethod(methodData).getMethodInstance(classLoader)
-        val handledCasesField = generateSequence(method.declaringClass) {
-            it.superclass
-        }.flatMap { it.declaredFields.asSequence() }
-            .first { MutableMap::class.java.isAssignableFrom(it.type) }
-            .apply { isAccessible = true }
-        XposedBridge.hookMethod(method, object : XC_MethodHook() {
-            override fun beforeHookedMethod(param: MethodHookParam) {
+        try {
+            val method = DexMethod(methodData).getMethodInstance(classLoader)
+            val handledCasesField = generateSequence(method.declaringClass) {
+                it.superclass
+            }.flatMap { it.declaredFields.asSequence() }
+                .first { MutableMap::class.java.isAssignableFrom(it.type) }
+                .apply { isAccessible = true }
+            xposedModule.hook(method).intercept { chain ->
                 @Suppress("UNCHECKED_CAST")
-                val handledCases = handledCasesField.get(param.thisObject) as?
-                    MutableMap<String, Any?> ?: return
-                handledCases["SHEALTH#RestrictedChinaCaseHandler"] = true
+                val handledCases = handledCasesField.get(chain.thisObject) as?
+                    MutableMap<String, Any?>
+                handledCases?.put("SHEALTH#RestrictedChinaCaseHandler", true)
+                chain.proceed()
             }
-        })
-        log("SamsungHealth restricted China dialog suppressed")
+        } catch (t: Throwable) {
+            xlog(t)
+        }
     }
 
     private fun Context.getAllowedAccountHookConfig(): AllowedAccountHookConfig? {
@@ -225,6 +226,7 @@ object SamsungHealth {
         }
     }
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun hookServerRegion(classLoader: ClassLoader, serverRegion: Int) {
         val endpoints = when (serverRegion) {
             SERVER_REGION_CHINA -> mapOf(
@@ -242,7 +244,7 @@ object SamsungHealth {
                 "getCloudServerEndPoint" to "https://api.samsungcloud.com",
                 "getE2eeServerEndPoint" to "https://api.samsungcloud.com",
                 "getPrdHealthServerEndPoint" to "https://shealth-api.samsunghealth.com",
-                "getStgHealthServerEndPoint" to "https://shealth-stg-api.samsunghealth.com",
+                "getStgHealthServerEndPoint" to "https://shealth-api.samsunghealth.com",
                 "getPrdKnowledgeServerEndPoint" to
                     "https://api.samsungknowledge.com/knowledge-ws/v1.3/",
                 "getStgKnowledgeServerEndPoint" to
@@ -260,17 +262,17 @@ object SamsungHealth {
                         it.name == methodName && Modifier.isStatic(it.modifiers) &&
                             it.parameterCount == 0 && it.returnType == String::class.java
                     }
-                    .forEach {
-                        XposedBridge.hookMethod(it, XC_MethodReplacement.returnConstant(endpoint))
+                    .forEach { method ->
+                        xposedModule.hook(method).intercept { endpoint }
                     }
             }
             hookSamsungAccountServer(classLoader, serverRegion)
-            log("SamsungHealth server region forced to $serverRegion")
         } catch (t: Throwable) {
-            logError("SamsungHealth server region hook failed", t)
+            xlog(t)
         }
     }
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun hookSamsungAccountServer(classLoader: ClassLoader, serverRegion: Int) {
         try {
             val clazz = classLoader.loadClass(ACCOUNT_SERVER_API_UTIL_CLASS)
@@ -281,36 +283,34 @@ object SamsungHealth {
                         it.returnType == String::class.java
                 }
                 .forEach { method ->
-                    XposedBridge.hookMethod(method, object : XC_MethodReplacement() {
-                        override fun replaceHookedMethod(param: MethodHookParam): Any {
-                            if (serverRegion == SERVER_REGION_CHINA) {
-                                return "https://account.samsung.cn"
-                            }
-                            val country = (param.args[0] as? String).orEmpty()
+                    xposedModule.hook(method).intercept { chain ->
+                        if (serverRegion == SERVER_REGION_CHINA) {
+                            "https://account.samsung.cn"
+                        } else {
+                            val country = (chain.args[0] as? String).orEmpty()
                                 .uppercase(Locale.US)
-                            return if (country == "US") {
+                            if (country == "US") {
                                 "https://us.account.samsung.com"
                             } else {
                                 "https://account.samsung.com"
                             }
                         }
-                    })
+                    }
                 }
         } catch (t: Throwable) {
-            logError("SamsungHealth account server hook failed", t)
+            xlog(t)
         }
     }
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun hookCountryFeatures(classLoader: ClassLoader) {
         try {
             val cscFeatureClass = classLoader.loadClass(CSC_FEATURE_CLASS)
-            XposedBridge.hookAllMethods(
-                cscFeatureClass,
-                "isAllowed",
-                XC_MethodReplacement.returnConstant(true)
-            )
+            cscFeatureClass.declaredMethods.filter { it.name == "isAllowed" }.forEach { method ->
+                xposedModule.hook(method).intercept { true }
+            }
         } catch (t: Throwable) {
-            logError("SamsungHealth CSC feature hook failed", t)
+            xlog(t)
         }
 
         try {
@@ -320,12 +320,11 @@ object SamsungHealth {
                     it.returnType == Boolean::class.javaPrimitiveType &&
                         it.parameterTypes.contentEquals(arrayOf(Context::class.java))
                 }
-                .forEach {
-                    XposedBridge.hookMethod(it, XC_MethodReplacement.returnConstant(true))
+                .forEach { method ->
+                    xposedModule.hook(method).intercept { true }
                 }
-            log("SamsungHealth country features unlocked")
         } catch (t: Throwable) {
-            logError("SamsungHealth country condition hook failed", t)
+            xlog(t)
         }
 
         try {
@@ -335,17 +334,16 @@ object SamsungHealth {
                 "getIsCountryMatched" to true,
                 "getIsSupportedCountry" to true
             ).forEach { (methodName, result) ->
-                XposedBridge.hookAllMethods(
-                    responseClass,
-                    methodName,
-                    XC_MethodReplacement.returnConstant(result)
-                )
+                responseClass.declaredMethods.filter { it.name == methodName }.forEach { method ->
+                    xposedModule.hook(method).intercept { result }
+                }
             }
         } catch (t: Throwable) {
-            logError("SamsungHealth watch country status hook failed", t)
+            xlog(t)
         }
     }
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun hookAccessoryProfiles(classLoader: ClassLoader) {
         try {
             val clazz = classLoader.loadClass(ACCESSORY_INFO_CLASS)
@@ -357,12 +355,11 @@ object SamsungHealth {
                             arrayOf(Int::class.javaPrimitiveType)
                         )
                 }
-                .forEach {
-                    XposedBridge.hookMethod(it, XC_MethodReplacement.returnConstant(true))
+                .forEach { method ->
+                    xposedModule.hook(method).intercept { true }
                 }
-            log("SamsungHealth accessory profiles unlocked")
         } catch (t: Throwable) {
-            logError("SamsungHealth accessory profile hook failed", t)
+            xlog(t)
         }
     }
 }

@@ -20,19 +20,10 @@ class Main : XposedModule() {
 
     override fun onModuleLoaded(param: XposedModuleInterface.ModuleLoadedParam) {
         processName = param.processName
-        de.robv.android.xposed.XposedBridge.init(this)
     }
 
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) = with(param) {
-        de.robv.android.xposed.XposedBridge.init(this@Main)
         val preference = PreferenceProvider.loadPreference() ?: return@with
-        val lpparam = de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam(
-            packageName = packageName,
-            processName = processName,
-            classLoader = classLoader,
-            appInfo = appInfo,
-            isFirstApplication = isFirstPackage
-        )
 
         when (packageName) {
             Package.BROWSER -> {
@@ -80,7 +71,7 @@ class Main : XposedModule() {
                 }
 
                 if (preference.call.mdecDeviceType != 0) {
-                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                    Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
                 }
             }
 
@@ -110,7 +101,7 @@ class Main : XposedModule() {
 
             Package.STORAGE_AGENT -> {
                 if (preference.other.supportGalleryGoogleSync) {
-                    StorageAgent.bypassCountryCheck(lpparam)
+                    StorageAgent.bypassCountryCheck()
                 }
             }
 
@@ -127,7 +118,7 @@ class Main : XposedModule() {
                     samsungHealth.unlockCountryFeatures ||
                     samsungHealth.unlockAccessoryProfiles
                 ) {
-                    SamsungHealth.init(lpparam, samsungHealth)
+                    SamsungHealth.init(samsungHealth)
                 }
             }
 
@@ -139,7 +130,7 @@ class Main : XposedModule() {
                 }
 
                 if (preference.call.mdecDeviceType != 0) {
-                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                    Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
                 }
             }
 
@@ -184,19 +175,19 @@ class Main : XposedModule() {
 
             Package.PHONE -> {
                 if (preference.call.mdecDeviceType != 0) {
-                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                    Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
                 }
             }
 
             Package.IMS_SERVICE -> {
                 if (preference.call.mdecDeviceType != 0) {
-                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                    Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
                 }
             }
 
             Package.TELECOM -> {
                 if (preference.call.mdecDeviceType != 0) {
-                    Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+                    Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
                 }
             }
 
@@ -205,8 +196,8 @@ class Main : XposedModule() {
                     Messaging.isSupportBlock()
                 }
                 if (preference.call.mdecDeviceType != 0) {
-                    Messaging.preventCmcRestart(lpparam)
-                    Messaging.showCmcMessageIndicator(lpparam)
+                    Messaging.preventCmcRestart()
+                    Messaging.showCmcMessageIndicator()
                 }
             }
 
@@ -286,7 +277,7 @@ class Main : XposedModule() {
 
             Package.SHARE_LIVE -> {
                 if (preference.other.enableGoogleQuickShare) {
-                    QuickShare.enableGoogleQuickShare(lpparam)
+                    QuickShare.enableGoogleQuickShare()
                 }
             }
 
@@ -358,7 +349,7 @@ class Main : XposedModule() {
 
                 if (preference.systemUI.statusBar.setStatusBarClockFormat) {
                     val format = preference.systemUI.statusBar.statusBarClockFormat
-                    StatusBarClock.setStatusBarClockStyle(lpparam, format)
+                    StatusBarClock.setStatusBarClockStyle(format)
                 }
 
                 if (preference.systemUI.statusBar.setStatusBarClockTextScale) {
@@ -367,7 +358,7 @@ class Main : XposedModule() {
                 }
 
                 if (preference.systemUI.statusBar.updateStatusBarClockEverySecond) {
-                    StatusBarClock.updateStatusBarClockEverySecond(lpparam)
+                    StatusBarClock.updateStatusBarClockEverySecond()
                 }
 
                 if (preference.systemUI.statusBar.hideSecureFolderStatusBarIcon) {
@@ -551,18 +542,17 @@ class Main : XposedModule() {
                 if (preference.bixby.injectModel ||
                     preference.bixby.labsMgr ||
                     preference.bixby.wwvBypass) {
-                    Bixby.init(lpparam, preference.bixby)
+                    Bixby.init(preference.bixby)
                 }
             }
 
             Package.NFC -> {
-                Nfc.init(lpparam, preference.nfc.enableSimulation)
+                Nfc.init(preference.nfc.enableSimulation)
             }
         }
     }
 
     override fun onSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) = with(param) {
-        de.robv.android.xposed.XposedBridge.init(this@Main)
         val preference = PreferenceProvider.loadPreference() ?: return@with
 
         if (preference.android.disableWritingToolkitGlobally) {
@@ -608,14 +598,7 @@ class Main : XposedModule() {
         }
 
         if (preference.call.mdecDeviceType != 0) {
-            val lpparam = de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam(
-                packageName = Package.ANDROID,
-                processName = "system",
-                classLoader = classLoader,
-                appInfo = null,
-                isFirstApplication = true
-            )
-            Call.setCallAndTextDeviceType(lpparam, preference.call.mdecDeviceType)
+            Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
         }
     }
 }

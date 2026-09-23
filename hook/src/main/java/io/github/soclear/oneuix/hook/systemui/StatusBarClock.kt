@@ -9,15 +9,12 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.widget.TextView
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedHelpers.findAndHookMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
-import de.robv.android.xposed.XposedHelpers.setObjectField
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
-import io.github.soclear.oneuix.hook.util.log
-import io.github.soclear.oneuix.hook.util.logError
+import io.github.soclear.oneuix.hook.util.reflect
+import io.github.soclear.oneuix.hook.util.xlog
 import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -29,19 +26,19 @@ import java.util.Locale
 import java.util.WeakHashMap
 
 object StatusBarClock {
-    fun updateStatusBarClockEverySecond(loadPackageParam: LoadPackageParam) {
-        if (loadPackageParam.packageName != Package.SYSTEMUI) return
-        setupSecondUpdate(loadPackageParam)
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun updateStatusBarClockEverySecond() {
+        if (param.packageName != Package.SYSTEMUI) return
+        setupSecondUpdate()
     }
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun setStatusBarClockStyle(
-        loadPackageParam: LoadPackageParam,
         format: String,
         needsSecondUpdate: Boolean = false,
     ) {
-        if (loadPackageParam.packageName != Package.SYSTEMUI) return
+        if (param.packageName != Package.SYSTEMUI) return
 
-        // Note: {temp} is intentionally event-driven (via battery receiver) and does NOT force a 1-second polling loop
         val autoDetectSecondUpdate = format.contains("ss") ||
             format.contains("SS") ||
             format.contains("{sec}")
@@ -49,13 +46,21 @@ object StatusBarClock {
         val shouldEnableSecondUpdate = needsSecondUpdate || autoDetectSecondUpdate
 
         if (shouldEnableSecondUpdate) {
-            setupSecondUpdate(loadPackageParam)
+            setupSecondUpdate()
         }
 
-        val callback = object : XC_MethodHook() {
-            override fun beforeHookedMethod(param: MethodHookParam) {
+        try {
+            val qsClockIndicatorClass = param.classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorView"
+            )
+            val bellSoundClass = param.classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockBellSound"
+            )
+            val method = qsClockIndicatorClass.getDeclaredMethod("notifyTimeChanged", bellSoundClass)
+            xposedModule.hook(method).intercept { chain ->
+                val result = chain.proceed()
                 try {
-                    val clockTextView = param.thisObject as TextView
+                    val clockTextView = chain.thisObject as TextView
                     val context = clockTextView.context
 
                     registerClockView(clockTextView)
@@ -74,24 +79,13 @@ object StatusBarClock {
                         clockTextView.text = text
                         clockTextView.contentDescription = text
                     }
-                    param.result = null
                 } catch (t: Throwable) {
-                    logError("setStatusBarClockStyle callback error", t)
+                    xlog(t)
                 }
+                result
             }
-        }
-
-        try {
-            findAndHookMethod(
-                "com.android.systemui.statusbar.policy.QSClockIndicatorView",
-                loadPackageParam.classLoader,
-                "notifyTimeChanged",
-                "com.android.systemui.statusbar.policy.QSClockBellSound",
-                callback
-            )
-            log("setStatusBarClockStyle hooked: format=$format, needsSecondUpdate=$shouldEnableSecondUpdate")
         } catch (t: Throwable) {
-            logError("setStatusBarClockStyle failed", t)
+            xlog(t)
         }
     }
 
@@ -161,31 +155,23 @@ object StatusBarClock {
     }
 
     private fun ensureBatteryReceiver(context: Context) {
-        if (isBatteryReceiverRegistered) return
-        synchronized(this) {
-            if (isBatteryReceiverRegistered) return
-            try {
-                val appContext = context.applicationContext ?: context
-                val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-                val stickyIntent = appContext.registerReceiver(batteryReceiver, filter)
-                isBatteryReceiverRegistered = true
-                if (stickyIntent != null) {
-                    updateTempFromIntent(stickyIntent)
-                } else if (cachedTempText.isEmpty()) {
-                    cachedTempText = readSysTemp() ?: ""
-                }
-            } catch (t: Throwable) {
-                logError("Failed to register battery receiver", t)
-                if (cachedTempText.isEmpty()) {
-                    cachedTempText = readSysTemp() ?: ""
+        if (!isBatteryReceiverRegistered) {
+            synchronized(this) {
+                if (!isBatteryReceiverRegistered) {
+                    val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+                    val stickyIntent = context.registerReceiver(batteryReceiver, filter)
+                    if (stickyIntent != null) {
+                        updateTempFromIntent(stickyIntent)
+                    }
+                    isBatteryReceiverRegistered = true
                 }
             }
         }
     }
 
     private fun updateTempFromIntent(intent: Intent) {
-        val tempRaw = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0)
-        if (tempRaw > 0) {
+        val tempRaw = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+        if (tempRaw != -1) {
             val tempCelsius = tempRaw / 10.0f
             val newTemp = String.format(Locale.getDefault(), "%.1f°C", tempCelsius)
             if (newTemp != cachedTempText) {
@@ -194,61 +180,75 @@ object StatusBarClock {
                     updateAllClockViews()
                 }
             }
+        } else {
+            val sysTemp = readSysTemp()
+            if (sysTemp != null && sysTemp != cachedTempText) {
+                cachedTempText = sysTemp
+                if (clockFormat.contains("{temp}")) {
+                    updateAllClockViews()
+                }
+            }
         }
     }
 
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     @Synchronized
-    private fun setupSecondUpdate(loadPackageParam: LoadPackageParam) {
+    private fun setupSecondUpdate() {
         if (secondUpdateHooksInstalled) return
         secondUpdateHooksInstalled = true
 
         try {
-            findAndHookMethod(
-                "com.android.systemui.statusbar.policy.QSClockIndicatorViewController",
-                loadPackageParam.classLoader,
-                "onViewAttached",
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        val clockTextView = getObjectField(param.thisObject, "view") as TextView
-                        clockTextView.fontFeatureSettings = "tnum"
-                        registerClockView(clockTextView)
-                    }
-                }
+            val controllerClass = param.classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorViewController"
             )
+            val onViewAttachedMethod = controllerClass.getDeclaredMethod("onViewAttached")
+            xposedModule.hook(onViewAttachedMethod).intercept { chain ->
+                val result = chain.proceed()
+                val clockTextView = (chain.thisObject.reflect["mView"] as? TextView)
+                    ?: (chain.thisObject.reflect["view"] as? TextView)
+                if (clockTextView != null) {
+                    clockTextView.fontFeatureSettings = "tnum"
+                    registerClockView(clockTextView)
+                }
+                result
+            }
         } catch (_: Throwable) {}
 
         try {
-            findAndHookMethod(
-                "com.android.systemui.statusbar.policy.QSClockQuickStarHelper",
-                loadPackageParam.classLoader,
-                "updateSecondsClockHandler",
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        val mSecondsHandler = getObjectField(param.thisObject, "mSecondsHandler")
-                        if (mSecondsHandler == null) {
-                            val looper = Looper.myLooper() ?: return
-                            val handler = Handler(looper)
-                            setObjectField(param.thisObject, "mSecondsHandler", handler)
-                            val mSecondTick = getObjectField(param.thisObject, "mSecondTick") as? Runnable ?: return
+            val helperClass = param.classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockQuickStarHelper"
+            )
+            val updateMethod = helperClass.getDeclaredMethod("updateSecondsClockHandler")
+            xposedModule.hook(updateMethod).intercept { chain ->
+                val result = chain.proceed()
+                val mSecondsHandler = chain.thisObject.reflect["mSecondsHandler"]
+                if (mSecondsHandler == null) {
+                    val looper = Looper.myLooper()
+                    if (looper != null) {
+                        val handler = Handler(looper)
+                        chain.thisObject.reflect["mSecondsHandler"] = handler
+                        val mSecondTick = chain.thisObject.reflect["mSecondTick"] as? Runnable
+                        if (mSecondTick != null) {
                             handler.post(mSecondTick)
-                            log("setupSecondUpdate: started system second update")
                         }
                     }
                 }
-            )
-            log("setupSecondUpdate: hook installed")
+                result
+            }
         } catch (t: Throwable) {
-            logError("setupSecondUpdate failed", t)
+            xlog(t)
         }
 
         try {
-            findAndHookMethod(
-                "com.android.systemui.statusbar.policy.QSClockIndicatorView",
-                loadPackageParam.classLoader,
-                "onViewDetached",
-                object : XC_MethodHook() {
-                    override fun afterHookedMethod(param: MethodHookParam) {
-                        val clockTextView = param.thisObject as? TextView
+            val indicatorClass = param.classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorView"
+            )
+            indicatorClass.declaredMethods
+                .filter { it.name == "onViewDetached" || it.name == "onDetachedFromWindow" }
+                .forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        val result = chain.proceed()
+                        val clockTextView = chain.thisObject as? TextView
                         if (clockTextView != null) {
                             synchronized(clockViews) {
                                 clockViews.remove(clockTextView)
@@ -257,9 +257,9 @@ object StatusBarClock {
                                 }
                             }
                         }
+                        result
                     }
                 }
-            )
         } catch (_: Throwable) {}
     }
 
@@ -268,7 +268,7 @@ object StatusBarClock {
 
         val mainHandler = Handler(Looper.getMainLooper())
         secondUpdateHandler = mainHandler
-        secondUpdateRunnable = object : Runnable {
+        val runnable = object : Runnable {
             override fun run() {
                 val handler = secondUpdateHandler ?: return
                 try {
@@ -280,15 +280,14 @@ object StatusBarClock {
                 handler.postDelayed(this, 1000)
             }
         }
-        mainHandler.post(secondUpdateRunnable!!)
-        log("ensureSecondUpdateRunning: started")
+        secondUpdateRunnable = runnable
+        mainHandler.post(runnable)
     }
 
     private fun stopSecondUpdate() {
         secondUpdateRunnable?.let { secondUpdateHandler?.removeCallbacks(it) }
         secondUpdateHandler = null
         secondUpdateRunnable = null
-        log("stopSecondUpdate: stopped")
     }
 
     private fun formatClockText(format: String, context: Context): String {
@@ -391,18 +390,6 @@ object StatusBarClock {
             } catch (_: Throwable) {}
         }
         return null
-    }
-
-    private fun getDateStyleText(context: Context, style: Int): String? {
-        return when (style) {
-            0 -> getSimpleDate()
-            1 -> getLunarDate()
-            2 -> getBatteryTempText(context)
-            3 -> getRefreshRate(context)
-            4 -> getChineseTimeHour()
-            5 -> getSeconds()
-            else -> null
-        }
     }
 
     private fun getSimpleDate(): String {

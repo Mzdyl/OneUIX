@@ -1,68 +1,68 @@
 package io.github.soclear.oneuix.hook
 
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.util.xlog
 
 object Nfc {
-    fun init(lpparam: LoadPackageParam, enableSimulation: Boolean) {
-        if (lpparam.packageName != Package.NFC) return
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun init(enableSimulation: Boolean) {
+        if (param.packageName != Package.NFC) return
 
-        bypassShellNfcPrompt(lpparam)
+        bypassShellNfcPrompt()
 
         if (enableSimulation) {
-            overrideRoutingOptions(lpparam)
+            overrideRoutingOptions()
         }
     }
 
-    private fun bypassShellNfcPrompt(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun bypassShellNfcPrompt() {
         try {
-            val adapterServiceClass = XposedHelpers.findClassIfExists(
-                "com.android.nfc.NfcService\$NfcAdapterService",
-                lpparam.classLoader
-            ) ?: return
+            val adapterServiceClass = runCatching {
+                param.classLoader.loadClass("com.android.nfc.NfcService\$NfcAdapterService")
+            }.getOrNull() ?: return
 
-            XposedBridge.hookAllMethods(adapterServiceClass, "enable", object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    val pkg = param.args.firstOrNull() as? String
+            adapterServiceClass.declaredMethods.filter { it.name == "enable" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val pkg = chain.args.firstOrNull() as? String
                     if (pkg == "com.android.shell" || pkg == "io.github.soclear.oneuix" || pkg == "io.github.mzdyl.oneuix" || pkg == "root") {
-                        param.args[0] = "com.android.settings"
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[0] = "com.android.settings"
+                        chain.proceed(newArgs)
+                    } else {
+                        chain.proceed()
                     }
                 }
-            })
-        } catch (_: Throwable) {}
+            }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
     }
 
-    private fun overrideRoutingOptions(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun overrideRoutingOptions() {
         try {
-            val routingManagerClass = XposedHelpers.findClassIfExists(
-                "com.android.nfc.cardemulation.RoutingOptionManager",
-                lpparam.classLoader
-            )
-            if (routingManagerClass != null) {
-                tryHookMethod(routingManagerClass, "isAutoChangeEnabled", false)
-                tryHookMethod(routingManagerClass, "isDefaultRouteAutoChange", false)
-                tryHookMethod(routingManagerClass, "getDefaultRoute", 0)
-                tryHookMethod(routingManagerClass, "getDefaultOffHostRoute", 0)
-                tryHookMethod(routingManagerClass, "getDefaultIsoDepRoute", 0)
-            }
-        } catch (_: Throwable) {}
-    }
+            val routingManagerClass = runCatching {
+                param.classLoader.loadClass("com.android.nfc.cardemulation.RoutingOptionManager")
+            }.getOrNull() ?: return
 
-    private fun tryHookMethod(clazz: Class<*>, methodName: String, returnValue: Any) {
-        try {
-            val methods = clazz.declaredMethods.filter { it.name == methodName }
-            for (method in methods) {
-                XposedHelpers.findAndHookMethod(
-                    clazz,
-                    method.name,
-                    *method.parameterTypes,
-                    XC_MethodReplacement.returnConstant(returnValue)
-                )
+            val booleanMethods = listOf("isAutoChangeEnabled", "isDefaultRouteAutoChange")
+            booleanMethods.forEach { methodName ->
+                routingManagerClass.declaredMethods.filter { it.name == methodName }.forEach { method ->
+                    xposedModule.hook(method).intercept { false }
+                }
             }
-        } catch (_: Throwable) {}
+
+            val intMethods = listOf("getDefaultRoute", "getDefaultOffHostRoute", "getDefaultIsoDepRoute")
+            intMethods.forEach { methodName ->
+                routingManagerClass.declaredMethods.filter { it.name == methodName }.forEach { method ->
+                    xposedModule.hook(method).intercept { 0 }
+                }
+            }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
     }
 }

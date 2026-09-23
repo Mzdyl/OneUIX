@@ -27,18 +27,6 @@ object Weather {
         } catch (t: Throwable) {
             xlog(t)
         }
-        /*
-        findAndHookMethod(
-            "com.samsung.android.weather.data.model.forecast.ForecastProviderManagerImpl",
-            loadPackageParam.classLoader,
-            "getDeviceCpType",
-            object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    param.result = callMethod(param.thisObject, "getInfo", "HUA")
-                }
-            }
-        )
-         */
     }
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)

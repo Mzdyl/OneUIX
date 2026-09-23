@@ -4,14 +4,10 @@ import android.content.Context
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.util.reflect
 
 object Messaging {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
@@ -28,8 +24,6 @@ object Messaging {
             "enableAlwaysSendSpamReport",
             "getEnableBotSpamReport",
             "getEnableSpamReport4Kor",
-//            "isSupportAIFeature",
-//            "isSupportAISpam",
             "isSupportMaliciousMessageDetection",
             "isSupportMaliciousMessageDetectionAndSpamBlocker",
             "isSupportBlockSpamByAi",
@@ -48,186 +42,138 @@ object Messaging {
         }
     }
 
-    fun preventCmcRestart(loadPackageParam: LoadPackageParam) {
-        if (loadPackageParam.packageName != Package.MESSAGING) return
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun preventCmcRestart() {
+        if (param.packageName != Package.MESSAGING) return
+        val classLoader = param.classLoader
 
-        val cmcFeatureLoadUtilsClass = XposedHelpers.findClassIfExists(
-            "com.samsung.android.messaging.common.configuration.cmc.CmcFeatureLoadUtils",
-            loadPackageParam.classLoader
-        )
+        val cmcFeatureLoadUtilsClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.common.configuration.cmc.CmcFeatureLoadUtils")
+        }.getOrNull()
         if (cmcFeatureLoadUtilsClass != null) {
-            try {
-                XposedBridge.hookAllMethods(
-                    cmcFeatureLoadUtilsClass,
-                    "compareFeatures",
-                    XC_MethodReplacement.returnConstant(true)
-                )
-            } catch (_: Throwable) {
+            cmcFeatureLoadUtilsClass.declaredMethods.filter { it.name == "compareFeatures" }.forEach {
+                xposedModule.hook(it).intercept { true }
             }
-
-            try {
-                XposedBridge.hookAllMethods(
-                    cmcFeatureLoadUtilsClass,
-                    "killOrRestartMessageApp",
-                    XC_MethodReplacement.DO_NOTHING
-                )
-            } catch (_: Throwable) {
+            cmcFeatureLoadUtilsClass.declaredMethods.filter { it.name == "killOrRestartMessageApp" }.forEach {
+                xposedModule.hook(it).intercept { null }
             }
-
-            try {
-                XposedBridge.hookAllMethods(
-                    cmcFeatureLoadUtilsClass,
-                    "loadFeatures",
-                    object : XC_MethodHook() {
-                        override fun beforeHookedMethod(param: MethodHookParam) {
-                            val context = param.args[0] as? Context ?: return
-                            val cmcFeatureClass = XposedHelpers.findClassIfExists(
-                                "com.samsung.android.messaging.common.configuration.cmc.CmcFeature",
-                                loadPackageParam.classLoader
-                            ) ?: return
-                            val cache = XposedHelpers.callStaticMethod(cmcFeatureClass, "getFeaturesCache")
+            cmcFeatureLoadUtilsClass.declaredMethods.filter { it.name == "loadFeatures" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val context = chain.args.firstOrNull() as? Context
+                    if (context != null) {
+                        val cmcFeatureClass = runCatching {
+                            classLoader.loadClass("com.samsung.android.messaging.common.configuration.cmc.CmcFeature")
+                        }.getOrNull()
+                        if (cmcFeatureClass != null) {
+                            val getCacheMethod = cmcFeatureClass.getDeclaredMethod("getFeaturesCache")
+                            val cache = getCacheMethod.invoke(null)
                             if (cache == null) {
-                                XposedHelpers.callStaticMethod(cmcFeatureLoadUtilsClass, "loadFeaturesCache", context)
+                                val loadCacheMethod = cmcFeatureLoadUtilsClass.getDeclaredMethod("loadFeaturesCache", Context::class.java)
+                                loadCacheMethod.invoke(null, context)
                             }
                         }
                     }
-                )
-            } catch (_: Throwable) {
+                    chain.proceed()
+                }
             }
         }
 
-        val cmcFeatureClass = XposedHelpers.findClassIfExists(
-            "com.samsung.android.messaging.common.configuration.cmc.CmcFeature",
-            loadPackageParam.classLoader
-        )
+        val cmcFeatureClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.common.configuration.cmc.CmcFeature")
+        }.getOrNull()
         if (cmcFeatureClass != null) {
-            try {
-                XposedBridge.hookAllMethods(
-                    cmcFeatureClass,
-                    "needToKillAndRestartMsgApp",
-                    XC_MethodReplacement.returnConstant(false)
-                )
-            } catch (_: Throwable) {
+            cmcFeatureClass.declaredMethods.filter { it.name == "needToKillAndRestartMsgApp" }.forEach {
+                xposedModule.hook(it).intercept { false }
             }
         }
     }
 
-    fun showCmcMessageIndicator(loadPackageParam: LoadPackageParam) {
-        if (loadPackageParam.packageName != Package.MESSAGING) return
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun showCmcMessageIndicator() {
+        if (param.packageName != Package.MESSAGING) return
+        val classLoader = param.classLoader
 
-        val cmcOpenUtilsClass = XposedHelpers.findClassIfExists(
-            "com.samsung.android.messaging.common.cmc.CmcOpenUtils",
-            loadPackageParam.classLoader
-        )
+        val cmcOpenUtilsClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.common.cmc.CmcOpenUtils")
+        }.getOrNull()
         if (cmcOpenUtilsClass != null) {
-            try {
-                XposedHelpers.findAndHookMethod(
-                    cmcOpenUtilsClass,
-                    "isCmcOpenMessageForView",
-                    String::class.java,
-                    object : XC_MethodReplacement() {
-                        override fun replaceHookedMethod(param: MethodHookParam): Any {
-                            val str = param.args[0] as? String ?: return false
-                            return XposedHelpers.callStaticMethod(
-                                cmcOpenUtilsClass,
-                                "isCmcOpenMessage",
-                                str
-                            ) as? Boolean ?: false
-                        }
-                    }
-                )
-            } catch (_: Throwable) {
+            runCatching {
+                val isCmcOpenMessageForViewMethod = cmcOpenUtilsClass.getDeclaredMethod("isCmcOpenMessageForView", String::class.java)
+                val isCmcOpenMessageMethod = cmcOpenUtilsClass.getDeclaredMethod("isCmcOpenMessage", String::class.java)
+                xposedModule.hook(isCmcOpenMessageForViewMethod).intercept { chain ->
+                    val str = chain.args[0] as? String ?: return@intercept false
+                    isCmcOpenMessageMethod.invoke(null, str) as? Boolean ?: false
+                }
             }
 
-            try {
-                XposedBridge.hookAllMethods(
-                    cmcOpenUtilsClass,
-                    "isCmcSwitcherSupportState",
-                    XC_MethodReplacement.returnConstant(true)
-                )
-            } catch (_: Throwable) {
+            cmcOpenUtilsClass.declaredMethods.filter { it.name == "isCmcSwitcherSupportState" }.forEach {
+                xposedModule.hook(it).intercept { true }
             }
         }
 
-        val bottomViewClass = XposedHelpers.findClassIfExists(
-            "com.samsung.android.messaging.ui.view.bubble.item.BubbleInfoBottomView",
-            loadPackageParam.classLoader
-        )
+        val bottomViewClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.ui.view.bubble.item.BubbleInfoBottomView")
+        }.getOrNull()
         val vClass = bottomViewClass?.superclass
         if (vClass != null) {
-            try {
-                XposedBridge.hookAllMethods(
-                    vClass,
-                    "d",
-                    object : XC_MethodHook() {
-                        override fun afterHookedMethod(param: MethodHookParam) {
-                            val isCmc = param.args[1] as? Boolean ?: false
-                            if (isCmc) {
-                                try {
-                                    val simSlotImg = XposedHelpers.getObjectField(param.thisObject, "s") as? View
-                                    simSlotImg?.visibility = View.GONE
-                                } catch (_: Throwable) {
-                                }
-                            }
-                        }
+            vClass.declaredMethods.filter { it.name == "d" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val result = chain.proceed()
+                    val isCmc = chain.args.getOrNull(1) as? Boolean ?: false
+                    if (isCmc) {
+                        try {
+                            val simSlotImg = chain.thisObject.reflect["s"] as? View
+                            simSlotImg?.visibility = View.GONE
+                        } catch (_: Throwable) {}
                     }
-                )
-            } catch (_: Throwable) {
+                    result
+                }
             }
         }
 
-        val bubbleListItemClass = XposedHelpers.findClassIfExists(
-            "com.samsung.android.messaging.ui.view.bubble.item.BubbleListItem",
-            loadPackageParam.classLoader
-        )
+        val bubbleListItemClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.ui.view.bubble.item.BubbleListItem")
+        }.getOrNull()
         if (bubbleListItemClass != null) {
-            try {
-                val oMethod = bubbleListItemClass.declaredMethods.firstOrNull { it.name == "o" && it.parameterCount == 0 }
-                if (oMethod != null) {
-                    XposedBridge.hookMethod(
-                        oMethod,
-                        object : XC_MethodHook() {
-                            override fun afterHookedMethod(param: MethodHookParam) {
-                                try {
-                                    val item = runCatching {
-                                        XposedHelpers.callMethod(param.thisObject, "getMessagePartsItem")
-                                    }.getOrNull() ?: runCatching {
-                                        XposedHelpers.getObjectField(param.thisObject, "messagePartsItem")
-                                    }.getOrNull() ?: runCatching {
-                                        XposedHelpers.getObjectField(param.thisObject, "w")
-                                    }.getOrNull() ?: return
-                                    var isCmc = false
-                                    for (f in item.javaClass.declaredFields) {
-                                        if (f.type == String::class.java) {
-                                            f.isAccessible = true
-                                            val v = f.get(item) as? String ?: continue
-                                            if (v.contains("relayMessage") || v.contains("syncedMessage")) {
-                                                isCmc = true
-                                                break
-                                            }
+            bubbleListItemClass.declaredMethods.filter { it.name == "o" && it.parameterCount == 0 }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val result = chain.proceed()
+                    try {
+                        val item = runCatching { chain.thisObject.reflect.call("getMessagePartsItem") }.getOrNull()
+                            ?: runCatching { chain.thisObject.reflect["messagePartsItem"] }.getOrNull()
+                            ?: runCatching { chain.thisObject.reflect["w"] }.getOrNull()
+                        if (item != null) {
+                            var isCmc = false
+                            for (f in item.javaClass.declaredFields) {
+                                if (f.type == String::class.java) {
+                                    f.isAccessible = true
+                                    val v = f.get(item) as? String ?: continue
+                                    if (v.contains("relayMessage") || v.contains("syncedMessage")) {
+                                        isCmc = true
+                                        break
+                                    }
+                                }
+                            }
+                            if (isCmc) {
+                                val container = chain.thisObject as? LinearLayout
+                                if (container != null) {
+                                    val res = container.resources
+                                    val slotId = res.getIdentifier("announcement_list_item_divider_sim_slot", "id", param.packageName)
+                                    val devIconId = res.getIdentifier("orc_ic_device_cmc", "drawable", param.packageName)
+                                    if (slotId != 0 && devIconId != 0) {
+                                        val imageView = container.findViewById<ImageView>(slotId)
+                                            ?: (runCatching { chain.thisObject.reflect["l"] as? View }.getOrNull())?.findViewById(slotId)
+                                        if (imageView != null) {
+                                            imageView.visibility = View.VISIBLE
+                                            imageView.setImageResource(devIconId)
                                         }
                                     }
-                                    if (isCmc) {
-                                        val container = param.thisObject as? LinearLayout ?: return
-                                        val res = container.resources
-                                        val slotId = res.getIdentifier("announcement_list_item_divider_sim_slot", "id", loadPackageParam.packageName)
-                                        val devIconId = res.getIdentifier("orc_ic_device_cmc", "drawable", loadPackageParam.packageName)
-                                        if (slotId != 0 && devIconId != 0) {
-                                            val imageView = container.findViewById<ImageView>(slotId)
-                                                ?: (runCatching { XposedHelpers.getObjectField(param.thisObject, "l") as? View }.getOrNull())?.findViewById(slotId)
-                                            if (imageView != null) {
-                                                imageView.visibility = View.VISIBLE
-                                                imageView.setImageResource(devIconId)
-                                            }
-                                        }
-                                    }
-                                } catch (_: Throwable) {
                                 }
                             }
                         }
-                    )
+                    } catch (_: Throwable) {}
+                    result
                 }
-            } catch (_: Throwable) {
             }
         }
     }

@@ -3,10 +3,8 @@ package io.github.soclear.oneuix.hook
 import android.content.Context
 import android.os.Build
 import android.os.SystemClock
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers.findAndHookMethod
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.DebugFileLogger
@@ -20,88 +18,100 @@ import java.util.WeakHashMap
 object Bixby {
 
     private fun log(msg: String) {
-        if (DebugFileLogger.isEnabled) XposedBridge.log("[OneUIX-Bixby] $msg")
+        if (DebugFileLogger.isEnabled) android.util.Log.i("OneUIX-Bixby", msg)
         DebugFileLogger.log("Bixby", msg)
     }
 
     private fun logError(msg: String, t: Throwable? = null) {
-        XposedBridge.log("[OneUIX-Bixby] $msg")
-        if (t != null) XposedBridge.log(t)
+        android.util.Log.e("OneUIX-Bixby", msg, t)
         DebugFileLogger.logError("Bixby", msg, t)
     }
 
-    fun init(lpparam: LoadPackageParam, p: Preference.Bixby) {
-        DebugFileLogger.attachToProcess(lpparam)
-        when (lpparam.packageName) {
-            Package.BIXBY_AGENT  -> initBixbyAgent(lpparam, p)
-            Package.BIXBY_WAKEUP -> initBixbyWakeup(lpparam, p)
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun init(p: Preference.Bixby) {
+        DebugFileLogger.attachToProcess(param.packageName)
+        when (param.packageName) {
+            Package.BIXBY_AGENT  -> initBixbyAgent(p)
+            Package.BIXBY_WAKEUP -> initBixbyWakeup(p)
         }
     }
 
-    private fun initBixbyAgent(lpparam: LoadPackageParam, p: Preference.Bixby) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun initBixbyAgent(p: Preference.Bixby) {
         log("Init offline=${p.injectModel} customWakeup=${p.labsMgr} wwv=${p.wwvBypass}")
-        if (p.injectModel) hookInjectModel(lpparam)
+        if (p.injectModel) hookInjectModel()
         if (p.labsMgr) {
-            hookLabsFeatureManager(lpparam)
-            hookWakeupKeywordTypeBridge(lpparam)
-            hookAgentCustomPhraseBridge(lpparam)
-            hookCustomWakeupResourceDownload(lpparam)
-            hookAgentEnrollmentFlow(lpparam)
+            hookLabsFeatureManager()
+            hookWakeupKeywordTypeBridge()
+            hookAgentCustomPhraseBridge()
+            hookCustomWakeupResourceDownload()
+            hookAgentEnrollmentFlow()
         }
-        if (p.wwvBypass)  hookWakeupWordValidator(lpparam)
+        if (p.wwvBypass) hookWakeupWordValidator()
     }
 
-    private fun initBixbyWakeup(lpparam: LoadPackageParam, p: Preference.Bixby) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun initBixbyWakeup(p: Preference.Bixby) {
         if (p.labsMgr) {
-            hookWakeupCustomPhrase(lpparam)
-            hookCustomWakeupTrainers(lpparam)
-            hookWakeupSpotterFlow(lpparam)
+            hookWakeupCustomPhrase()
+            hookCustomWakeupTrainers()
+            hookWakeupSpotterFlow()
         }
         if (p.wwvBypass) {
-            hookWakeupWordTypeValidator(lpparam)
-            hookKwdAsianTextFix(lpparam)
+            hookWakeupWordTypeValidator()
+            hookKwdAsianTextFix()
         }
     }
 
     // ═══════ injectModel: 注入 Build.MODEL 到设备白名单缓存 ═══════
 
-    private fun hookInjectModel(lpparam: LoadPackageParam) {
-        findAndHookMethod("android.app.SharedPreferencesImpl", lpparam.classLoader,
-            "getString", String::class.java, String::class.java,
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(p: MethodHookParam) {
-                    if (p.args[0] == "pref_key_on_device_config_cache") {
-                        val orig = p.result as? String ?: p.args[1] as? String ?: ""
-                        if (!orig.contains(Build.MODEL)) {
-                            p.result = if (orig.isEmpty()) Build.MODEL else "$orig,${Build.MODEL}"
-                            log("injectModel matched cache='$orig' result='${p.result}'")
-                        }
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookInjectModel() {
+        try {
+            val spClass = param.classLoader.loadClass("android.app.SharedPreferencesImpl")
+            val method = spClass.getDeclaredMethod("getString", String::class.java, String::class.java)
+            xposedModule.hook(method).intercept { chain ->
+                val result = chain.proceed()
+                if (chain.args[0] == "pref_key_on_device_config_cache") {
+                    val orig = result as? String ?: chain.args[1] as? String ?: ""
+                    if (!orig.contains(Build.MODEL)) {
+                        val newResult = if (orig.isEmpty()) Build.MODEL else "$orig,${Build.MODEL}"
+                        log("injectModel matched cache='$orig' result='$newResult'")
+                        newResult
+                    } else {
+                        result
                     }
+                } else {
+                    result
                 }
-            })
+            }
+        } catch (t: Throwable) {
+            logError("hookInjectModel failed", t)
+        }
     }
 
     // ═══════ labsMgr: 绕过 LabsFeatureManager 所有限制 ═══════
 
-    private fun hookLabsFeatureManager(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookLabsFeatureManager() {
         try {
-            val c = Class.forName("com.samsung.android.bixby.agent.common.util.datamanager.LabsFeatureManager", true, lpparam.classLoader)
+            val c = Class.forName("com.samsung.android.bixby.agent.common.util.datamanager.LabsFeatureManager", true, param.classLoader)
             for (name in arrayOf("isSupported", "isAvailable", "isEnabled", "isLabs")) {
-                findAndHookMethod(c, name, String::class.java, object : XC_MethodHook() {
-                    override fun beforeHookedMethod(mp: MethodHookParam) {
-                        if (mp.args[0] == "labs_custom_wakeup") {
-                            mp.result = true
-                            log("labsMgr forced $name(${mp.args[0]})=true")
-                        }
+                val method = c.getDeclaredMethod(name, String::class.java)
+                xposedModule.hook(method).intercept { chain ->
+                    if (chain.args[0] == "labs_custom_wakeup") {
+                        log("labsMgr forced $name(${chain.args[0]})=true")
+                        true
+                    } else {
+                        chain.proceed()
                     }
-                })
-            }
-            findAndHookMethod(c, "isLabsMenuSupported", object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    p.result = true
-                    log("labsMgr forced isLabsMenuSupported=true")
                 }
-            })
+            }
+            val isLabsMenuSupported = c.getDeclaredMethod("isLabsMenuSupported")
+            xposedModule.hook(isLabsMenuSupported).intercept {
+                log("labsMgr forced isLabsMenuSupported=true")
+                true
+            }
         } catch (t: Throwable) {
             logError("hookLabsFeatureManager failed", t)
         }
@@ -110,9 +120,10 @@ object Bixby {
     // ═══════ wwvBypass: 绕过原生库唤醒词黑名单（竞品词/脏话/政治等） ═══════
     // 签名匹配而非硬编码方法名，兼容不同 Bixby 版本
 
-    private fun hookWakeupWordValidator(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookWakeupWordValidator() {
         try {
-            val cls = lpparam.classLoader.loadClass(
+            val cls = param.classLoader.loadClass(
                 "com.samsung.voicewakeup.wwv.WakeupWordValidator"
             )
             for (m in cls.declaredMethods) {
@@ -128,15 +139,13 @@ object Bixby {
                         )
                     )
                 ) {
-                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                        override fun beforeHookedMethod(p: MethodHookParam) {
-                            p.result = true
-                            log(
-                                "wwvBypass forced length validator ${m.name} " +
-                                    "locale=${p.args[0]} keyword=${p.args[1]}"
-                            )
-                        }
-                    })
+                    xposedModule.hook(m).intercept { chain ->
+                        log(
+                            "wwvBypass forced length validator ${m.name} " +
+                                "locale=${chain.args[0]} keyword=${chain.args[1]}"
+                        )
+                        true
+                    }
                 }
                 if (m.returnType == Int::class.javaPrimitiveType &&
                     pts.contentEquals(
@@ -148,15 +157,13 @@ object Bixby {
                         )
                     )
                 ) {
-                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                        override fun beforeHookedMethod(p: MethodHookParam) {
-                            p.result = 0
-                            log(
-                                "wwvBypass forced blacklist validator ${m.name} " +
-                                    "keyword=${p.args[1]} locale=${p.args[2]}"
-                            )
-                        }
-                    })
+                    xposedModule.hook(m).intercept { chain ->
+                        log(
+                            "wwvBypass forced blacklist validator ${m.name} " +
+                                "keyword=${chain.args[1]} locale=${chain.args[2]}"
+                        )
+                        0
+                    }
                 }
             }
         } catch (t: Throwable) {
@@ -168,23 +175,22 @@ object Bixby {
     // zhCN 等非韩语 locale 直接返回 false，导致 TEXT_CUSTOM 训练失败
     // 三个 decoder 变体 (normal/bargein/acousticecho) 均有同名方法
 
-    private fun hookWakeupWordTypeValidator(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookWakeupWordTypeValidator() {
         for (cn in arrayOf(
             "com.samsung.voicewakeup.kwv.normal.custom.WakeupKwvNormalCommon",
             "com.samsung.voicewakeup.kwv.bargein.custom.WakeupKwvBargeinCommon",
             "com.samsung.voicewakeup.kwv.acousticecho.custom.WakeupKwvAcousticEchoCommon")) {
             try {
-                val cls = lpparam.classLoader.loadClass(cn)
+                val cls = param.classLoader.loadClass(cn)
                 var hooked = 0
                 for (m in cls.declaredMethods) {
                     if (m.returnType != Boolean::class.javaPrimitiveType) continue
                     if (!m.parameterTypes.contentEquals(arrayOf(String::class.java, Locale::class.java))) continue
-                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                        override fun beforeHookedMethod(p: MethodHookParam) {
-                            p.result = true
-                            log("kwv locale bypass $cn.${m.name} text=${p.args[0]} locale=${p.args[1]}")
-                        }
-                    })
+                    xposedModule.hook(m).intercept { chain ->
+                        log("kwv locale bypass $cn.${m.name} text=${chain.args[0]} locale=${chain.args[1]}")
+                        true
+                    }
                     hooked++
                 }
                 log("kwv locale bypass installed class=$cn hooks=$hooked")
@@ -198,13 +204,14 @@ object Bixby {
     // native KWD 引擎无法处理中文/韩文/日文文本，verifyRun 始终返回 0
     // 检测到 mKeyword 含相关文字时强改结果为 1，实际唤醒由 KWV 音频匹配把关
 
-    private fun hookKwdAsianTextFix(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookKwdAsianTextFix() {
         for (kn in arrayOf(
             "com.samsung.voicewakeup.kwd.normal.custom.WakeupKwdNormalCustom",
             "com.samsung.voicewakeup.kwd.bargein.custom.WakeupKwdBargeinCustom",
             "com.samsung.voicewakeup.kwd.acousticecho.custom.WakeupKwdAcousticEchoCustom")) {
             try {
-                val cls = lpparam.classLoader.loadClass(kn)
+                val cls = param.classLoader.loadClass(kn)
                 var kwField: java.lang.reflect.Field? = null
                 try { kwField = cls.getDeclaredField("mKeyword"); kwField.isAccessible = true } catch (_: Throwable) {}
                 var hooked = 0
@@ -218,17 +225,18 @@ object Bixby {
                     if (!isVr) continue
 
                     val kwF = kwField
-                    XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                        override fun afterHookedMethod(p: MethodHookParam) {
-                            val ret = p.result as? Int ?: return
-                            if (ret != 0) return
-                            val kw = try { kwF?.get(p.thisObject) ?: "" } catch (_: Throwable) { "" }
-                            if ((kw as? String)?.any { it.isAsianWakeupCharacter() } == true) {
-                                p.result = 1
-                                log("kwd asian text fix $kn.${m.name} keyword=$kw")
-                            }
+                    xposedModule.hook(m).intercept { chain ->
+                        val result = chain.proceed()
+                        val ret = result as? Int ?: return@intercept result
+                        if (ret != 0) return@intercept ret
+                        val kw = try { kwF?.get(chain.thisObject) ?: "" } catch (_: Throwable) { "" }
+                        if ((kw as? String)?.any { it.isAsianWakeupCharacter() } == true) {
+                            log("kwd asian text fix $kn.${m.name} keyword=$kw")
+                            1
+                        } else {
+                            ret
                         }
-                    })
+                    }
                     hooked++
                 }
                 log("kwd asian text fix installed class=$kn hooks=$hooked hasKeywordField=${kwField != null}")
@@ -246,112 +254,127 @@ object Bixby {
 
     // ═══════ wakeup: 修复自定义短语文本返回空的问题 ═══════
 
-    private fun hookWakeupCustomPhrase(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookWakeupCustomPhrase() {
         // SP.getString → 数据源为空时从 XML 文件读取
-        findAndHookMethod("android.app.SharedPreferencesImpl", lpparam.classLoader,
-            "getString", String::class.java, String::class.java,
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(p: MethodHookParam) {
-                    if (p.args[0] == CUSTOM_WAKEUP_TEXT_KEY) {
-                        val orig = p.result as? String
-                        if (orig.isNullOrEmpty()) {
-                            val txt = readWakeupText()
-                            if (txt.isNotEmpty()) {
-                                p.result = txt
-                                log("custom phrase fallback from shared_prefs key=$CUSTOM_WAKEUP_TEXT_KEY value=$txt")
-                            }
+        try {
+            val spClass = param.classLoader.loadClass("android.app.SharedPreferencesImpl")
+            val getString = spClass.getDeclaredMethod("getString", String::class.java, String::class.java)
+            xposedModule.hook(getString).intercept { chain ->
+                val result = chain.proceed()
+                if (chain.args[0] == CUSTOM_WAKEUP_TEXT_KEY) {
+                    val orig = result as? String
+                    if (orig.isNullOrEmpty()) {
+                        val txt = readWakeupText()
+                        if (txt.isNotEmpty()) {
+                            log("custom phrase fallback from shared_prefs key=$CUSTOM_WAKEUP_TEXT_KEY value=$txt")
+                            txt
                         } else {
-                            updateWakeupTextCache(orig)
+                            result
                         }
+                    } else {
+                        updateWakeupTextCache(orig)
+                        result
                     }
+                } else {
+                    result
                 }
-            })
+            }
+        } catch (t: Throwable) {
+            logError("hookWakeupCustomPhrase getString failed", t)
+        }
+
         // MatrixCursor.addRow → ContentProvider locale 不匹配后丢弃文本
         try {
-            val c = lpparam.classLoader.loadClass("android.database.MatrixCursor")
+            val c = param.classLoader.loadClass("android.database.MatrixCursor")
             val columnNamesField = try {
                 c.getDeclaredField("columnNames").apply { isAccessible = true }
             } catch (_: Throwable) {
                 null
             }
-            findAndHookMethod(c, "addRow", arrayOfNulls<Any>(0).javaClass, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    val row = p.args[0] ?: return
-                    if (!row.javaClass.isArray) return
+            val addRow = c.getDeclaredMethod("addRow", arrayOfNulls<Any>(0).javaClass)
+            xposedModule.hook(addRow).intercept { chain ->
+                val row = chain.args.firstOrNull()
+                if (row != null && row.javaClass.isArray) {
                     try {
-                        val cols = columnNamesField?.get(p.thisObject) as? Array<*> ?: return
-                        val rowSize = ReflectArray.getLength(row)
-                        for (i in cols.indices) {
-                            if (i >= rowSize) break
-                            if (cols[i] != "customKeyword") continue
-                            val value = ReflectArray.get(row, i)
-                            if (value == null || value.toString().isEmpty()) {
-                                val txt = readWakeupText()
-                                if (txt.isNotEmpty()) {
-                                    ReflectArray.set(row, i, txt)
-                                    log("customKeyword row filled from XML cache value=$txt")
+                        val cols = columnNamesField?.get(chain.thisObject) as? Array<*>
+                        if (cols != null) {
+                            val rowSize = ReflectArray.getLength(row)
+                            for (i in cols.indices) {
+                                if (i >= rowSize) break
+                                if (cols[i] != "customKeyword") continue
+                                val value = ReflectArray.get(row, i)
+                                if (value == null || value.toString().isEmpty()) {
+                                    val txt = readWakeupText()
+                                    if (txt.isNotEmpty()) {
+                                        ReflectArray.set(row, i, txt)
+                                        log("customKeyword row filled from XML cache value=$txt")
+                                    }
+                                } else {
+                                    updateWakeupTextCache(value.toString())
                                 }
-                            } else {
-                                updateWakeupTextCache(value.toString())
                             }
                         }
                     } catch (t: Throwable) {
                         logError("MatrixCursor customKeyword patch failed", t)
                     }
                 }
-            })
+                chain.proceed()
+            }
         } catch (t: Throwable) {
             logError("hookWakeupCustomPhrase failed", t)
         }
     }
 
-    private fun hookCustomWakeupTrainers(lpparam: LoadPackageParam) {
-        hookCustomWakeupTrainerClass(lpparam, "uc.a", "CustomKwdTrainer")
-        hookCustomWakeupTrainerClass(lpparam, "uc.b", "CustomKwvTrainer")
-        hookCustomWakeupTrainerClass(lpparam, "sb.c", "CustomWakeupKwdCoreWrapper")
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookCustomWakeupTrainers() {
+        hookCustomWakeupTrainerClass("uc.a", "CustomKwdTrainer")
+        hookCustomWakeupTrainerClass("uc.b", "CustomKwvTrainer")
+        hookCustomWakeupTrainerClass("sb.c", "CustomWakeupKwdCoreWrapper")
     }
 
-    private fun hookCustomWakeupTrainerClass(lpparam: LoadPackageParam, className: String, tag: String) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookCustomWakeupTrainerClass(className: String, tag: String) {
         try {
-            val cls = lpparam.classLoader.loadClass(className)
+            val cls = param.classLoader.loadClass(className)
             var hooked = 0
             for (m in cls.declaredMethods) {
                 when {
                     m.name == "c" && m.parameterTypes.size == 2 -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun afterHookedMethod(p: MethodHookParam) {
-                                val gVar = p.args.getOrNull(0)
-                                val lVar = p.args.getOrNull(1)
-                                val wakeupWord = extractStringField(lVar, "f7970e")
-                                val debugMode = extractBooleanField(lVar, "f7968c")
-                                val locale = extractLocaleField(gVar, "f7962b")
-                                log("$tag prepare ok=${p.result} wakeupWord=$wakeupWord debug=$debugMode locale=$locale")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            val result = chain.proceed()
+                            val gVar = chain.args.getOrNull(0)
+                            val lVar = chain.args.getOrNull(1)
+                            val wakeupWord = extractStringField(lVar, "f7970e")
+                            val debugMode = extractBooleanField(lVar, "f7968c")
+                            val locale = extractLocaleField(gVar, "f7962b")
+                            log("$tag prepare ok=$result wakeupWord=$wakeupWord debug=$debugMode locale=$locale")
+                            result
+                        }
                         hooked++
                     }
                     m.name == "b" && m.parameterTypes.size == 2 -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun afterHookedMethod(p: MethodHookParam) {
-                                log("$tag train ok=${p.result}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            val result = chain.proceed()
+                            log("$tag train ok=$result")
+                            result
+                        }
                         hooked++
                     }
                     m.name == "m" && m.parameterTypes.size == 1 -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun afterHookedMethod(p: MethodHookParam) {
-                                log("$tag verifyRun ok=${p.result}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            val result = chain.proceed()
+                            log("$tag verifyRun ok=$result")
+                            result
+                        }
                         hooked++
                     }
                     m.name == "release" && m.parameterTypes.isEmpty() -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun afterHookedMethod(p: MethodHookParam) {
-                                log("$tag release")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            val result = chain.proceed()
+                            log("$tag release")
+                            result
+                        }
                         hooked++
                     }
                 }
@@ -362,28 +385,29 @@ object Bixby {
         }
     }
 
-    private fun hookWakeupKeywordTypeBridge(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookWakeupKeywordTypeBridge() {
         try {
-            val cls = lpparam.classLoader.loadClass("eh0.l0")
+            val cls = param.classLoader.loadClass("eh0.l0")
             var hooked = 0
             for (m in cls.declaredMethods) {
                 if (m.name != "l" || m.parameterTypes.size != 2) continue
                 if (m.parameterTypes[0] != Context::class.java || m.parameterTypes[1] != String::class.java) continue
-                XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                    override fun afterHookedMethod(p: MethodHookParam) {
-                        log("keywordType update ${m.name} value=${p.args.getOrNull(1)}")
-                    }
-                })
+                xposedModule.hook(m).intercept { chain ->
+                    val result = chain.proceed()
+                    log("keywordType update ${m.name} value=${chain.args.getOrNull(1)}")
+                    result
+                }
                 hooked++
             }
             for (m in cls.declaredMethods) {
                 if (m.name != "a" || m.parameterTypes.size != 1) continue
                 if (m.parameterTypes[0] != Context::class.java) continue
-                XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                    override fun afterHookedMethod(p: MethodHookParam) {
-                        log("keywordType query ${m.name} result=${p.result}")
-                    }
-                })
+                xposedModule.hook(m).intercept { chain ->
+                    val result = chain.proceed()
+                    log("keywordType query ${m.name} result=$result")
+                    result
+                }
                 hooked++
             }
             log("keywordType bridge installed hooks=$hooked")
@@ -392,9 +416,10 @@ object Bixby {
         }
     }
 
-    private fun hookAgentCustomPhraseBridge(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookAgentCustomPhraseBridge() {
         try {
-            val cls = lpparam.classLoader.loadClass("ut.m")
+            val cls = param.classLoader.loadClass("ut.m")
             val getter = cls.declaredMethods.firstOrNull { method ->
                 method.name == "a" &&
                     Modifier.isStatic(method.modifiers) &&
@@ -407,65 +432,70 @@ object Bixby {
                     if (text.isNotBlank()) updateWakeupTextCache(text)
                 }
             }
-            XposedBridge.hookMethod(getter, object : XC_MethodHook() {
-                override fun afterHookedMethod(p: MethodHookParam) {
-                    val text = p.result as? String ?: return
-                    if (text.isNotBlank()) updateWakeupTextCache(text)
-                }
-            })
+            xposedModule.hook(getter).intercept { chain ->
+                val result = chain.proceed()
+                val text = result as? String
+                if (!text.isNullOrBlank()) updateWakeupTextCache(text)
+                result
+            }
             log("custom phrase provider bridge installed")
         } catch (t: Throwable) {
             logError("hookAgentCustomPhraseBridge failed", t)
         }
     }
 
-    private fun hookCustomWakeupResourceDownload(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookCustomWakeupResourceDownload() {
         try {
-            val cls = lpparam.classLoader.loadClass("ck0.a")
+            val cls = param.classLoader.loadClass("ck0.a")
             val invoke = cls.declaredMethods.firstOrNull { method ->
                 method.name == "invoke" && method.parameterTypes.size == 1
             } ?: return
-            XposedBridge.hookMethod(invoke, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    if (extractIntField(p.thisObject, "f9823a") != 17) return
-                    val presenter = extractAnyField(p.thisObject, "f9824b") ?: return
-                    if (presenter.javaClass.name != "dk0.l") return
-                    val result = p.args.getOrNull(0) as? Int ?: return
-                    val resourceState = queryCustomWakeupResourceState(lpparam.classLoader)
-                    log("custom wakeup PUS result=$result resourceState=$resourceState")
+            xposedModule.hook(invoke).intercept { chain ->
+                if (extractIntField(chain.thisObject, "f9823a") == 17) {
+                    val presenter = extractAnyField(chain.thisObject, "f9824b")
+                    if (presenter != null && presenter.javaClass.name == "dk0.l") {
+                        val result = chain.args.getOrNull(0) as? Int
+                        if (result != null) {
+                            val resourceState = queryCustomWakeupResourceState(param.classLoader)
+                            log("custom wakeup PUS result=$result resourceState=$resourceState")
 
-                    if (result == 1) {
-                        customWakeupResourceRetryByPresenter.remove(presenter)
-                        return
-                    }
-                    if (result != -1) {
-                        customWakeupResourceRetryByPresenter.remove(presenter)
-                        return
-                    }
-                    if (resourceState == CUSTOM_WAKEUP_RESOURCE_READY) {
-                        customWakeupResourceRetryByPresenter.remove(presenter)
-                        p.args[0] = 1
-                        log("custom wakeup PUS stale failure reconciled as ready")
-                        return
-                    }
-                    if (customWakeupResourceRetryByPresenter.put(presenter, true) == true) return
-
-                    p.result = null
-                    Thread {
-                        try {
-                            Thread.sleep(CUSTOM_WAKEUP_RESOURCE_RETRY_DELAY_MILLIS)
-                            val refreshedState = queryCustomWakeupResourceState(lpparam.classLoader)
-                            val methodName = if (refreshedState == CUSTOM_WAKEUP_RESOURCE_READY) "E" else "D"
-                            presenter.javaClass.getDeclaredMethod(methodName).apply {
-                                isAccessible = true
-                            }.invoke(presenter)
-                            log("custom wakeup PUS retry action=$methodName resourceState=$refreshedState")
-                        } catch (t: Throwable) {
-                            logError("custom wakeup PUS retry failed", t)
+                            if (result == 1) {
+                                customWakeupResourceRetryByPresenter.remove(presenter)
+                                return@intercept chain.proceed()
+                            }
+                            if (result != -1) {
+                                customWakeupResourceRetryByPresenter.remove(presenter)
+                                return@intercept chain.proceed()
+                            }
+                            if (resourceState == CUSTOM_WAKEUP_RESOURCE_READY) {
+                                customWakeupResourceRetryByPresenter.remove(presenter)
+                                val newArgs = chain.args.toTypedArray()
+                                newArgs[0] = 1
+                                log("custom wakeup PUS stale failure reconciled as ready")
+                                return@intercept chain.proceed(newArgs)
+                            }
+                            if (customWakeupResourceRetryByPresenter.put(presenter, true) != true) {
+                                Thread {
+                                    try {
+                                        Thread.sleep(CUSTOM_WAKEUP_RESOURCE_RETRY_DELAY_MILLIS)
+                                        val refreshedState = queryCustomWakeupResourceState(param.classLoader)
+                                        val methodName = if (refreshedState == CUSTOM_WAKEUP_RESOURCE_READY) "E" else "D"
+                                        presenter.javaClass.getDeclaredMethod(methodName).apply {
+                                            isAccessible = true
+                                        }.invoke(presenter)
+                                        log("custom wakeup PUS retry action=$methodName resourceState=$refreshedState")
+                                    } catch (t: Throwable) {
+                                        logError("custom wakeup PUS retry failed", t)
+                                    }
+                                }.start()
+                                return@intercept null
+                            }
                         }
-                    }.start()
+                    }
                 }
-            })
+                chain.proceed()
+            }
             log("custom wakeup PUS result hook installed")
         } catch (t: Throwable) {
             logError("hookCustomWakeupResourceDownload failed", t)
@@ -481,136 +511,134 @@ object Bixby {
         }.getOrNull()
     }
 
-    private fun hookAgentEnrollmentFlow(lpparam: LoadPackageParam) {
-        hookPhraseSelectionPresenter(lpparam)
-        hookRecordingLaunch(lpparam)
-        hookEnrollManagerConstructors(lpparam)
-        hookEnrollManagers(lpparam)
-        hookEnrollCallbacks(lpparam)
-        hookSentenceSpotterFlow(lpparam)
-        hookSentenceFinalAsrFlow(lpparam)
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookAgentEnrollmentFlow() {
+        hookPhraseSelectionPresenter()
+        hookRecordingLaunch()
+        hookEnrollManagerConstructors()
+        hookEnrollManagers()
+        hookEnrollCallbacks()
+        hookSentenceSpotterFlow()
+        hookSentenceFinalAsrFlow()
     }
 
-    private fun hookEnrollManagerConstructors(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookEnrollManagerConstructors() {
         try {
-            val cls = lpparam.classLoader.loadClass("eh0.w")
-            XposedBridge.hookAllConstructors(cls, object : XC_MethodHook() {
-                override fun afterHookedMethod(p: MethodHookParam) {
+            val cls = param.classLoader.loadClass("eh0.w")
+            cls.declaredConstructors.forEach { ctor ->
+                xposedModule.hook(ctor).intercept { chain ->
+                    val result = chain.proceed()
                     cacheSentenceManagerConfig(
-                        p.thisObject,
-                        p.args.getOrNull(4) as? String
+                        chain.thisObject,
+                        chain.args.getOrNull(4) as? String
                     )
                     log(
                         "SentenceEnrollManager.ctor " +
-                            "langArg=${p.args.getOrNull(3)} " +
-                            "spotterKeywordArg=${p.args.getOrNull(4)} " +
-                            "lang=${extractStringField(p.thisObject, "f21859d")} " +
-                            "spotterKeyword=${extractStringField(p.thisObject, "f21875u")} " +
+                            "langArg=${chain.args.getOrNull(3)} " +
+                            "spotterKeywordArg=${chain.args.getOrNull(4)} " +
+                            "lang=${extractStringField(chain.thisObject, "f21859d")} " +
+                            "spotterKeyword=${extractStringField(chain.thisObject, "f21875u")} " +
                             "customText=${readWakeupText()}"
                     )
+                    result
                 }
-            })
+            }
             log("SentenceEnrollManager constructor hook installed")
         } catch (t: Throwable) {
             logError("hookEnrollManagerConstructors failed", t)
         }
     }
 
-    private fun hookPhraseSelectionPresenter(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookPhraseSelectionPresenter() {
         try {
-            val cls = lpparam.classLoader.loadClass("dk0.l")
+            val cls = param.classLoader.loadClass("dk0.l")
             for (m in cls.declaredMethods) {
                 if (m.name != "F" || !m.parameterTypes.contentEquals(arrayOf(String::class.java))) continue
-                XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                    override fun beforeHookedMethod(p: MethodHookParam) {
-                        log("VoiceWakeupOptionsPresenter.select phrase=${p.args.getOrNull(0)}")
-                    }
-                    override fun afterHookedMethod(p: MethodHookParam) {
-                        log("VoiceWakeupOptionsPresenter.select done phrase=${p.args.getOrNull(0)}")
-                    }
-                })
+                xposedModule.hook(m).intercept { chain ->
+                    log("VoiceWakeupOptionsPresenter.select phrase=${chain.args.getOrNull(0)}")
+                    val result = chain.proceed()
+                    log("VoiceWakeupOptionsPresenter.select done phrase=${chain.args.getOrNull(0)}")
+                    result
+                }
             }
         } catch (t: Throwable) {
             logError("hookPhraseSelectionPresenter failed", t)
         }
     }
 
-    private fun hookRecordingLaunch(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookRecordingLaunch() {
         try {
-            val cls = lpparam.classLoader.loadClass("dk0.f")
+            val cls = param.classLoader.loadClass("dk0.f")
             for (m in cls.declaredMethods) {
                 if (m.name != "H" || !m.parameterTypes.contentEquals(arrayOf(String::class.java))) continue
-                XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                    override fun beforeHookedMethod(p: MethodHookParam) {
-                        log("VoiceWakeupOptionsFragment.launch recording WAKEUP_PHRASE=${p.args.getOrNull(0)}")
-                    }
-                })
+                xposedModule.hook(m).intercept { chain ->
+                    log("VoiceWakeupOptionsFragment.launch recording WAKEUP_PHRASE=${chain.args.getOrNull(0)}")
+                    chain.proceed()
+                }
             }
         } catch (t: Throwable) {
             logError("hookRecordingLaunch failed", t)
         }
     }
 
-    private fun hookEnrollManagers(lpparam: LoadPackageParam) {
-        hookEnrollManagerClass(lpparam, "eh0.n", "CustomEnrollManager")
-        hookEnrollManagerClass(lpparam, "eh0.w", "SentenceEnrollManager")
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookEnrollManagers() {
+        hookEnrollManagerClass("eh0.n", "CustomEnrollManager")
+        hookEnrollManagerClass("eh0.w", "SentenceEnrollManager")
     }
 
-    private fun hookEnrollManagerClass(lpparam: LoadPackageParam, className: String, tag: String) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookEnrollManagerClass(className: String, tag: String) {
         try {
-            val cls = lpparam.classLoader.loadClass(className)
+            val cls = param.classLoader.loadClass(className)
             var hooked = 0
             for (m in cls.declaredMethods) {
                 when {
                     m.name == "prepare" && m.parameterTypes.isEmpty() -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun beforeHookedMethod(p: MethodHookParam) {
-                                log("$tag.prepare before state=${extractState(p.thisObject)} lang=${extractStringField(p.thisObject, if (className == "eh0.n") "f21826d" else "f21859d")} keyword=${extractStringField(p.thisObject, "f21875u")}")
-                            }
-                            override fun afterHookedMethod(p: MethodHookParam) {
-                                log("$tag.prepare after result=${p.result} binded=${extractBooleanField(p.thisObject, if (className == "eh0.n") "l" else "f21866k")}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            log("$tag.prepare before state=${extractState(chain.thisObject)} lang=${extractStringField(chain.thisObject, if (className == "eh0.n") "f21826d" else "f21859d")} keyword=${extractStringField(chain.thisObject, "f21875u")}")
+                            val result = chain.proceed()
+                            log("$tag.prepare after result=$result binded=${extractBooleanField(chain.thisObject, if (className == "eh0.n") "l" else "f21866k")}")
+                            result
+                        }
                         hooked++
                     }
                     m.name == "b" && m.parameterTypes.isEmpty() -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun beforeHookedMethod(p: MethodHookParam) {
-                                log("$tag.startRecordCustomKeyword state=${extractState(p.thisObject)}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            log("$tag.startRecordCustomKeyword state=${extractState(chain.thisObject)}")
+                            chain.proceed()
+                        }
                         hooked++
                     }
                     m.name == "f" && m.parameterTypes.isEmpty() -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun beforeHookedMethod(p: MethodHookParam) {
-                                log("$tag.startEnroll before customKeyword=${extractStringField(p.thisObject, "f21830h")} g2p=${extractStringField(p.thisObject, "f21843v")}")
-                            }
-                            override fun afterHookedMethod(p: MethodHookParam) {
-                                log("$tag.startEnroll after result=${p.result} customKeyword=${extractStringField(p.thisObject, "f21830h")} g2p=${extractStringField(p.thisObject, "f21843v")}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            log("$tag.startEnroll before customKeyword=${extractStringField(chain.thisObject, "f21830h")} g2p=${extractStringField(chain.thisObject, "f21843v")}")
+                            val result = chain.proceed()
+                            log("$tag.startEnroll after result=$result customKeyword=${extractStringField(chain.thisObject, "f21830h")} g2p=${extractStringField(chain.thisObject, "f21843v")}")
+                            result
+                        }
                         hooked++
                     }
                     (m.name == "i" || m.name == "e") && m.parameterTypes.isNotEmpty() -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun beforeHookedMethod(p: MethodHookParam) {
-                                if (className == "eh0.w") {
-                                    val expectedText = p.args.getOrNull(2) as? String
-                                    cacheSentenceExpectedText(p.thisObject, expectedText)
-                                }
-                                log("$tag.setNext ${m.name} args=${p.args.joinToString()}")
+                        xposedModule.hook(m).intercept { chain ->
+                            if (className == "eh0.w") {
+                                val expectedText = chain.args.getOrNull(2) as? String
+                                cacheSentenceExpectedText(chain.thisObject, expectedText)
                             }
-                        })
+                            log("$tag.setNext ${m.name} args=${chain.args.joinToString()}")
+                            chain.proceed()
+                        }
                         hooked++
                     }
                     m.name == "l" && m.parameterTypes.isEmpty() -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun beforeHookedMethod(p: MethodHookParam) {
-                                sentenceEndpointStopArmedByManager.remove(p.thisObject)
-                                log("$tag.startRecording audioSrc=${if (className == "eh0.n") "CUSTOM_ENROLL" else "SENTENCE_ENROLL"} spotterKeyword=${extractStringField(p.thisObject, "f21875u")} spotterCompleted=${extractBooleanField(p.thisObject, "f21873s")} spotterBundle=${safeToString(extractAnyField(p.thisObject, "f21874t"))}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            sentenceEndpointStopArmedByManager.remove(chain.thisObject)
+                            log("$tag.startRecording audioSrc=${if (className == "eh0.n") "CUSTOM_ENROLL" else "SENTENCE_ENROLL"} spotterKeyword=${extractStringField(chain.thisObject, "f21875u")} spotterCompleted=${extractBooleanField(chain.thisObject, "f21873s")} spotterBundle=${safeToString(extractAnyField(chain.thisObject, "f21874t"))}")
+                            chain.proceed()
+                        }
                         hooked++
                     }
                 }
@@ -621,9 +649,10 @@ object Bixby {
         }
     }
 
-    private fun hookSentenceSpotterFlow(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookSentenceSpotterFlow() {
         try {
-            val listenerCls = lpparam.classLoader.loadClass("eh0.u")
+            val listenerCls = param.classLoader.loadClass("eh0.u")
             val onTransact = listenerCls.getDeclaredMethod(
                 "onTransact",
                 Int::class.javaPrimitiveType,
@@ -631,39 +660,39 @@ object Bixby {
                 android.os.Parcel::class.java,
                 Int::class.javaPrimitiveType
             )
-            XposedBridge.hookMethod(onTransact, object : XC_MethodHook() {
-                override fun afterHookedMethod(p: MethodHookParam) {
-                    val manager = extractSpotterManager(p.thisObject)
-                    val directBundle = readSpotterResultBundle(p.args.getOrNull(1))
-                    val normalizedBundle = normalizeAgentSpotterResult(manager, directBundle)
-                    if (manager != null && normalizedBundle != null) {
-                        cacheSpotterResult(manager, normalizedBundle)
-                        maybeArmSentenceEndpointStop(manager, normalizedBundle, "spotter")
-                    }
-                    log(
-                        "SentenceSpotterListener.onTransact code=${p.args.getOrNull(0)} " +
-                            "completed=${extractBooleanField(manager, "f21873s")} " +
-                            "cachedCompleted=${extractCachedSpotterCompleted(manager)} " +
-                            "keyword=${extractManagerSpotterKeyword(manager)} " +
-                            "bundle=${safeToString(extractAnyField(manager, "f21874t"))} " +
-                            "cachedBundle=${safeToString(extractCachedSpotterBundle(manager))} " +
-                            "directBundle=${safeToString(directBundle)} " +
-                            "normalizedBundle=${safeToString(normalizedBundle)}"
-                    )
+            xposedModule.hook(onTransact).intercept { chain ->
+                val result = chain.proceed()
+                val manager = extractSpotterManager(chain.thisObject)
+                val directBundle = readSpotterResultBundle(chain.args.getOrNull(1))
+                val normalizedBundle = normalizeAgentSpotterResult(manager, directBundle)
+                if (manager != null && normalizedBundle != null) {
+                    cacheSpotterResult(manager, normalizedBundle)
+                    maybeArmSentenceEndpointStop(manager, normalizedBundle, "spotter")
                 }
-            })
+                log(
+                    "SentenceSpotterListener.onTransact code=${chain.args.getOrNull(0)} " +
+                        "completed=${extractBooleanField(manager, "f21873s")} " +
+                        "cachedCompleted=${extractCachedSpotterCompleted(manager)} " +
+                        "keyword=${extractManagerSpotterKeyword(manager)} " +
+                        "bundle=${safeToString(extractAnyField(manager, "f21874t"))} " +
+                        "cachedBundle=${safeToString(extractCachedSpotterBundle(manager))} " +
+                        "directBundle=${safeToString(directBundle)} " +
+                        "normalizedBundle=${safeToString(normalizedBundle)}"
+                )
+                result
+            }
             log("SentenceSpotterListener hook installed")
         } catch (t: Throwable) {
             logError("hookSentenceSpotterFlow listener failed", t)
         }
         try {
-            val compareCls = lpparam.classLoader.loadClass("com.samsung.android.imagetranslation.util.p")
+            val compareCls = param.classLoader.loadClass("com.samsung.android.imagetranslation.util.p")
             val accept = compareCls.getDeclaredMethod("accept", Any::class.java)
-            XposedBridge.hookMethod(accept, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    val manager = extractCompareManager(p.thisObject) ?: return
-                    val expected = extractCompareExpected(p.thisObject)
-                    val pos = extractComparePosition(p.thisObject)
+            xposedModule.hook(accept).intercept { chain ->
+                val manager = extractCompareManager(chain.thisObject)
+                if (manager != null) {
+                    val expected = extractCompareExpected(chain.thisObject)
+                    val pos = extractComparePosition(chain.thisObject)
                     val normalized = normalizeAgentSpotterResult(manager, extractCachedSpotterBundle(manager))
                     if (normalized != null) {
                         cacheSpotterResult(manager, normalized)
@@ -675,11 +704,11 @@ object Bixby {
                             "keyword=${extractManagerSpotterKeyword(manager)} " +
                             "bundle=${safeToString(extractAnyField(manager, "f21874t"))} " +
                             "cachedBundle=${safeToString(extractCachedSpotterBundle(manager))} " +
-                            "asr=${safeToString(p.args.getOrNull(0))}"
+                            "asr=${safeToString(chain.args.getOrNull(0))}"
                     )
                 }
-                override fun afterHookedMethod(p: MethodHookParam) {
-                    val manager = extractCompareManager(p.thisObject) ?: return
+                val result = chain.proceed()
+                if (manager != null) {
                     log(
                         "SentenceSpotterCompare.after spotterCompleted=${extractBooleanField(manager, "f21873s")} " +
                             "cachedCompleted=${extractCachedSpotterCompleted(manager)} " +
@@ -687,61 +716,68 @@ object Bixby {
                             "cachedBundle=${safeToString(extractCachedSpotterBundle(manager))}"
                     )
                 }
-            })
+                result
+            }
             log("SentenceSpotterCompare hook installed")
         } catch (t: Throwable) {
             logError("hookSentenceSpotterFlow compare failed", t)
         }
     }
 
-    private fun hookSentenceFinalAsrFlow(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookSentenceFinalAsrFlow() {
         try {
-            val runnerCls = lpparam.classLoader.loadClass("com.samsung.phoebus.audio.output.c0")
+            val runnerCls = param.classLoader.loadClass("com.samsung.phoebus.audio.output.c0")
             val run = runnerCls.getDeclaredMethod("run")
-            XposedBridge.hookMethod(run, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    val caseId = extractIntField(p.thisObject, "f17674a")
-                    if (caseId != 4) return
-                    val manager = extractAnyField(p.thisObject, "f17675b") ?: return
-                    log(
-                        "SentenceFinalAsr.run case=$caseId " +
-                            "manager=${manager.javaClass.name} " +
-                            "keyword=${extractManagerSpotterKeyword(manager)} " +
-                            "expected=${extractExpectedSentenceText(manager)} " +
-                            "consumer=${extractAnyField(p.thisObject, "f17677d")?.javaClass?.name}"
-                    )
-                    if (!isCustomSentenceManager(manager)) return
-                    val originalConsumer = extractAnyField(p.thisObject, "f17677d") as? java.util.function.Consumer<Any?> ?: return
-                    val wrapper = java.util.function.Consumer<Any?> { obj ->
-                        val finalText = extractFinalAsrText(obj)
-                        val expectedText = extractExpectedSentenceText(manager)
-                        val normalizedBundle = normalizeAgentSpotterResult(manager, extractCachedSpotterBundle(manager))
-                        val submitted = submitSentenceEnrollFromFinalAsr(manager, expectedText, finalText, normalizedBundle)
+            xposedModule.hook(run).intercept { chain ->
+                val caseId = extractIntField(chain.thisObject, "f17674a")
+                if (caseId == 4) {
+                    val manager = extractAnyField(chain.thisObject, "f17675b")
+                    if (manager != null) {
                         log(
-                            "SentenceFinalAsr.consumer " +
-                                "expected=$expectedText final=$finalText " +
-                                "bundle=${safeToString(normalizedBundle)} submitted=$submitted"
+                            "SentenceFinalAsr.run case=$caseId " +
+                                "manager=${manager.javaClass.name} " +
+                                "keyword=${extractManagerSpotterKeyword(manager)} " +
+                                "expected=${extractExpectedSentenceText(manager)} " +
+                                "consumer=${extractAnyField(chain.thisObject, "f17677d")?.javaClass?.name}"
                         )
-                        if (!submitted) {
-                            originalConsumer.accept(obj)
+                        if (isCustomSentenceManager(manager)) {
+                            val originalConsumer = extractAnyField(chain.thisObject, "f17677d") as? java.util.function.Consumer<Any?>
+                            if (originalConsumer != null) {
+                                val wrapper = java.util.function.Consumer<Any?> { obj ->
+                                    val finalText = extractFinalAsrText(obj)
+                                    val expectedText = extractExpectedSentenceText(manager)
+                                    val normalizedBundle = normalizeAgentSpotterResult(manager, extractCachedSpotterBundle(manager))
+                                    val submitted = submitSentenceEnrollFromFinalAsr(manager, expectedText, finalText, normalizedBundle)
+                                    log(
+                                        "SentenceFinalAsr.consumer " +
+                                            "expected=$expectedText final=$finalText " +
+                                            "bundle=${safeToString(normalizedBundle)} submitted=$submitted"
+                                    )
+                                    if (!submitted) {
+                                        originalConsumer.accept(obj)
+                                    }
+                                }
+                                findFieldRecursive(chain.thisObject.javaClass, "f17677d")?.apply {
+                                    isAccessible = true
+                                    set(chain.thisObject, wrapper)
+                                }
+                                log(
+                                    "SentenceFinalAsr.wrap consumer=${originalConsumer.javaClass.name} " +
+                                        "expected=${extractExpectedSentenceText(manager)}"
+                                )
+                            }
                         }
                     }
-                    findFieldRecursive(p.thisObject.javaClass, "f17677d")?.apply {
-                        isAccessible = true
-                        set(p.thisObject, wrapper)
-                    }
-                    log(
-                        "SentenceFinalAsr.wrap consumer=${originalConsumer.javaClass.name} " +
-                            "expected=${extractExpectedSentenceText(manager)}"
-                    )
                 }
-            })
+                chain.proceed()
+            }
             log("SentenceFinalAsr hook installed")
         } catch (t: Throwable) {
             logError("hookSentenceFinalAsrFlow failed", t)
         }
         try {
-            val enrollProxyCls = lpparam.classLoader.loadClass("no0.b")
+            val enrollProxyCls = param.classLoader.loadClass("no0.b")
             val submit = enrollProxyCls.getDeclaredMethod(
                 "o",
                 Int::class.javaPrimitiveType,
@@ -749,143 +785,149 @@ object Bixby {
                 String::class.java,
                 android.os.Bundle::class.java
             )
-            XposedBridge.hookMethod(submit, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    log(
-                        "EnrollmentService.setNextWithText " +
-                            "sessionId=${p.args.getOrNull(0)} " +
-                            "expected=${p.args.getOrNull(1)} " +
-                            "asr=${p.args.getOrNull(2)} " +
-                            "bundle=${safeToString(p.args.getOrNull(3))}"
-                    )
-                }
-            })
+            xposedModule.hook(submit).intercept { chain ->
+                log(
+                    "EnrollmentService.setNextWithText " +
+                        "sessionId=${chain.args.getOrNull(0)} " +
+                        "expected=${chain.args.getOrNull(1)} " +
+                        "asr=${chain.args.getOrNull(2)} " +
+                        "bundle=${safeToString(chain.args.getOrNull(3))}"
+                )
+                chain.proceed()
+            }
             log("EnrollmentService setNextWithText hook installed")
         } catch (t: Throwable) {
             logError("hookSentenceFinalAsrFlow enrollment proxy failed", t)
         }
         try {
-            val dispatcherCls = lpparam.classLoader.loadClass("a51.o")
-            val asrResultCls = lpparam.classLoader.loadClass("xp0.c")
+            val dispatcherCls = param.classLoader.loadClass("a51.o")
+            val asrResultCls = param.classLoader.loadClass("xp0.c")
             val dispatch = dispatcherCls.getDeclaredMethod("s", asrResultCls)
-            XposedBridge.hookMethod(dispatch, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    val recognizer = extractAnyField(p.thisObject, "f780b") ?: return
-                    if (recognizer.javaClass.name != "eh0.c0") return
+            xposedModule.hook(dispatch).intercept { chain ->
+                val recognizer = extractAnyField(chain.thisObject, "f780b")
+                if (recognizer != null && recognizer.javaClass.name == "eh0.c0") {
                     val finalListener = extractAnyField(recognizer, "f21769g")
                     val partialListener = extractAnyField(recognizer, "f21768f")
                     log(
                         "SentenceAsrDispatcher.s " +
-                            "final=${extractBooleanField(p.args.getOrNull(0), "f63648a")} " +
-                            "result=${safeToString(p.args.getOrNull(0))} " +
+                            "final=${extractBooleanField(chain.args.getOrNull(0), "f63648a")} " +
+                            "result=${safeToString(chain.args.getOrNull(0))} " +
                             "finalListener=${finalListener?.javaClass?.name} " +
                             "partialListener=${partialListener?.javaClass?.name}"
                     )
                 }
-            })
+                chain.proceed()
+            }
             log("SentenceAsrDispatcher hook installed")
         } catch (t: Throwable) {
             logError("hookSentenceFinalAsrFlow dispatcher failed", t)
         }
     }
 
-    private fun hookWakeupSpotterFlow(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookWakeupSpotterFlow() {
         try {
-            val cls = lpparam.classLoader.loadClass("com.samsung.android.voicewakeup.audiorecord.SpotterService")
+            val cls = param.classLoader.loadClass("com.samsung.android.voicewakeup.audiorecord.SpotterService")
             val onStartCommand = cls.getDeclaredMethod(
                 "onStartCommand",
                 android.content.Intent::class.java,
                 Int::class.javaPrimitiveType,
                 Int::class.javaPrimitiveType
             )
-            XposedBridge.hookMethod(onStartCommand, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    val intent = p.args.getOrNull(0) as? android.content.Intent
-                    currentWakeupSpotterKeyword = intent?.getStringExtra("spotterKeyword")
-                    lastWakeupSpotterBundle = null
-                    log(
-                        "SpotterService.onStartCommand " +
-                            "intent=${intentSummary(intent)} " +
-                            "customText=${readWakeupText()} " +
-                            "fieldKeyword=${extractStringField(p.thisObject, "F")}"
-                    )
-                }
-
-                override fun afterHookedMethod(p: MethodHookParam) {
-                    log(
-                        "SpotterService.onStartCommand.after " +
-                            "fieldKeyword=${extractStringField(p.thisObject, "F")} " +
-                            "bundle=${safeToString(extractAnyField(p.thisObject, "E"))}"
-                    )
-                }
-            })
+            xposedModule.hook(onStartCommand).intercept { chain ->
+                val intent = chain.args.getOrNull(0) as? android.content.Intent
+                currentWakeupSpotterKeyword = intent?.getStringExtra("spotterKeyword")
+                lastWakeupSpotterBundle = null
+                log(
+                    "SpotterService.onStartCommand " +
+                        "intent=${intentSummary(intent)} " +
+                        "customText=${readWakeupText()} " +
+                        "fieldKeyword=${extractStringField(chain.thisObject, "F")}"
+                )
+                val result = chain.proceed()
+                log(
+                    "SpotterService.onStartCommand.after " +
+                        "fieldKeyword=${extractStringField(chain.thisObject, "F")} " +
+                        "bundle=${safeToString(extractAnyField(chain.thisObject, "E"))}"
+                )
+                result
+            }
             val getSpotter = cls.getDeclaredMethod("a")
-            XposedBridge.hookMethod(getSpotter, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    log(
-                        "SpotterService.getSpotter.before " +
-                            "fieldKeyword=${extractStringField(p.thisObject, "F")} " +
-                            "customText=${readWakeupText()}"
-                    )
-                }
-
-                override fun afterHookedMethod(p: MethodHookParam) {
-                    val keyword = extractStringField(p.thisObject, "F")
-                    if (keyword == "custom") {
-                        val replacement = buildCustomSentenceSpotter(p.thisObject, lpparam.classLoader)
-                        if (replacement != null) {
-                            p.result = replacement
-                            log("SpotterService.getSpotter replaced default verifier for custom keyword")
-                        }
+            xposedModule.hook(getSpotter).intercept { chain ->
+                log(
+                    "SpotterService.getSpotter.before " +
+                        "fieldKeyword=${extractStringField(chain.thisObject, "F")} " +
+                        "customText=${readWakeupText()}"
+                )
+                val defaultResult = chain.proceed()
+                val keyword = extractStringField(chain.thisObject, "F")
+                val finalResult = if (keyword == "custom") {
+                    val replacement = buildCustomSentenceSpotter(chain.thisObject, param.classLoader)
+                    if (replacement != null) {
+                        log("SpotterService.getSpotter replaced default verifier for custom keyword")
+                        replacement
+                    } else {
+                        defaultResult
                     }
-                    log(
-                        "SpotterService.getSpotter.after " +
-                            "fieldKeyword=${extractStringField(p.thisObject, "F")} " +
-                            "spotter=${p.result?.javaClass?.name}"
-                    )
+                } else {
+                    defaultResult
                 }
-            })
+                log(
+                    "SpotterService.getSpotter.after " +
+                        "fieldKeyword=${extractStringField(chain.thisObject, "F")} " +
+                        "spotter=${finalResult?.javaClass?.name}"
+                )
+                finalResult
+            }
             log("SpotterService hooks installed")
         } catch (t: Throwable) {
             logError("hookWakeupSpotterFlow service failed", t)
         }
         try {
-            val listenerProxyCls = lpparam.classLoader.loadClass("com.samsung.android.bixby.wakeup.x")
+            val listenerProxyCls = param.classLoader.loadClass("com.samsung.android.bixby.wakeup.x")
             val deliver = listenerProxyCls.getDeclaredMethod("t", android.os.Bundle::class.java)
-            XposedBridge.hookMethod(deliver, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    val original = p.args.getOrNull(0) as? android.os.Bundle ?: return
+            xposedModule.hook(deliver).intercept { chain ->
+                val original = chain.args.getOrNull(0) as? android.os.Bundle
+                if (original != null) {
                     val normalized = normalizeWakeupResultBundle(original)
-                    if (normalized !== original) {
-                        p.args[0] = normalized
-                    }
                     log(
                         "SpotterResultProxy.t " +
                             "keyword=$currentWakeupSpotterKeyword " +
                             "original=${safeToString(original)} " +
                             "normalized=${safeToString(normalized)}"
                     )
+                    if (normalized !== original) {
+                        val args = chain.args.toTypedArray()
+                        args[0] = normalized
+                        chain.proceed(args)
+                    } else {
+                        chain.proceed()
+                    }
+                } else {
+                    chain.proceed()
                 }
-            })
+            }
             log("SpotterResultProxy hook installed")
         } catch (t: Throwable) {
             logError("hookWakeupSpotterFlow proxy failed", t)
         }
         try {
-            val callbackCls = lpparam.classLoader.loadClass("pc.e")
+            val callbackCls = param.classLoader.loadClass("pc.e")
+            val z0Cls = param.classLoader.loadClass("gd.z0")
             for (methodName in arrayOf("a", "b", "c")) {
-                val m = callbackCls.getDeclaredMethod(methodName, lpparam.classLoader.loadClass("gd.z0"))
-                XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                    override fun beforeHookedMethod(p: MethodHookParam) {
-                        val service = extractSpotterServiceFromCallback(p.thisObject) ?: return
+                val m = callbackCls.getDeclaredMethod(methodName, z0Cls)
+                xposedModule.hook(m).intercept { chain ->
+                    val service = extractSpotterServiceFromCallback(chain.thisObject)
+                    if (service != null) {
                         log(
                             "SpotterCallback.$methodName " +
                                 "fieldKeyword=${extractStringField(service, "F")} " +
                                 "bundle=${safeToString(extractAnyField(service, "E"))} " +
-                                "result=${safeToString(p.args.getOrNull(0))}"
+                                "result=${safeToString(chain.args.getOrNull(0))}"
                         )
                     }
-                })
+                    chain.proceed()
+                }
             }
             log("SpotterCallback hooks installed")
         } catch (t: Throwable) {
@@ -893,60 +935,57 @@ object Bixby {
         }
     }
 
-    private fun hookEnrollCallbacks(lpparam: LoadPackageParam) {
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookEnrollCallbacks() {
         try {
-            val customAsrCls = lpparam.classLoader.loadClass("eh0.d")
+            val customAsrCls = param.classLoader.loadClass("eh0.d")
             val accept = customAsrCls.getDeclaredMethod("accept", Any::class.java)
-            XposedBridge.hookMethod(accept, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    log("CustomEnrollManager.accept case=${extractIntField(p.thisObject, "f21775a")} obj=${safeToString(p.args.getOrNull(0))}")
-                }
-            })
+            xposedModule.hook(accept).intercept { chain ->
+                log("CustomEnrollManager.accept case=${extractIntField(chain.thisObject, "f21775a")} obj=${safeToString(chain.args.getOrNull(0))}")
+                chain.proceed()
+            }
             log("CustomEnrollManager callback hook installed")
         } catch (t: Throwable) {
             logError("hookEnrollCallbacks custom failed", t)
         }
         try {
-            val sentenceAsrCls = lpparam.classLoader.loadClass("eh0.t")
+            val sentenceAsrCls = param.classLoader.loadClass("eh0.t")
             val accept = sentenceAsrCls.getDeclaredMethod("accept", Any::class.java)
-            XposedBridge.hookMethod(accept, object : XC_MethodHook() {
-                override fun beforeHookedMethod(p: MethodHookParam) {
-                    val manager = extractSentenceAcceptManager(p.thisObject)
-                    val partialText = extractFinalAsrText(p.args.getOrNull(0))
-                    val partialRawText = extractRawAsrText(p.args.getOrNull(0))
-                    maybeArmSentenceEndpointStop(manager, extractCachedSpotterBundle(manager), "partial")
-                    log(
-                        "SentenceEnrollManager.accept case=${extractIntField(p.thisObject, "f21853a")} " +
-                            "obj=${safeToString(p.args.getOrNull(0))} " +
-                            "text=$partialText raw=$partialRawText " +
-                            "spotterCompleted=${extractBooleanField(manager, "f21873s")} " +
-                            "cachedCompleted=${extractCachedSpotterCompleted(manager)} " +
-                            "bundle=${safeToString(extractAnyField(manager, "f21874t"))} " +
-                            "cachedBundle=${safeToString(extractCachedSpotterBundle(manager))}"
-                    )
-                }
-            })
+            xposedModule.hook(accept).intercept { chain ->
+                val manager = extractSentenceAcceptManager(chain.thisObject)
+                val partialText = extractFinalAsrText(chain.args.getOrNull(0))
+                val partialRawText = extractRawAsrText(chain.args.getOrNull(0))
+                maybeArmSentenceEndpointStop(manager, extractCachedSpotterBundle(manager), "partial")
+                log(
+                    "SentenceEnrollManager.accept case=${extractIntField(chain.thisObject, "f21853a")} " +
+                        "obj=${safeToString(chain.args.getOrNull(0))} " +
+                        "text=$partialText raw=$partialRawText " +
+                        "spotterCompleted=${extractBooleanField(manager, "f21873s")} " +
+                        "cachedCompleted=${extractCachedSpotterCompleted(manager)} " +
+                        "bundle=${safeToString(extractAnyField(manager, "f21874t"))} " +
+                        "cachedBundle=${safeToString(extractCachedSpotterBundle(manager))}"
+                )
+                chain.proceed()
+            }
             log("SentenceEnrollManager callback hook installed")
         } catch (t: Throwable) {
             logError("hookEnrollCallbacks sentence failed", t)
         }
         try {
-            val vmCls = lpparam.classLoader.loadClass("ek0.o")
+            val vmCls = param.classLoader.loadClass("ek0.o")
             for (m in vmCls.declaredMethods) {
                 when {
                     m.name == "g" && m.parameterTypes.contentEquals(arrayOf(Int::class.javaPrimitiveType, String::class.java)) -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun beforeHookedMethod(p: MethodHookParam) {
-                                log("EnrollView callback onCustomKeywordReceived code=${p.args.getOrNull(0)} text=${p.args.getOrNull(1)} mode=${extractIntField(p.thisObject, "f22007a")}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            log("EnrollView callback onCustomKeywordReceived code=${chain.args.getOrNull(0)} text=${chain.args.getOrNull(1)} mode=${extractIntField(chain.thisObject, "f22007a")}")
+                            chain.proceed()
+                        }
                     }
                     m.name == "f" && m.parameterTypes.contentEquals(arrayOf(Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)) -> {
-                        XposedBridge.hookMethod(m, object : XC_MethodHook() {
-                            override fun beforeHookedMethod(p: MethodHookParam) {
-                                log("EnrollView callback onEnrollResult status=${p.args.getOrNull(0)} step=${p.args.getOrNull(1)} result=${p.args.getOrNull(2)} mode=${extractIntField(p.thisObject, "f22007a")}")
-                            }
-                        })
+                        xposedModule.hook(m).intercept { chain ->
+                            log("EnrollView callback onEnrollResult status=${chain.args.getOrNull(0)} step=${chain.args.getOrNull(1)} result=${chain.args.getOrNull(2)} mode=${extractIntField(chain.thisObject, "f22007a")}")
+                            chain.proceed()
+                        }
                     }
                 }
             }

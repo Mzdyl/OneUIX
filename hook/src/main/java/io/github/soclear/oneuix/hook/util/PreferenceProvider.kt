@@ -4,26 +4,47 @@ import android.os.ParcelFileDescriptor
 import io.github.libxposed.api.XposedModule
 import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
 import io.github.soclear.oneuix.common.Preference
+import io.github.soclear.oneuix.common.decodePreference
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
+import java.io.File
 
 object PreferenceProvider {
-    // libxposed 102 通过框架的 remote file 机制读取模块配置
-    // （宿主进程对 remote file 只读，由模块 App 通过 libxposed service 推送到共享目录）
     @OptIn(ExperimentalSerializationApi::class)
     context(xposedModule: XposedModule)
-    fun loadPreference(): Preference? = try {
-        val parcelFileDescriptor = xposedModule.openRemoteFile(Preference.FILE_NAME)
-        ParcelFileDescriptor.AutoCloseInputStream(parcelFileDescriptor).use { inputStream ->
-            if (inputStream.channel.size() == 0L) {
-                return null
+    fun loadPreference(): Preference? {
+        val remotePref = try {
+            val parcelFileDescriptor: ParcelFileDescriptor? = try {
+                xposedModule.openRemoteFile(Preference.FILE_NAME)
+            } catch (_: java.io.FileNotFoundException) {
+                null
             }
-            IgnoreUnknownKeysJson.decodeFromStream<Preference>(inputStream)
+            if (parcelFileDescriptor != null) {
+                ParcelFileDescriptor.AutoCloseInputStream(parcelFileDescriptor).use { inputStream ->
+                    if (inputStream.channel.size() > 0L) {
+                        IgnoreUnknownKeysJson.decodeFromStream<Preference>(inputStream)
+                    } else null
+                }
+            } else null
+        } catch (t: Throwable) {
+            xlog(t)
+            null
         }
-    } catch (_: java.io.FileNotFoundException) {
-        null
-    } catch (t: Throwable) {
-        xlog(t)
-        null
+
+        if (remotePref != null) {
+            return remotePref
+        }
+
+        return try {
+            val legacyFile = listOf(
+                "/data/user_de/0/io.github.soclear.oneuix/files/datastore/preference",
+                "/data/user/0/io.github.soclear.oneuix/files/datastore/preference",
+                "/data/user_de/0/io.github.mzdyl.oneuix/files/datastore/preference",
+                "/data/user/0/io.github.mzdyl.oneuix/files/datastore/preference"
+            ).map { File(it) }.firstOrNull { it.exists() && it.canRead() }
+            legacyFile?.readText()?.let(::decodePreference)
+        } catch (_: Throwable) {
+            null
+        }
     }
 }

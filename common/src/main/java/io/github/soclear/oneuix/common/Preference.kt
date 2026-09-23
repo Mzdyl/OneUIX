@@ -1,6 +1,7 @@
 package io.github.soclear.oneuix.common
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 @Serializable
 data class Preference(
@@ -230,4 +231,8 @@ data class Preference(
         const val FILE_NAME = "preference.json"
         const val DATASTORE_SENTINEL_NAME = "whatever"
     }
+}
+
+val IgnoreUnknownKeysJson = Json {
+    ignoreUnknownKeys = true
 }
