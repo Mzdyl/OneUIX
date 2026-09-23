@@ -603,6 +603,12 @@ class Main : IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHoo
                     Bixby.init(lpparam, preference.bixby)
                 }
             }
+
+            Package.NFC -> {
+                if (preference.nfc.enableSimulation) {
+                    Nfc.init(lpparam)
+                }
+            }
         }
     }
 

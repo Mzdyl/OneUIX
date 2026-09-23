@@ -24,7 +24,7 @@ import io.github.soclear.oneuix.ui.category.CategoryAppInfo
 import java.io.InputStream
 import java.io.OutputStream
 
-class SettingViewModel(application: Application) : ViewModel() {
+class SettingViewModel(val application: Application) : ViewModel() {
     val categoryAppInfoList: StateFlow<List<CategoryAppInfo>> = flow {
         val packageManager = application.packageManager
         val fallbackIcon = application.applicationInfo

@@ -1,0 +1,539 @@
+#!/system/bin/sh
+# ==============================================================================
+# NFC UID Simulation CLI for Samsung One UI 7+ / Android 15+ (NXP SN100/SN220)
+# Developed for OneUIX Project
+# ==============================================================================
+
+MOD_DIR="/data/adb/modules/nfc_sim"
+CONF_DIR="$MOD_DIR/system/vendor/etc"
+NCI_DIR="$MOD_DIR/system/etc"
+BIN_DIR="$MOD_DIR/system/bin"
+
+TARGET_NXP="/vendor/etc/libnfc-nxp.conf"
+TARGET_NCI="/system/etc/libnfc-nci.conf"
+TARGET_PREFS="/data/user_de/0/com.android.nfc/shared_prefs/RoutingOptionPrefs.xml"
+
+ORIG_NXP="$MOD_DIR/libnfc-nxp.conf.orig"
+ORIG_NCI="$MOD_DIR/libnfc-nci.conf.orig"
+ORIG_PREFS="$MOD_DIR/RoutingOptionPrefs.xml.orig"
+
+ACTIVE_NXP="$CONF_DIR/libnfc-nxp.conf"
+ACTIVE_NCI="$NCI_DIR/libnfc-nci.conf"
+
+CARDS_FILE="$MOD_DIR/cards.conf"
+STATUS_FILE="$MOD_DIR/active_uid"
+
+init_env() {
+    mkdir -p "$CONF_DIR" "$NCI_DIR" "$BIN_DIR"
+    if [ ! -f "$ORIG_NXP" ] && [ -f "$TARGET_NXP" ]; then
+        cp -f "$TARGET_NXP" "$ORIG_NXP"
+    fi
+    if [ ! -f "$ORIG_NCI" ] && [ -f "$TARGET_NCI" ]; then
+        cp -f "$TARGET_NCI" "$ORIG_NCI"
+    fi
+    if [ ! -f "$ORIG_PREFS" ] && [ -f "$TARGET_PREFS" ]; then
+        cp -f "$TARGET_PREFS" "$ORIG_PREFS"
+    fi
+    if [ ! -f "$CARDS_FILE" ]; then
+        touch "$CARDS_FILE"
+    fi
+}
+
+clean_uid() {
+    echo "$1" | tr -d ': -' | tr '[:lower:]' '[:upper:]'
+}
+
+format_uid() {
+    CLEAN=$(clean_uid "$1")
+    LEN=${#CLEAN}
+    BYTES=$((LEN / 2))
+    RES=""
+    for i in $(seq 0 $((BYTES - 1))); do
+        B=$(echo "$CLEAN" | cut -c $((i * 2 + 1))-$((i * 2 + 2)))
+        [ -z "$RES" ] && RES="$B" || RES="$RES:$B"
+    done
+    echo "$RES"
+}
+
+validate_uid() {
+    CLEAN=$(clean_uid "$1")
+    LEN=${#CLEAN}
+    BYTES=$((LEN / 2))
+    if [ "$BYTES" -ne 4 ] && [ "$BYTES" -ne 7 ]; then
+        echo "错误: UID 必须是 4 字节（8 位十六进制）或 7 字节（14 位十六进制）！" >&2
+        echo "输入: $1 (解析为 $BYTES 字节: $CLEAN)" >&2
+        return 1
+    fi
+    if echo "$CLEAN" | grep -q '[^0-9A-F]'; then
+        echo "错误: UID 包含非十六进制字符: $1" >&2
+        return 1
+    fi
+    return 0
+}
+
+fast_reload_nfc() {
+    echo "[*] 正在热重载 NFC 芯片配置 (0.8s 极速切卡模式)..."
+    rm -f /data/vendor/nfc/libnfc-nxp*ConfigState.bin /data/vendor/nfc/nci_log* 2>/dev/null || true
+    cmd nfc disable-nfc >/dev/null 2>&1 || svc nfc disable >/dev/null 2>&1 || true
+    sleep 0.3
+    cmd nfc enable-nfc >/dev/null 2>&1 || svc nfc enable >/dev/null 2>&1 || true
+    sleep 0.5
+    STATE=$(dumpsys nfc 2>/dev/null | grep "mState=" | head -n1 | cut -d'=' -f2)
+    if [ "$STATE" = "on" ]; then
+        echo "[+] NFC 极速切卡完成 (状态: ON)"
+        return 0
+    fi
+    echo "[!] 热重载状态未就绪 ($STATE)，正在安全回退重载..."
+    safe_restart_nfc
+}
+
+safe_restart_nfc() {
+    echo "[*] 正在平滑重载 NFC 架构与硬件总线..."
+    svc nfc disable >/dev/null 2>&1 || true
+    sleep 0.5
+    
+    # 清理 NXP CRC 校验缓存与 NCI 临时日志，强制硬件重载新固件配置
+    rm -f /data/vendor/nfc/libnfc-nxp*ConfigState.bin /data/vendor/nfc/nci_log* 2>/dev/null || true
+    
+    # 精准重启 HAL (由 init 自动拉起)
+    HPID=$(pidof nxp.android.hardware.nfc@1.2-service 2>/dev/null || pgrep -f "hardware.nfc" 2>/dev/null || true)
+    if [ -n "$HPID" ]; then
+        kill -9 $HPID 2>/dev/null || true
+        sleep 1.0
+    fi
+    start vendor.nfc_hal_service 2>/dev/null || true
+    
+    # 精准杀死 com.android.nfc 重新读取偏好并连接新 HAL
+    NFC_JAVA_PID=$(pidof com.android.nfc 2>/dev/null || true)
+    if [ -n "$NFC_JAVA_PID" ]; then
+        kill -9 $NFC_JAVA_PID 2>/dev/null || true
+        sleep 1.0
+    fi
+    am start-service com.android.nfc/com.samsung.android.nfc.quicktile.NfcTile >/dev/null 2>&1 || true
+    
+    cmd nfc enable-nfc >/dev/null 2>&1 || svc nfc enable >/dev/null 2>&1 || true
+    sleep 1.5
+    
+    STATE=$(dumpsys nfc 2>/dev/null | grep "mState=" | head -n1 | cut -d'=' -f2)
+    if [ "$STATE" = "on" ]; then
+        echo "[+] NFC 协议栈已就绪 (状态: ON)"
+    else
+        echo "[!] NFC 当前状态: $STATE，请在系统设置中确认开启"
+    fi
+}
+
+apply_mounts() {
+    unmount_all
+    mount --bind "$ACTIVE_NXP" "$TARGET_NXP" 2>/dev/null || true
+    chcon u:object_r:vendor_configs_file:s0 "$ACTIVE_NXP" "$TARGET_NXP" 2>/dev/null || true
+    chmod 644 "$ACTIVE_NXP" 2>/dev/null || true
+
+    mount --bind "$ACTIVE_NCI" "$TARGET_NCI" 2>/dev/null || true
+    chcon u:object_r:system_file:s0 "$ACTIVE_NCI" "$TARGET_NCI" 2>/dev/null || true
+    chmod 644 "$ACTIVE_NCI" 2>/dev/null || true
+}
+
+unmount_all() {
+    umount -l "$TARGET_NXP" 2>/dev/null || true
+    umount -l "$TARGET_NCI" 2>/dev/null || true
+}
+
+build_nxp_conf() {
+    UID_HEX="$1"
+    SAK_HEX="${2:-04}"
+    ATQA_HEX="${3:-00}"
+    SAK_HEX=$(echo "$SAK_HEX" | tr -d ': -' | tr '[:lower:]' '[:upper:]')
+    [ ${#SAK_HEX} -eq 1 ] && SAK_HEX="0$SAK_HEX"
+    SAK_HEX="${SAK_HEX:0:2}"
+    [ -z "$SAK_HEX" ] && SAK_HEX="04"
+
+    ATQA_HEX=$(echo "$ATQA_HEX" | tr -d ': -' | tr '[:lower:]' '[:upper:]')
+    if [ ${#ATQA_HEX} -ge 4 ]; then
+        ATQA0_HEX="${ATQA_HEX:0:2}"
+        ATQA1_HEX="${ATQA_HEX:2:2}"
+    elif [ ${#ATQA_HEX} -ge 2 ]; then
+        ATQA0_HEX="${ATQA_HEX:0:2}"
+        ATQA1_HEX=""
+    elif [ ${#ATQA_HEX} -eq 1 ]; then
+        ATQA0_HEX="0$ATQA_HEX"
+        ATQA1_HEX=""
+    else
+        ATQA0_HEX="00"
+        ATQA1_HEX=""
+    fi
+
+    BYTE_COUNT=$((${#UID_HEX} / 2))
+    LEN_HEX=$(printf "%02X" "$BYTE_COUNT")
+
+    # 在 Shell 层直接计算新包长，彻底消除 awk 十六进制兼容性隐患
+    ORIG_LEN_HEX=$(grep -A 1 "NXP_CORE_CONF={" "$ORIG_NXP" 2>/dev/null | grep "20, 02," | head -n1 | sed -E 's/.*20, 02, ([0-9A-Fa-f]{2}),.*/\1/')
+    if [ -n "$ORIG_LEN_HEX" ]; then
+        ORIG_LEN_DEC=$((16#$ORIG_LEN_HEX))
+        NEW_LEN_DEC=$((ORIG_LEN_DEC + BYTE_COUNT))
+        NEW_LEN_HEX=$(printf "%02X" "$NEW_LEN_DEC")
+    else
+        NEW_LEN_HEX=$(printf "%02X" $((57 + BYTE_COUNT)))
+    fi
+
+    awk -v uid="$UID_HEX" -v ulen="$LEN_HEX" -v newlen="$NEW_LEN_HEX" -v sak="$SAK_HEX" -v atqa0="$ATQA0_HEX" -v atqa1="$ATQA1_HEX" '
+    BEGIN { in_core = 0 }
+    /^NXP_CORE_CONF=\{/ { in_core = 1; print $0; next }
+    in_core && /\}/ { in_core = 0; print $0; next }
+    in_core {
+        # 替换为在 Shell 中安全计算的正确长度
+        if ($0 ~ /20, 02, [0-9A-Fa-f]{2},/) {
+            sub(/20, 02, [0-9A-Fa-f]{2},/, "20, 02, " newlen ",")
+        }
+        # SAK (Tag 30: LA_SEL_INFO, 1 字节)
+        if ($0 ~ /30, 01,/) {
+            sub(/30, 01, [0-9A-Fa-f]{2},/, "30, 01, " sak ",")
+        }
+        # ATQA Byte 0 (Tag 31: LA_BIT_FRAME_SDD, 1 字节)
+        if ($0 ~ /31, 01,/) {
+            sub(/31, 01, [0-9A-Fa-f]{2},/, "31, 01, " atqa0 ",")
+        }
+        # ATQA Byte 1 (Tag 32: LA_PLATFORM_CONFIG, 1 字节)
+        if (atqa1 != "" && $0 ~ /32, 01,/) {
+            sub(/32, 01, [0-9A-Fa-f]{2},/, "32, 01, " atqa1 ",")
+        }
+        # Tag 33 (LA_NFCID1) 替换为目标卡号
+        if ($0 ~ /33, [0-9A-Fa-f]{2}/) {
+            uid_str = "33, " ulen
+            for (i = 1; i <= length(uid); i += 2) {
+                uid_str = uid_str ", " substr(uid, i, 2)
+            }
+            uid_str = uid_str ","
+            sub(/33, [0-9A-Fa-f]{2}(, [0-9A-Fa-f]{2})*,/, uid_str)
+        }
+        print $0; next
+    }
+    !in_core {
+        # 强制路由为 Host (0x00)
+        if ($0 ~ /^DEFAULT_MIFARE_CLT_ROUTE=/) { print "DEFAULT_MIFARE_CLT_ROUTE=0x00"; next }
+        if ($0 ~ /^DEFAULT_AID_ROUTE=/) { print "DEFAULT_AID_ROUTE=0x00"; next }
+        if ($0 ~ /^DEFAULT_ISODEP_ROUTE=/) { print "DEFAULT_ISODEP_ROUTE=0x00"; next }
+        if ($0 ~ /^DEFAULT_OFFHOST_ROUTE=/) { print "DEFAULT_OFFHOST_ROUTE=0x00"; next }
+        if ($0 ~ /^DEFAULT_ROUTE=/) { print "DEFAULT_ROUTE=0x00"; next }
+        if ($0 ~ /^NXP_DEFAULT_SE=/) { print "NXP_DEFAULT_SE=0x00"; next }
+        if ($0 ~ /^NXP_PRFD_TECH_SE=/) { print "NXP_PRFD_TECH_SE=0x00"; next }
+        if ($0 ~ /^#NXP_PRFD_TECH_SE=/) { print "NXP_PRFD_TECH_SE=0x00"; next }
+        if ($0 ~ /^NXP_CHECK_DEFAULT_PROTO_SE_ID=/) { print "NXP_CHECK_DEFAULT_PROTO_SE_ID=0x00"; next }
+        print $0
+    }
+    ' "$ORIG_NXP" > "$ACTIVE_NXP"
+
+    # 兜底注入
+    if ! grep -q "^DEFAULT_ROUTE=0x00" "$ACTIVE_NXP"; then
+        echo "DEFAULT_ROUTE=0x00" >> "$ACTIVE_NXP"
+    fi
+    if ! grep -q "^NXP_DEFAULT_SE=0x00" "$ACTIVE_NXP"; then
+        echo "NXP_DEFAULT_SE=0x00" >> "$ACTIVE_NXP"
+    fi
+}
+
+build_nci_conf() {
+    sed \
+        -e 's/UICC_LISTEN_TECH_MASK=0x07/UICC_LISTEN_TECH_MASK=0x00/' \
+        -e 's/#HOST_LISTEN_ENABLE=0x01/HOST_LISTEN_ENABLE=0x01/' \
+        -e 's/#P2P_LISTEN_TECH_MASK=0x00/P2P_LISTEN_TECH_MASK=0x00/' \
+        -e 's/NFA_MAX_EE_SUPPORTED=0x06/NFA_MAX_EE_SUPPORTED=0x03/' \
+        -e 's/#NXP_PRFD_TECH_SE=0x01/NXP_PRFD_TECH_SE=0x00/' \
+        -e 's/NFA_DM_DISC_DURATION_POLL=1050/NFA_DM_DISC_DURATION_POLL=500/' \
+        "$ORIG_NCI" > "$ACTIVE_NCI"
+
+    if ! grep -q "^NXP_PRFD_TECH_SE=0x00" "$ACTIVE_NCI"; then
+        echo "NXP_PRFD_TECH_SE=0x00" >> "$ACTIVE_NCI"
+    fi
+    if ! grep -q "^HOST_LISTEN_ENABLE=0x01" "$ACTIVE_NCI"; then
+        echo "HOST_LISTEN_ENABLE=0x01" >> "$ACTIVE_NCI"
+    fi
+}
+
+apply_prefs() {
+    if [ -d "/data/user_de/0/com.android.nfc/shared_prefs" ]; then
+        cat << 'XML' > "$TARGET_PREFS"
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <string name="default_iso_dep_route">DH</string>
+    <string name="default_offhost_route">DH</string>
+    <boolean name="allow_auto_routing_changed" value="false" />
+    <string name="default_route">DH</string>
+</map>
+XML
+        chown nfc:nfc "$TARGET_PREFS" 2>/dev/null || true
+        chmod 660 "$TARGET_PREFS" 2>/dev/null || true
+    fi
+}
+
+restore_prefs() {
+    if [ -f "$ORIG_PREFS" ]; then
+        cp -f "$ORIG_PREFS" "$TARGET_PREFS" 2>/dev/null || true
+        chown nfc:nfc "$TARGET_PREFS" 2>/dev/null || true
+        chmod 660 "$TARGET_PREFS" 2>/dev/null || true
+    fi
+}
+
+set_uid() {
+    init_env
+    RAW="$1"
+    SAK="${2:-04}"
+    ATQA="${3:-00}"
+    if [ -z "$RAW" ]; then
+        echo "用法: nfc-sim set <UID> [SAK] [ATQA] (例如: nfc-sim set 11:22:33:44 08 04)"
+        exit 1
+    fi
+
+    if ! validate_uid "$RAW"; then
+        exit 1
+    fi
+
+    CLEAN=$(clean_uid "$RAW")
+    FORMATTED=$(format_uid "$CLEAN")
+    BYTE_COUNT=$((${#CLEAN} / 2))
+
+    echo "[*] 开始配置目标 UID: $FORMATTED ($BYTE_COUNT 字节), SAK: $SAK, ATQA: $ATQA"
+    
+    if [ -f "$STATUS_FILE" ] && mount | grep -q "$TARGET_NXP"; then
+        echo "[*] 硬件隔离环境已就绪，触发 0.8s 瞬时极速热切卡..."
+        build_nxp_conf "$CLEAN" "$SAK" "$ATQA"
+        fast_reload_nfc
+    else
+        echo "[*] 正在初次建立硬件模拟隔离环境与协议路由..."
+        build_nxp_conf "$CLEAN" "$SAK" "$ATQA"
+        build_nci_conf
+        apply_prefs
+        apply_mounts
+        safe_restart_nfc
+    fi
+    
+    echo "$FORMATTED,$SAK,$ATQA" > "$STATUS_FILE"
+    echo "=========================================="
+    echo "[+] 成功激活模拟 UID: $FORMATTED (SAK: $SAK, ATQA: $ATQA)"
+    echo "[*] 请保持手机解锁亮屏，贴近读卡器测试！"
+    echo "=========================================="
+}
+
+reset_uid() {
+    init_env
+    echo "[*] 正在恢复官方默认 NFC 配置..."
+    unmount_all
+    restore_prefs
+    safe_restart_nfc
+    rm -f "$STATUS_FILE" 2>/dev/null || true
+    echo "=========================================="
+    echo "[+] 已完全恢复出厂默认 NFC 配置（随机 UID）"
+    echo "=========================================="
+}
+
+show_status() {
+    init_env
+    echo "================ NFC 模拟状态 ================"
+    if [ -f "$STATUS_FILE" ]; then
+        ACT=$(cat "$STATUS_FILE")
+        UID_P=$(echo "$ACT" | cut -d',' -f1)
+        SAK_P=$(echo "$ACT" | cut -d',' -f2)
+        ATQA_P=$(echo "$ACT" | cut -d',' -f3)
+        [ -z "$SAK_P" ] || [ "$SAK_P" = "$UID_P" ] && SAK_P="04"
+        [ -z "$ATQA_P" ] && ATQA_P="00"
+        echo "当前模拟卡号 : $UID_P [已生效] (SAK: $SAK_P, ATQA: $ATQA_P)"
+    else
+        echo "当前模拟状态 : 默认模式（未激活模拟）"
+    fi
+    
+    HAL_PID=$(pidof nxp.android.hardware.nfc@1.2-service 2>/dev/null || pgrep -f "hardware.nfc" 2>/dev/null || echo "未运行")
+    NFC_PID=$(pidof com.android.nfc 2>/dev/null || pgrep -x com.android.nfc 2>/dev/null || echo "未运行")
+    echo "NFC HAL 进程 : PID $HAL_PID"
+    echo "NFC 服务进程 : PID $NFC_PID"
+    
+    NXP_MNT=$(grep -q "$TARGET_NXP" /proc/mounts && echo "已挂载 (Active)" || echo "未挂载")
+    NCI_MNT=$(grep -q "$TARGET_NCI" /proc/mounts && echo "已挂载 (Active)" || echo "未挂载")
+    echo "NXP 配置挂载 : $NXP_MNT"
+    echo "NCI 配置挂载 : $NCI_MNT"
+    
+    SYS_STATE=$(dumpsys nfc 2>/dev/null | grep 'mState=' | head -n1 | cut -d'=' -f2)
+    echo "系统 NFC 状态: $SYS_STATE"
+    
+    DEF_ROUTE=$(dumpsys nfc 2>/dev/null | grep 'Default route:' | head -n1 | awk '{print $NF}')
+    echo "当前默认路由 : $DEF_ROUTE"
+    echo "=============================================="
+}
+
+save_card() {
+    init_env
+    NAME="$1"
+    UID_VAL="$2"
+    SAK="${3:-04}"
+    ATQA="${4:-00}"
+    if [ -z "$NAME" ] || [ -z "$UID_VAL" ]; then
+        echo "用法: nfc-sim save <卡片名称> <UID> [SAK] [ATQA]"
+        echo "示例: nfc-sim save 小区门禁 11:22:33:44 08 0400"
+        exit 1
+    fi
+    if ! validate_uid "$UID_VAL"; then
+        exit 1
+    fi
+    FMT_UID=$(format_uid "$UID_VAL")
+    sed -i "/^$NAME=/d" "$CARDS_FILE" 2>/dev/null || true
+    echo "$NAME=$FMT_UID,$SAK,$ATQA" >> "$CARDS_FILE"
+    echo "[+] 卡片已保存: $NAME -> $FMT_UID (SAK: $SAK, ATQA: $ATQA)"
+}
+
+list_cards() {
+    init_env
+    echo "================ 已存卡片列表 ================"
+    if [ ! -s "$CARDS_FILE" ]; then
+        echo "（暂无保存的卡片，可用 nfc-sim save <名称> <UID> 保存）"
+        echo "=============================================="
+        return
+    fi
+    CURR=""
+    [ -f "$STATUS_FILE" ] && CURR=$(cat "$STATUS_FILE" | cut -d',' -f1)
+    while IFS='=' read -r name val; do
+        [ -z "$name" ] && continue
+        uid=$(echo "$val" | cut -d',' -f1)
+        sak=$(echo "$val" | cut -d',' -f2)
+        atqa=$(echo "$val" | cut -d',' -f3)
+        [ -z "$sak" ] || [ "$sak" = "$uid" ] && sak="04"
+        [ -z "$atqa" ] && atqa="00"
+        if [ "$uid" = "$CURR" ]; then
+            printf " * %-16s %s (SAK: %s, ATQA: %s) [当前激活]\n" "$name" "$uid" "$sak" "$atqa"
+        else
+            printf "   %-16s %s (SAK: %s, ATQA: %s)\n" "$name" "$uid" "$sak" "$atqa"
+        fi
+    done < "$CARDS_FILE"
+    echo "=============================================="
+}
+
+load_card() {
+    init_env
+    NAME="$1"
+    if [ -z "$NAME" ]; then
+        echo "用法: nfc-sim load <卡片名称>"
+        exit 1
+    fi
+    TARGET=$(grep "^$NAME=" "$CARDS_FILE" 2>/dev/null | cut -d'=' -f2)
+    if [ -z "$TARGET" ]; then
+        echo "错误: 未找到名为 '$NAME' 的卡片！"
+        echo "运行 'nfc-sim list' 查看所有保存的卡片"
+        exit 1
+    fi
+    UID_PART=$(echo "$TARGET" | cut -d',' -f1)
+    SAK_PART=$(echo "$TARGET" | cut -d',' -f2)
+    ATQA_PART=$(echo "$TARGET" | cut -d',' -f3)
+    [ -z "$SAK_PART" ] || [ "$SAK_PART" = "$UID_PART" ] && SAK_PART="04"
+    [ -z "$ATQA_PART" ] && ATQA_PART="00"
+    set_uid "$UID_PART" "$SAK_PART" "$ATQA_PART"
+}
+
+delete_card() {
+    init_env
+    NAME="$1"
+    if [ -z "$NAME" ]; then
+        echo "用法: nfc-sim delete <卡片名称>"
+        exit 1
+    fi
+    if ! grep -q "^$NAME=" "$CARDS_FILE" 2>/dev/null; then
+        echo "错误: 未找到名为 '$NAME' 的卡片！"
+        exit 1
+    fi
+    sed -i "/^$NAME=/d" "$CARDS_FILE" 2>/dev/null || true
+    echo "[+] 卡片 '$NAME' 已删除"
+}
+
+rename_card() {
+    init_env
+    OLD_NAME="$1"
+    NEW_NAME="$2"
+    if [ -z "$OLD_NAME" ] || [ -z "$NEW_NAME" ]; then
+        echo "用法: nfc-sim rename <旧名称> <新名称>"
+        exit 1
+    fi
+    TARGET=$(grep "^$OLD_NAME=" "$CARDS_FILE" 2>/dev/null | cut -d'=' -f2)
+    if [ -z "$TARGET" ]; then
+        echo "错误: 未找到卡片 '$OLD_NAME'！"
+        exit 1
+    fi
+    sed -i "/^$OLD_NAME=/d" "$CARDS_FILE" 2>/dev/null || true
+    sed -i "/^$NEW_NAME=/d" "$CARDS_FILE" 2>/dev/null || true
+    echo "$NEW_NAME=$TARGET" >> "$CARDS_FILE"
+    echo "[+] 卡片已重命名: $OLD_NAME -> $NEW_NAME ($TARGET)"
+}
+
+read_tag() {
+    echo "[*] 启动实体卡片/读卡器嗅探器（按 Ctrl+C 退出）..."
+    echo "[*] 请将实体门禁卡或 NFC 设备贴近手机背部..."
+    
+    # 清空 logcat 缓冲区
+    logcat -c
+    
+    # 监听 NFC 发现事件并实时解析 UID
+    logcat -v time | while read -r line; do
+        # 匹配 Tag 发现日志
+        if echo "$line" | grep -qiE "TagEndpoint|TAG_DISCOVERED|onTagDiscovered|fillNativeNfcTagMembers|NfcTag::"; then
+            # 尝试抓取 UID 模式
+            UID_MATCH=$(echo "$line" | grep -oE "([0-9A-Fa-f]{2}[: ]){3,6}[0-9A-Fa-f]{2}" | head -n1 | tr ' ' ':')
+            if [ -n "$UID_MATCH" ]; then
+                FMT=$(format_uid "$UID_MATCH")
+                echo ""
+                echo "=============================================="
+                echo "[!] 成功探测到卡片 UID: $FMT"
+                echo "提示: 可运行 'nfc-sim save <名称> $FMT' 保存"
+                echo "      可运行 'nfc-sim set $FMT' 立即模拟"
+                echo "=============================================="
+                break
+            fi
+        fi
+    done
+}
+
+case "$1" in
+    set)
+        set_uid "$2" "$3" "$4"
+        ;;
+    reset)
+        reset_uid
+        ;;
+    status)
+        show_status
+        ;;
+    save)
+        save_card "$2" "$3" "$4" "$5"
+        ;;
+    load)
+        load_card "$2"
+        ;;
+    list)
+        list_cards
+        ;;
+    delete|del|rm)
+        delete_card "$2"
+        ;;
+    rename|mv)
+        rename_card "$2" "$3"
+        ;;
+    read|sniff|scan)
+        read_tag
+        ;;
+    *)
+        echo "================================================="
+        echo "   NFC 卡模拟命令行工具 (OneUIX NFC-SIM v1.0)"
+        echo "   适配: One UI 7+ / Android 15+ (NXP 控制器)"
+        echo "================================================="
+        echo "核心功能:"
+        echo "  nfc-sim set <UID>            模拟指定卡号 (如: nfc-sim set 11:22:33:44)"
+        echo "  nfc-sim reset                还原出厂默认设置（动态随机 UID）"
+        echo "  nfc-sim status               查看当前模拟卡号、路由与硬件状态"
+        echo ""
+        echo "卡包管理:"
+        echo "  nfc-sim save <名> <UID>      保存卡片 (如: nfc-sim save 公司卡 11:22:33:44)"
+        echo "  nfc-sim load <名>            一键切换为指定卡片"
+        echo "  nfc-sim list                 列出所有已保存卡片及当前激活项"
+        echo "  nfc-sim delete <名>          删除已保存卡片"
+        echo "  nfc-sim rename <旧名> <新名> 重命名卡片"
+        echo ""
+        echo "实用辅助:"
+        echo "  nfc-sim read                 嗅探扫描实体卡片并提取 UID"
+        echo "================================================="
+        exit 0
+        ;;
+esac

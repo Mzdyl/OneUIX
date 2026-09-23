@@ -34,12 +34,17 @@
         <package android:name="com.sec.android.gallery3d" />
         <package android:name="com.sec.android.mimage.photoretouching" />
         <package android:name="com.samsung.android.agent.storage" />
+        <package android:name="com.android.nfc" />
     </queries>
 
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="false" />
 
+    <uses-permission android:name="android.permission.NFC" />
     <uses-permission
         android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"
         tools:ignore="ProtectedPermissions" />

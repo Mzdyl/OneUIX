@@ -50,6 +50,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
 import io.github.soclear.oneuix.ui.category.DetailPaneVideo
 import io.github.soclear.oneuix.ui.category.DetailPaneWatchManager
 import io.github.soclear.oneuix.ui.category.DetailPaneWeather
+import io.github.soclear.oneuix.ui.category.DetailPaneNfc
 import io.github.soclear.oneuix.ui.category.ListPaneCategory
 import io.github.soclear.oneuix.ui.category.onAndroidEvent
 import io.github.soclear.oneuix.ui.category.onBixbyEvent
@@ -64,6 +65,7 @@ import io.github.soclear.oneuix.ui.category.onHealthMonitorEvent
 import io.github.soclear.oneuix.ui.category.onLauncherEvent
 import io.github.soclear.oneuix.ui.category.onMessagingEvent
 import io.github.soclear.oneuix.ui.category.onNotesEvent
+import io.github.soclear.oneuix.ui.category.onNfcEvent
 import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
 import io.github.soclear.oneuix.ui.category.onQuickShareEvent
 import io.github.soclear.oneuix.ui.category.onSamsungHealthEvent
@@ -260,6 +262,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.QuickShare -> DetailPaneQuickShare(
                             uiState = preference.other,
                             onEvent = viewModel::onQuickShareEvent
+                        )
+
+                        Category.Nfc -> DetailPaneNfc(
+                            uiState = preference.nfc,
+                            onEvent = viewModel::onNfcEvent
                         )
                     }
                 }

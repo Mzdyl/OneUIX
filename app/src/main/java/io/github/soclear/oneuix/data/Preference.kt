@@ -12,6 +12,7 @@ data class Preference(
     val other: Other = Other(),
     val samsungHealth: SamsungHealth = SamsungHealth(),
     val bixby: Bixby = Bixby(),
+    val nfc: Nfc = Nfc(),
 ) {
     @Serializable
     data class Android(
@@ -198,6 +199,25 @@ data class Preference(
         val injectModel: Boolean = false,
         val labsMgr: Boolean = false,
         val wwvBypass: Boolean = false,
+    )
+
+    @Serializable
+    data class Nfc(
+        val enableSimulation: Boolean = false,
+        val activeUid: String = "",
+        val activeCardName: String = "",
+        val activeSak: String = "04",
+        val activeAtqa: String = "00",
+        val cards: List<NfcCard> = emptyList(),
+    )
+
+    @Serializable
+    data class NfcCard(
+        val id: String = "",
+        val name: String = "",
+        val uid: String = "",
+        val sak: String = "04",
+        val atqa: String = "00",
     )
 
     companion object {
