@@ -9,161 +9,148 @@ import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import io.github.libxposed.api.XposedModule
-import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 
 object Browser {
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun showMorePlaybackSpeeds() {
-        if (param.packageName != Package.BROWSER) {
-            return
+    context(xposedModule: XposedModule)
+    fun showMorePlaybackSpeeds() = afterAttachTry {
+        // Restore visibility of playback speed feature
+        runCatching {
+            classLoader
+                .loadClass("com.sec.android.app.sbrowser.common.device.setting_preference.SettingPreference")
+                .getDeclaredMethod("getPlaybackRateViewVisibility")
+        }.getOrElse {
+            return@afterAttachTry
+        }.let {
+            xposedModule.hook(it).intercept { true }
         }
-        try {
-            try {
-                // Restore visibility of playback speed feature
-                xposedModule.hook(
-                    param.classLoader
-                        .loadClass("com.sec.android.app.sbrowser.common.device.setting_preference.SettingPreference")
-                        .getDeclaredMethod("getPlaybackRateViewVisibility")
-                ).intercept { true }
 
-                xposedModule.hook(
-                    param.classLoader
-                        .loadClass($$"com.sec.android.app.sbrowser.media.common.MediaFeatureGlobalConfigUtils$Companion")
-                        .getDeclaredMethod("isPlaybackSpeedEnabled", Context::class.java)
-                ).intercept { true }
+        xposedModule.hook(
+            classLoader
+                .loadClass($$"com.sec.android.app.sbrowser.media.common.MediaFeatureGlobalConfigUtils$Companion")
+                .getDeclaredMethod("isPlaybackSpeedEnabled", Context::class.java)
+        ).intercept { true }
+
+        val playbackRateViewClass =
+            classLoader.loadClass("${Package.BROWSER}.media.player.fullscreen.view.MPFullScreenPlaybackRateView")
+        val sPlaybackRates = doubleArrayOf(
+            0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0
+        )
+        xposedModule.hook(
+            playbackRateViewClass.getDeclaredMethod("init", LinearLayout::class.java)
+        ).intercept { chain ->
+            fun setPlaybackRates() {
+                playbackRateViewClass.reflect["sPlaybackRates"] = sPlaybackRates
+            }
+
+            fun createRadioButton(text: String, template: RadioButton): RadioButton {
+                return RadioButton(template.context).apply {
+                    id = View.generateViewId()
+                    this.text = text
+                    textSize = 12f
+                    setTextColor(template.currentTextColor)
+                    buttonDrawable = template.buttonDrawable
+                    textAlignment = View.TEXT_ALIGNMENT_CENTER
+                    typeface = template.typeface
+                    setPadding(0, 0, 0, 0)
+                    layoutParams = RadioGroup.LayoutParams(template.layoutParams).apply {
+                        weight = 1f
+                        setMargins(0, 0, 0, 0)
+                    }
+                }
+            }
+
+            fun addMoreSpeeds() {
+                val radioGroup =
+                    chain.thisObject.reflect["mPlaybackSpeedRadioGroup"] as? RadioGroup ?: return
+                val radioButton = radioGroup.getChildAt(0) as? RadioButton ?: return
+                radioGroup.addView(createRadioButton("3.0", radioButton))
+                radioGroup.addView(createRadioButton("4.0", radioButton))
+            }
+
+            fun setPlaybackRateViewWidth() {
+                val view = chain.thisObject.reflect["mPlaybackRateView"] as? View ?: return
+
+                val density = view.resources.displayMetrics.density
+                view.layoutParams = view.layoutParams.apply {
+                    width = (380 * density).toInt()
+                }
+            }
+
+            val result = chain.proceed()
+            try {
+                setPlaybackRates()
+                setPlaybackRateViewWidth()
+                addMoreSpeeds()
             } catch (t: Throwable) {
                 xlog(t)
             }
-
-            val playbackRateViewClass = runCatching {
-                param.classLoader.loadClass("${Package.BROWSER}.media.player.fullscreen.view.MPFullScreenPlaybackRateView")
-            }.getOrNull() ?: return
-            val sPlaybackRates = doubleArrayOf(
-                0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0
-            )
-            xposedModule.hook(
-                playbackRateViewClass.getDeclaredMethod("init", LinearLayout::class.java)
-            ).intercept { chain ->
-                fun setPlaybackRates() {
-                    playbackRateViewClass.reflect["sPlaybackRates"] = sPlaybackRates
-                }
-
-                fun createRadioButton(text: String, template: RadioButton): RadioButton {
-                    return RadioButton(template.context).apply {
-                        id = View.generateViewId()
-                        this.text = text
-                        textSize = 12f
-                        setTextColor(template.currentTextColor)
-                        buttonDrawable = template.buttonDrawable
-                        textAlignment = View.TEXT_ALIGNMENT_CENTER
-                        typeface = template.typeface
-                        setPadding(0, 0, 0, 0)
-                        layoutParams = RadioGroup.LayoutParams(template.layoutParams).apply {
-                            weight = 1f
-                            setMargins(0, 0, 0, 0)
-                        }
-                    }
-                }
-
-                fun addMoreSpeeds() {
-                    val radioGroup =
-                        chain.thisObject.reflect["mPlaybackSpeedRadioGroup"] as? RadioGroup ?: return
-                    val radioButton = radioGroup.getChildAt(0) as? RadioButton ?: return
-                    radioGroup.addView(createRadioButton("3.0", radioButton))
-                    radioGroup.addView(createRadioButton("4.0", radioButton))
-                }
-
-                fun setPlaybackRateViewWidth() {
-                    val view = chain.thisObject.reflect["mPlaybackRateView"] as? View ?: return
-
-                    val density = view.resources.displayMetrics.density
-                    view.layoutParams = view.layoutParams.apply {
-                        width = (380 * density).toInt()
-                    }
-                }
-
-                val result = chain.proceed()
-                try {
-                    setPlaybackRates()
-                    setPlaybackRateViewWidth()
-                    addMoreSpeeds()
-                } catch (t: Throwable) {
-                    xlog(t)
-                }
-                result
-            }
-
-
-            xposedModule.hook(
-                playbackRateViewClass.getDeclaredMethod("setInitialSpeed")
-            ).intercept { chain ->
-                try {
-                    val mController = chain.thisObject.reflect["mController"] ?: throw Exception("mController is null")
-                    val speed = mController.reflect.call("getPlaybackRate") as Double
-                    var index = sPlaybackRates.indexOfFirst { it == speed }
-                    // Default to 1.0x
-                    if (index == -1) index = 3
-
-                    val radioGroup =
-                        chain.thisObject.reflect["mPlaybackSpeedRadioGroup"] as? RadioGroup ?: return@intercept null
-                    val radioButton =
-                        radioGroup.getChildAt(index) as? RadioButton ?: return@intercept null
-
-                    mController.reflect.call("setPlaybackRate", speed)
-                    chain.thisObject.reflect["mCurrentSpeed"] = radioButton
-                    radioButton.isChecked = true
-                    chain.thisObject.reflect.call("highlightSelectedSpeedButton", radioButton)
-                } catch (t: Throwable) {
-                    xlog(t)
-                }
-                null
-            }
-        } catch (t: Throwable) {
-            xlog(t)
+            result
         }
-    }
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun setCountryIsoCode(code: String) {
-        if (param.packageName != Package.BROWSER) return
-        try {
-            xposedModule.hook(
-                param.classLoader
-                    .loadClass("com.sec.android.app.sbrowser.common.application.AppInfo")
-                    .getDeclaredMethod("isCnApk")
-            ).intercept { code == "CN" }
 
-            xposedModule.hook(
-                param.classLoader
-                    .loadClass("com.sec.android.app.sbrowser.common.device.CountryUtil")
-                    .getDeclaredMethod("getCountryIsoCode")
-            ).intercept { code }
-
-            xposedModule.hook(
-                param.classLoader
-                    .loadClass("com.sec.android.app.sbrowser.common.device.SystemProperties")
-                    .getDeclaredMethod("getCountryCodeintoLocaleForGED")
-            ).intercept { code }
-
-            xposedModule.hook(
-                param.classLoader
-                    .loadClass("com.sec.android.app.sbrowser.common.device.SystemProperties")
-                    .getDeclaredMethod("getCscCountryIsoCode")
-            ).intercept { code }
-        } catch (t: Throwable) {
-            xlog(t)
-        }
-    }
-
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun redirectCustomTab() {
-        val packageName = param.packageName
-        if (packageName != Package.BROWSER) return
         xposedModule.hook(
-            param.classLoader
+            playbackRateViewClass.getDeclaredMethod("setInitialSpeed")
+        ).intercept { chain ->
+            try {
+                val mController = chain.thisObject.reflect["mController"] ?: throw Exception("mController is null")
+                val speed = mController.reflect.call("getPlaybackRate") as Double
+                var index = sPlaybackRates.indexOfFirst { it == speed }
+                // Default to 1.0x
+                if (index == -1) index = 3
+
+                val radioGroup =
+                    chain.thisObject.reflect["mPlaybackSpeedRadioGroup"] as? RadioGroup ?: return@intercept null
+                val radioButton =
+                    radioGroup.getChildAt(index) as? RadioButton ?: return@intercept null
+
+                mController.reflect.call("setPlaybackRate", speed)
+                chain.thisObject.reflect["mCurrentSpeed"] = radioButton
+                radioButton.isChecked = true
+                chain.thisObject.reflect.call("highlightSelectedSpeedButton", radioButton)
+            } catch (t: Throwable) {
+                xlog(t)
+            }
+            null
+        }
+    }
+
+    context(xposedModule: XposedModule)
+    fun setCountryIsoCode(code: String) = afterAttachTry {
+        runCatching {
+            classLoader
+                .loadClass("com.sec.android.app.sbrowser.common.application.AppInfo")
+                .getDeclaredMethod("isCnApk")
+        }.getOrElse {
+            return@afterAttachTry
+        }.let { xposedModule.hook(it).intercept { code == "CN" } }
+
+        xposedModule.hook(
+            classLoader
+                .loadClass("com.sec.android.app.sbrowser.common.device.CountryUtil")
+                .getDeclaredMethod("getCountryIsoCode")
+        ).intercept { code }
+
+        xposedModule.hook(
+            classLoader
+                .loadClass("com.sec.android.app.sbrowser.common.device.SystemProperties")
+                .getDeclaredMethod("getCountryCodeintoLocaleForGED")
+        ).intercept { code }
+
+        xposedModule.hook(
+            classLoader
+                .loadClass("com.sec.android.app.sbrowser.common.device.SystemProperties")
+                .getDeclaredMethod("getCscCountryIsoCode")
+        ).intercept { code }
+    }
+
+    context(xposedModule: XposedModule)
+    fun redirectCustomTab() = afterAttachTry {
+        xposedModule.hook(
+            classLoader
                 .loadClass("com.sec.android.app.sbrowser.customtabs.CustomTabActivity")
                 .getDeclaredMethod("onCreate", Bundle::class.java)
         ).intercept { chain ->

@@ -15,10 +15,10 @@ import android.widget.SeekBar
 import android.widget.TextView
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
-import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.ONE_UI_VERSION
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
+import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 import kotlin.math.roundToInt
@@ -34,135 +34,182 @@ object QS {
     }
 
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun hideDeviceControlQsTile() {
-        if (param.packageName != Package.SYSTEMUI ||
-            Build.VERSION.SDK_INT != Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-        ) return
-        try {
-            val qsTileHostClass = param.classLoader.loadClass("com.android.systemui.qs.QSTileHost")
-            val createTileMethod = qsTileHostClass.getDeclaredMethod("createTile", String::class.java)
-            xposedModule.hook(createTileMethod).intercept { chain ->
-                if (chain.args.firstOrNull() == "DeviceControl") {
-                    null
-                } else {
-                    chain.proceed()
-                }
+    context(xposedModule: XposedModule)
+    fun hideDeviceControlQsTile() = afterAttachTry(Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        val qsTileHostClass = classLoader.loadClass("com.android.systemui.qs.QSTileHost")
+        val createTileMethod = qsTileHostClass.getDeclaredMethod("createTile", String::class.java)
+        xposedModule.hook(createTileMethod).intercept { chain ->
+            if (chain.args.firstOrNull() == "DeviceControl") {
+                null
+            } else {
+                chain.proceed()
             }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun hideSmartViewQsTile() {
-        if (param.packageName != Package.SYSTEMUI ||
-            Build.VERSION.SDK_INT != Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-        ) return
-        try {
-            val qsTileHostClass = param.classLoader.loadClass("com.android.systemui.qs.QSTileHost")
-            val createTileMethod = qsTileHostClass.getDeclaredMethod("createTile", String::class.java)
-            xposedModule.hook(createTileMethod).intercept { chain ->
-                if (chain.args.firstOrNull() == "custom(com.samsung.android.smartmirroring/.tile.SmartMirroringTile)") {
-                    null
-                } else {
-                    chain.proceed()
-                }
+    context(xposedModule: XposedModule)
+    fun hideSmartViewQsTile() = afterAttachTry(Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        val qsTileHostClass = classLoader.loadClass("com.android.systemui.qs.QSTileHost")
+        val createTileMethod = qsTileHostClass.getDeclaredMethod("createTile", String::class.java)
+        xposedModule.hook(createTileMethod).intercept { chain ->
+            if (chain.args.firstOrNull() == "custom(com.samsung.android.smartmirroring/.tile.SmartMirroringTile)") {
+                null
+            } else {
+                chain.proceed()
             }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 
     // related classes: BarFactory BarController  BarOrderInteractor
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun hideQsBar(qsBarSet: Set<QsBar>) {
-        if (param.packageName != Package.SYSTEMUI ||
-            qsBarSet.isEmpty() ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM
-        ) {
-            return
-        }
-
-        val hideBarCallback = XposedInterface.Hooker { chain ->
-            val result = chain.proceed()
-            val view = chain.thisObject.reflect["mBarRootView"] as? View
-            view?.visibility = View.GONE
-            result
-        }
-
-        if (QsBar.NearbyDevicesAndDeviceControl in qsBarSet && ONE_UI_VERSION < 80500) {
-            try {
-                if (param.applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
-                    val bottomLargeTileBarClass = param.classLoader.loadClass(
-                        "com.android.systemui.qs.bar.BottomLargeTileBar"
-                    )
-                    val showBarMethod = bottomLargeTileBarClass.getDeclaredMethod(
-                        "showBar",
-                        Boolean::class.javaPrimitiveType
-                    )
-                    xposedModule.hook(showBarMethod).intercept(hideBarCallback)
-                } else {
-                    val largeTileBarClass = param.classLoader.loadClass(
-                        "com.android.systemui.qs.bar.LargeTileBar"
-                    )
-                    val updateLayoutMethod = largeTileBarClass.getDeclaredMethod(
-                        "updateLayout",
-                        LinearLayout::class.java
-                    )
-                    xposedModule.hook(updateLayoutMethod).intercept { chain ->
-                        val result = chain.proceed()
-                        val string = chain.thisObject.reflect["TAG"] as? String
-                        if (string == "BottomLargeTileBar") {
-                            val view = chain.thisObject.reflect["mBarRootView"] as? View
-                            view?.visibility = View.GONE
-                        }
-                        result
-                    }
-                }
-            } catch (t: Throwable) {
-                xlog(t)
+    context(xposedModule: XposedModule)
+    fun hideQsBar(qsBarSet: Set<QsBar>) =
+        afterAttachTry(qsBarSet.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            val hideBarCallback = XposedInterface.Hooker { chain ->
+                val result = chain.proceed()
+                val view = chain.thisObject.reflect["mBarRootView"] as? View
+                view?.visibility = View.GONE
+                result
             }
-        }
 
-        if (QsBar.MediaPlayer in qsBarSet && ONE_UI_VERSION < 80500) {
-            try {
-                val qsMediaPlayerBarClass = param.classLoader.loadClass(
-                    "com.android.systemui.qs.bar.QSMediaPlayerBar"
-                )
-                val inflateViewsMethod = qsMediaPlayerBarClass.getDeclaredMethod(
-                    "inflateViews",
-                    ViewGroup::class.java
-                )
-                xposedModule.hook(inflateViewsMethod).intercept(hideBarCallback)
-            } catch (t: Throwable) {
-                xlog(t)
-            }
-        }
-
-        if (QsBar.SecurityFooter in qsBarSet) {
-            try {
-                if (ONE_UI_VERSION >= 80500) {
-                    val bottomBannerTransformClass = runCatching {
-                        param.classLoader.loadClass(
-                            $$"com.android.systemui.samsung.quicksetting.ui.banner.BottomBannerViewModel$1$1"
+            if (QsBar.NearbyDevicesAndDeviceControl in qsBarSet && ONE_UI_VERSION < 80500) {
+                try {
+                    if (applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
+                        val bottomLargeTileBarClass = classLoader.loadClass(
+                            "com.android.systemui.qs.bar.BottomLargeTileBar"
                         )
-                    }.getOrNull()
-                    bottomBannerTransformClass?.declaredMethods
-                        ?.filter { it.name == "invoke" }
-                        ?.forEach { method ->
-                            xposedModule.hook(method).intercept { chain ->
-                                if (chain.args.getOrNull(1) is Boolean) {
-                                    val newArgs = chain.args.toTypedArray()
-                                    newArgs[1] = false
-                                    chain.proceed(newArgs)
-                                } else {
-                                    chain.proceed()
+                        val showBarMethod = bottomLargeTileBarClass.getDeclaredMethod(
+                            "showBar",
+                            Boolean::class.javaPrimitiveType
+                        )
+                        xposedModule.hook(showBarMethod).intercept(hideBarCallback)
+                    } else {
+                        val largeTileBarClass = classLoader.loadClass(
+                            "com.android.systemui.qs.bar.LargeTileBar"
+                        )
+                        val updateLayoutMethod = largeTileBarClass.getDeclaredMethod(
+                            "updateLayout",
+                            LinearLayout::class.java
+                        )
+                        xposedModule.hook(updateLayoutMethod).intercept { chain ->
+                            val result = chain.proceed()
+                            val string = chain.thisObject.reflect["TAG"] as? String
+                            if (string == "BottomLargeTileBar") {
+                                val view = chain.thisObject.reflect["mBarRootView"] as? View
+                                view?.visibility = View.GONE
+                            }
+                            result
+                        }
+                    }
+                } catch (t: Throwable) {
+                    xlog(t)
+                }
+            }
+
+            if (QsBar.MediaPlayer in qsBarSet && ONE_UI_VERSION < 80500) {
+                try {
+                    val qsMediaPlayerBarClass = classLoader.loadClass(
+                        "com.android.systemui.qs.bar.QSMediaPlayerBar"
+                    )
+                    val inflateViewsMethod = qsMediaPlayerBarClass.getDeclaredMethod(
+                        "inflateViews",
+                        ViewGroup::class.java
+                    )
+                    xposedModule.hook(inflateViewsMethod).intercept(hideBarCallback)
+                } catch (t: Throwable) {
+                    xlog(t)
+                }
+            }
+
+            if (QsBar.SecurityFooter in qsBarSet) {
+                try {
+                    if (ONE_UI_VERSION >= 80500) {
+                        val bottomBannerTransformClass = runCatching {
+                            classLoader.loadClass(
+                                $$"com.android.systemui.samsung.quicksetting.ui.banner.BottomBannerViewModel$1$1"
+                            )
+                        }.getOrNull()
+                        bottomBannerTransformClass?.declaredMethods
+                            ?.filter { it.name == "invoke" }
+                            ?.forEach { method ->
+                                xposedModule.hook(method).intercept { chain ->
+                                    if (chain.args.getOrNull(1) is Boolean) {
+                                        val newArgs = chain.args.toTypedArray()
+                                        newArgs[1] = false
+                                        chain.proceed(newArgs)
+                                    } else {
+                                        chain.proceed()
+                                    }
                                 }
                             }
+                    } else if (applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
+                        val barItemImplClass = classLoader.loadClass(
+                            "com.android.systemui.qs.bar.BarItemImpl"
+                        )
+                        val showBarMethod = barItemImplClass.getDeclaredMethod(
+                            "showBar",
+                            Boolean::class.javaPrimitiveType
+                        )
+                        xposedModule.hook(showBarMethod).intercept { chain ->
+                            val tag = chain.thisObject.reflect["TAG"]
+                            if (tag == "SecurityFooterBar") {
+                                val newArgs = chain.args.toTypedArray()
+                                newArgs[0] = false
+                                chain.proceed(newArgs)
+                            } else {
+                                chain.proceed()
+                            }
                         }
-                } else if (param.applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
-                    val barItemImplClass = param.classLoader.loadClass(
+                    } else {
+                        val securityFooterBarClass = classLoader.loadClass(
+                            "com.android.systemui.qs.bar.SecurityFooterBar"
+                        )
+                        val onVisibilityChangedMethod = securityFooterBarClass.getDeclaredMethod(
+                            "onVisibilityChanged",
+                            Int::class.javaPrimitiveType
+                        )
+                        xposedModule.hook(onVisibilityChangedMethod).intercept(hideBarCallback)
+                    }
+                } catch (t: Throwable) {
+                    xlog(t)
+                }
+            }
+
+            if (QsBar.DataUsage in qsBarSet) {
+                try {
+                    if (ONE_UI_VERSION >= 80500) {
+                        val bottomBannerTransformClass = runCatching {
+                            classLoader.loadClass(
+                                $$"com.android.systemui.samsung.quicksetting.ui.banner.BottomBannerViewModel$1$1"
+                            )
+                        }.getOrNull()
+                        bottomBannerTransformClass?.declaredMethods
+                            ?.filter { it.name == "invoke" }
+                            ?.forEach { method ->
+                                xposedModule.hook(method).intercept { chain ->
+                                    if (chain.args.getOrNull(2) is Boolean) {
+                                        val newArgs = chain.args.toTypedArray()
+                                        newArgs[2] = false
+                                        chain.proceed(newArgs)
+                                    } else {
+                                        chain.proceed()
+                                    }
+                                }
+                            }
+                    } else {
+                        val dataUsageBarClass = classLoader.loadClass(
+                            "com.android.systemui.qs.bar.DataUsageBar"
+                        )
+                        val isAvailableMethod = dataUsageBarClass.getDeclaredMethod("isAvailable")
+                        xposedModule.hook(isAvailableMethod).intercept { false }
+                    }
+                } catch (t: Throwable) {
+                    xlog(t)
+                }
+            }
+
+            if (QsBar.SmartViewAndModes in qsBarSet && ONE_UI_VERSION < 80500) {
+                try {
+                    val barItemImplClass = classLoader.loadClass(
                         "com.android.systemui.qs.bar.BarItemImpl"
                     )
                     val showBarMethod = barItemImplClass.getDeclaredMethod(
@@ -171,7 +218,7 @@ object QS {
                     )
                     xposedModule.hook(showBarMethod).intercept { chain ->
                         val tag = chain.thisObject.reflect["TAG"]
-                        if (tag == "SecurityFooterBar") {
+                        if (tag == "SmartViewLargeTileBar") {
                             val newArgs = chain.args.toTypedArray()
                             newArgs[0] = false
                             chain.proceed(newArgs)
@@ -179,69 +226,38 @@ object QS {
                             chain.proceed()
                         }
                     }
-                } else {
-                    val securityFooterBarClass = param.classLoader.loadClass(
-                        "com.android.systemui.qs.bar.SecurityFooterBar"
-                    )
-                    val onVisibilityChangedMethod = securityFooterBarClass.getDeclaredMethod(
-                        "onVisibilityChanged",
-                        Int::class.javaPrimitiveType
-                    )
-                    xposedModule.hook(onVisibilityChangedMethod).intercept(hideBarCallback)
+                } catch (t: Throwable) {
+                    xlog(t)
                 }
-            } catch (t: Throwable) {
-                xlog(t)
             }
-        }
 
-        if (QsBar.DataUsage in qsBarSet) {
+            // 横屏
             try {
-                if (ONE_UI_VERSION >= 80500) {
-                    val bottomBannerTransformClass = runCatching {
-                        param.classLoader.loadClass(
-                            $$"com.android.systemui.samsung.quicksetting.ui.banner.BottomBannerViewModel$1$1"
-                        )
-                    }.getOrNull()
-                    bottomBannerTransformClass?.declaredMethods
-                        ?.filter { it.name == "invoke" }
-                        ?.forEach { method ->
-                            xposedModule.hook(method).intercept { chain ->
-                                if (chain.args.getOrNull(2) is Boolean) {
-                                    val newArgs = chain.args.toTypedArray()
-                                    newArgs[2] = false
-                                    chain.proceed(newArgs)
-                                } else {
-                                    chain.proceed()
-                                }
-                            }
-                        }
-                } else {
-                    val dataUsageBarClass = param.classLoader.loadClass(
-                        "com.android.systemui.qs.bar.DataUsageBar"
-                    )
-                    val isAvailableMethod = dataUsageBarClass.getDeclaredMethod("isAvailable")
-                    xposedModule.hook(isAvailableMethod).intercept { false }
+                if (ONE_UI_VERSION >= 80500) return@afterAttachTry
+                val nearbyDevicesAndDeviceControl = QsBar.NearbyDevicesAndDeviceControl in qsBarSet
+                val smartViewAndModes = QsBar.SmartViewAndModes in qsBarSet
+                if (!nearbyDevicesAndDeviceControl && !smartViewAndModes) {
+                    return@afterAttachTry
                 }
-            } catch (t: Throwable) {
-                xlog(t)
-            }
-        }
-
-        if (QsBar.SmartViewAndModes in qsBarSet && ONE_UI_VERSION < 80500) {
-            try {
-                val barItemImplClass = param.classLoader.loadClass(
-                    "com.android.systemui.qs.bar.BarItemImpl"
+                val topLargeTileBarClass = classLoader.loadClass(
+                    "com.android.systemui.qs.bar.TopLargeTileBar"
                 )
-                val showBarMethod = barItemImplClass.getDeclaredMethod(
-                    "showBar",
-                    Boolean::class.javaPrimitiveType
+                val tileRecordClass = classLoader.loadClass(
+                    $$"com.android.systemui.qs.SecQSPanelControllerBase$TileRecord"
                 )
-                xposedModule.hook(showBarMethod).intercept { chain ->
-                    val tag = chain.thisObject.reflect["TAG"]
-                    if (tag == "SmartViewLargeTileBar") {
-                        val newArgs = chain.args.toTypedArray()
-                        newArgs[0] = false
-                        chain.proceed(newArgs)
+                val addTileMethod = topLargeTileBarClass.getDeclaredMethod("addTile", tileRecordClass)
+                xposedModule.hook(addTileMethod).intercept { chain ->
+                    val tile = chain.args[0]?.reflect?.get("tile")
+                    val tileSpec = tile?.reflect?.call("getTileSpec")
+                    val flag = when (tileSpec) {
+                        "DeviceControl" if nearbyDevicesAndDeviceControl -> true
+                        "custom(com.samsung.android.mydevice/.quicksettings.MyDeviceTileService)" if nearbyDevicesAndDeviceControl -> true
+                        "custom(com.samsung.android.smartmirroring/.tile.SmartMirroringTile)" if smartViewAndModes -> true
+                        "custom(com.samsung.android.app.routines/.LifestyleModeTile)" if smartViewAndModes -> true
+                        else -> false
+                    }
+                    if (flag) {
+                        null
                     } else {
                         chain.proceed()
                     }
@@ -251,192 +267,141 @@ object QS {
             }
         }
 
-        // 横屏
-        try {
-            if (ONE_UI_VERSION >= 80500) return
-            val nearbyDevicesAndDeviceControl = QsBar.NearbyDevicesAndDeviceControl in qsBarSet
-            val smartViewAndModes = QsBar.SmartViewAndModes in qsBarSet
-            if (!nearbyDevicesAndDeviceControl && !smartViewAndModes) {
-                return
-            }
-            val topLargeTileBarClass = param.classLoader.loadClass(
-                "com.android.systemui.qs.bar.TopLargeTileBar"
-            )
-            val tileRecordClass = param.classLoader.loadClass(
-                $$"com.android.systemui.qs.SecQSPanelControllerBase$TileRecord"
-            )
-            val addTileMethod = topLargeTileBarClass.getDeclaredMethod("addTile", tileRecordClass)
-            xposedModule.hook(addTileMethod).intercept { chain ->
-                val tile = chain.args[0]?.reflect?.get("tile")
-                val tileSpec = tile?.reflect?.call("getTileSpec")
-                val flag = when (tileSpec) {
-                    "DeviceControl" if nearbyDevicesAndDeviceControl -> true
-                    "custom(com.samsung.android.mydevice/.quicksettings.MyDeviceTileService)" if nearbyDevicesAndDeviceControl -> true
-                    "custom(com.samsung.android.smartmirroring/.tile.SmartMirroringTile)" if smartViewAndModes -> true
-                    "custom(com.samsung.android.app.routines/.LifestyleModeTile)" if smartViewAndModes -> true
-                    else -> false
-                }
-                if (flag) {
-                    null
-                } else {
-                    chain.proceed()
-                }
-            }
-        } catch (t: Throwable) {
-            xlog(t)
-        }
-    }
-
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun alwaysExpandQsTileChunk() {
-        if (param.packageName != Package.SYSTEMUI ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM ||
-            ONE_UI_VERSION >= 80500
-        ) return
-        try {
-            val tileChunkLayoutBarClass = param.classLoader.loadClass(
-                "com.android.systemui.qs.bar.TileChunkLayoutBar"
-            )
-            val setContainerHeightMethod = tileChunkLayoutBarClass.getDeclaredMethod(
-                "setContainerHeight",
-                Int::class.javaPrimitiveType
-            )
-            xposedModule.hook(setContainerHeightMethod).intercept { chain ->
-                val expandedHeight = chain.thisObject.reflect["mContainerExpandedHeight"] as? Int
-                if (expandedHeight != null) {
-                    val newArgs = chain.args.toTypedArray()
-                    newArgs[0] = expandedHeight
-                    chain.proceed(newArgs)
-                } else {
-                    chain.proceed()
-                }
-            }
-
-            val inflateViewsMethod = tileChunkLayoutBarClass.getDeclaredMethod(
-                "inflateViews",
-                ViewGroup::class.java
-            )
-            xposedModule.hook(inflateViewsMethod).intercept { chain ->
-                val result = chain.proceed()
-                val scrollIndicator = chain.thisObject.reflect["mScrollIndicatorClickContainer"] as? View
-                scrollIndicator?.visibility = View.GONE
-                result
-            }
-        } catch (t: Throwable) {
-            xlog(t)
-        }
-    }
-
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun alwaysShowTimeDateOnQs() {
-        if (param.packageName != Package.SYSTEMUI ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM ||
-            ONE_UI_VERSION >= 80500
-        ) return
-        try {
-            val animatorClass = param.classLoader.loadClass(
-                "com.android.systemui.qs.animator.SecQSFragmentAnimatorBase"
-            )
-            val qsClass = param.classLoader.loadClass("com.android.systemui.plugins.qs.QS")
-            val setQsMethod = animatorClass.getDeclaredMethod("setQs", qsClass)
-            xposedModule.hook(setQsMethod).intercept { chain ->
-                val result = chain.proceed()
-                if (param.applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
-                    chain.thisObject.reflect["clockDateContainer"] = null
-                } else {
-                    val context = chain.thisObject.reflect["context"] as? Context
-                    if (context != null) {
-                        chain.thisObject.reflect["clockDateContainer"] = View(context)
+    context(xposedModule: XposedModule)
+    fun alwaysExpandQsTileChunk() =
+        afterAttachTry(Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && ONE_UI_VERSION < 80500) {
+            try {
+                val tileChunkLayoutBarClass = classLoader.loadClass(
+                    "com.android.systemui.qs.bar.TileChunkLayoutBar"
+                )
+                val setContainerHeightMethod = tileChunkLayoutBarClass.getDeclaredMethod(
+                    "setContainerHeight",
+                    Int::class.javaPrimitiveType
+                )
+                xposedModule.hook(setContainerHeightMethod).intercept { chain ->
+                    val expandedHeight = chain.thisObject.reflect["mContainerExpandedHeight"] as? Int
+                    if (expandedHeight != null) {
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[0] = expandedHeight
+                        chain.proceed(newArgs)
+                    } else {
+                        chain.proceed()
                     }
                 }
-                result
-            }
-        } catch (t: Throwable) {
-            xlog(t)
-        }
 
-        try {
-            val callback = XposedInterface.Hooker { chain ->
-                val result = chain.proceed()
-                val mContext = chain.thisObject.reflect["mContext"] as? Context
-                if (mContext != null) {
-                    chain.thisObject.reflect["mClockDateContainer"] = View(mContext)
+                val inflateViewsMethod = tileChunkLayoutBarClass.getDeclaredMethod(
+                    "inflateViews",
+                    ViewGroup::class.java
+                )
+                xposedModule.hook(inflateViewsMethod).intercept { chain ->
+                    val result = chain.proceed()
+                    val scrollIndicator = chain.thisObject.reflect["mScrollIndicatorClickContainer"] as? View
+                    scrollIndicator?.visibility = View.GONE
+                    result
                 }
-                result
+            } catch (t: Throwable) {
+                xlog(t)
             }
-            if (param.applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
-                val legacyAnimatorClass = param.classLoader.loadClass(
-                    "com.android.systemui.qs.animator.LegacyQsExpandAnimator"
-                )
-                val method = legacyAnimatorClass.getDeclaredMethod($$"updateViews$2")
-                xposedModule.hook(method).intercept(callback)
-            } else {
-                val expandAnimatorClass = param.classLoader.loadClass(
-                    "com.android.systemui.qs.animator.QsExpandAnimator"
-                )
-                val method = expandAnimatorClass.getDeclaredMethod("updateViews")
-                xposedModule.hook(method).intercept(callback)
-            }
-        } catch (t: Throwable) {
-            xlog(t)
         }
-    }
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    context(xposedModule: XposedModule)
+    fun alwaysShowTimeDateOnQs() =
+        afterAttachTry(Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && ONE_UI_VERSION < 80500) {
+            try {
+                val animatorClass = classLoader.loadClass(
+                    "com.android.systemui.qs.animator.SecQSFragmentAnimatorBase"
+                )
+                val qsClass = classLoader.loadClass("com.android.systemui.plugins.qs.QS")
+                val setQsMethod = animatorClass.getDeclaredMethod("setQs", qsClass)
+                xposedModule.hook(setQsMethod).intercept { chain ->
+                    val result = chain.proceed()
+                    if (applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
+                        chain.thisObject.reflect["clockDateContainer"] = null
+                    } else {
+                        val context = chain.thisObject.reflect["context"] as? Context
+                        if (context != null) {
+                            chain.thisObject.reflect["clockDateContainer"] = View(context)
+                        }
+                    }
+                    result
+                }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
+
+            try {
+                val callback = XposedInterface.Hooker { chain ->
+                    val result = chain.proceed()
+                    val mContext = chain.thisObject.reflect["mContext"] as? Context
+                    if (mContext != null) {
+                        chain.thisObject.reflect["mClockDateContainer"] = View(mContext)
+                    }
+                    result
+                }
+                if (applicationInfo.targetSdkVersion >= Build.VERSION_CODES.BAKLAVA) {
+                    val legacyAnimatorClass = classLoader.loadClass(
+                        "com.android.systemui.qs.animator.LegacyQsExpandAnimator"
+                    )
+                    val method = legacyAnimatorClass.getDeclaredMethod($$"updateViews$2")
+                    xposedModule.hook(method).intercept(callback)
+                } else {
+                    val expandAnimatorClass = classLoader.loadClass(
+                        "com.android.systemui.qs.animator.QsExpandAnimator"
+                    )
+                    val method = expandAnimatorClass.getDeclaredMethod("updateViews")
+                    xposedModule.hook(method).intercept(callback)
+                }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
+        }
+
+    context(xposedModule: XposedModule)
     fun setQsClockStyle(
         monospaced: Boolean,
         modifyTextSize: Boolean,
         textSize: Float
-    ) {
-        if (param.packageName != Package.SYSTEMUI || (!monospaced && !modifyTextSize)) {
-            return
-        }
+    ) = afterAttachTry(monospaced || modifyTextSize) {
         // 布局在 res/layout/sec_qqs_date_buttons.xml
-        try {
-            val headerClass = param.classLoader.loadClass(
-                "com.android.systemui.qs.SecQuickStatusBarHeader"
-            )
-            val onFinishInflateMethod = headerClass.getDeclaredMethod("onFinishInflate")
-            xposedModule.hook(onFinishInflateMethod).intercept { chain ->
-                val result = chain.proceed()
-                try {
-                    val clockView = chain.thisObject.reflect["mClockView"] as? TextView
-                    if (clockView != null) {
-                        // 启用 tabular (等宽) 数字: 'tnum' 1
-                        // 禁用 proportional (不等宽) 数字: 'pnum' 0
-                        if (monospaced) {
-                            clockView.fontFeatureSettings = "'tnum' 1, 'pnum' 0"
-                        }
-                        if (modifyTextSize) {
-                            clockView.textSize = textSize
-
-                            val density = clockView.context.resources.displayMetrics.density
-                            // 15sp 到 70sp
-                            val ratio = 0.00218181f * textSize * textSize + 0.16727272f * textSize
-                            val padding = -(density * ratio).roundToInt()
-                            clockView.setPadding(
-                                clockView.paddingLeft,
-                                padding,
-                                clockView.paddingRight,
-                                padding
-                            )
-                        }
+        val headerClass = classLoader.loadClass(
+            "com.android.systemui.qs.SecQuickStatusBarHeader"
+        )
+        val onFinishInflateMethod = headerClass.getDeclaredMethod("onFinishInflate")
+        xposedModule.hook(onFinishInflateMethod).intercept { chain ->
+            val result = chain.proceed()
+            try {
+                val clockView = chain.thisObject.reflect["mClockView"] as? TextView
+                if (clockView != null) {
+                    // 启用 tabular (等宽) 数字: 'tnum' 1
+                    // 禁用 proportional (不等宽) 数字: 'pnum' 0
+                    if (monospaced) {
+                        clockView.fontFeatureSettings = "'tnum' 1, 'pnum' 0"
                     }
-                } catch (t: Throwable) {
-                    xlog(t)
+                    if (modifyTextSize) {
+                        clockView.textSize = textSize
+
+                        val density = clockView.context.resources.displayMetrics.density
+                        // 15sp 到 70sp
+                        val ratio = 0.00218181f * textSize * textSize + 0.16727272f * textSize
+                        val padding = -(density * ratio).roundToInt()
+                        clockView.setPadding(
+                            clockView.paddingLeft,
+                            padding,
+                            clockView.paddingRight,
+                            padding
+                        )
+                    }
                 }
-                result
+            } catch (t: Throwable) {
+                xlog(t)
             }
-        } catch (t: Throwable) {
-            xlog(t)
+            result
         }
     }
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    context(xposedModule: XposedModule)
     fun supportOutdoorMode() {
-        if (param.packageName != Package.SYSTEMUI) return
-
-        fun outdoorModeRowTag() = "io.github.soclear.oneuix.outdoor_mode_row"
+        val outdoorModeRowTag = "io.github.soclear.oneuix.outdoor_mode_row"
 
         fun isOutdoorModeEnabled(context: Context): Boolean {
             return (android.provider.Settings.System::class.java.reflect.call(
@@ -470,7 +435,7 @@ object QS {
                     context,
                     detailView
                 ) as View
-                outdoorContainer.tag = outdoorModeRowTag()
+                outdoorContainer.tag = outdoorModeRowTag
 
                 val res = context.resources
                 val titleId = res.getIdentifier(
@@ -514,14 +479,14 @@ object QS {
             }
         }
 
-        try {
-            val switchPreferenceClass = param.classLoader.loadClass(
+        afterAttachTry {
+            val switchPreferenceClass = classLoader.loadClass(
                 "com.android.systemui.qs.SecQSSwitchPreference"
             )
             val brightnessDetailClass = runCatching {
-                param.classLoader.loadClass("com.android.systemui.settings.brightness.BrightnessDetailAdapter")
+                classLoader.loadClass("com.android.systemui.settings.brightness.BrightnessDetailAdapter")
             }.getOrNull() ?: runCatching {
-                param.classLoader.loadClass($$"com.android.systemui.settings.brightness.BrightnessDetail$1")
+                classLoader.loadClass($$"com.android.systemui.settings.brightness.BrightnessDetail$1")
             }.getOrNull()
 
             if (brightnessDetailClass != null) {
@@ -541,186 +506,167 @@ object QS {
                     result
                 }
             }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun showTraditionalChineseDateOnQS() {
-        if (param.packageName != Package.SYSTEMUI ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM
-        ) return
-        try {
-            val qsShortenDateClass = param.classLoader.loadClass(
-                "com.android.systemui.statusbar.policy.QSShortenDate"
-            )
-            qsShortenDateClass.declaredConstructors.forEach { constructor ->
-                xposedModule.hook(constructor).intercept { chain ->
-                    val result = chain.proceed()
-                    val textView = chain.thisObject as? TextView
-                    textView?.apply {
-                        isSingleLine = false
-                        setLines(2)
-                        ellipsize = null
-                        setPadding(paddingLeft, -10, paddingRight, -10)
-                        setLineSpacing(0f, 0.8f)
-                        val density = context.resources.displayMetrics.density
-                        translationY = -10 * density
-                    }
-                    result
+    context(xposedModule: XposedModule)
+    fun showTraditionalChineseDateOnQS() = afterAttachTry(
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
+    ) {
+        val qsShortenDateClass = classLoader.loadClass(
+            "com.android.systemui.statusbar.policy.QSShortenDate"
+        )
+        qsShortenDateClass.declaredConstructors.forEach { constructor ->
+            xposedModule.hook(constructor).intercept { chain ->
+                val result = chain.proceed()
+                val textView = chain.thisObject as? TextView
+                textView?.apply {
+                    isSingleLine = false
+                    setLines(2)
+                    ellipsize = null
+                    setPadding(paddingLeft, -10, paddingRight, -10)
+                    setLineSpacing(0f, 0.8f)
+                    val density = context.resources.displayMetrics.density
+                    translationY = -10 * density
                 }
+                result
             }
+        }
 
-            val qsClockBellSoundClass = param.classLoader.loadClass(
-                "com.android.systemui.statusbar.policy.QSClockBellSound"
-            )
-            val notifyTimeChangedMethod = qsShortenDateClass.getDeclaredMethod(
-                "notifyTimeChanged",
-                qsClockBellSoundClass
-            )
-            var previousDate = ""
-            var result = ""
-            xposedModule.hook(notifyTimeChangedMethod).intercept { chain ->
-                val shortDateText = chain.args[0]?.reflect?.get("ShortDateText") as? String ?: ""
-                if (shortDateText != previousDate) {
-                    previousDate = shortDateText
-                    result = "$shortDateText\n${TraditionalChineseCalendar.getMonthAndDay()}"
-                }
-                val dateTextView = chain.thisObject as? TextView
-                if (dateTextView?.text != result) {
-                    dateTextView?.text = result
-                }
-                null
+        val qsClockBellSoundClass = classLoader.loadClass(
+            "com.android.systemui.statusbar.policy.QSClockBellSound"
+        )
+        val notifyTimeChangedMethod = qsShortenDateClass.getDeclaredMethod(
+            "notifyTimeChanged",
+            qsClockBellSoundClass
+        )
+        var previousDate = ""
+        var result = ""
+        xposedModule.hook(notifyTimeChangedMethod).intercept { chain ->
+            val shortDateText = chain.args[0]?.reflect?.get("ShortDateText") as? String ?: ""
+            if (shortDateText != previousDate) {
+                previousDate = shortDateText
+                result = "$shortDateText\n${TraditionalChineseCalendar.getMonthAndDay()}"
             }
-        } catch (t: Throwable) {
-            xlog(t)
+            val dateTextView = chain.thisObject as? TextView
+            if (dateTextView?.text != result) {
+                dateTextView?.text = result
+            }
+            null
         }
     }
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun addVolumeProgressToQsBar() {
-        if (param.packageName != Package.SYSTEMUI ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM ||
-            ONE_UI_VERSION >= 80500
-        ) return
+    context(xposedModule: XposedModule)
+    fun addVolumeProgressToQsBar() = afterAttachTry(
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && ONE_UI_VERSION < 80500
+    ) {
         var textView: TextView? = null
 
-        try {
-            val volumeBarClass = param.classLoader.loadClass("com.android.systemui.qs.bar.VolumeBar")
-            val inflateViewsMethod = volumeBarClass.getDeclaredMethod("inflateViews", ViewGroup::class.java)
-            xposedModule.hook(inflateViewsMethod).intercept { chain ->
-                val result = chain.proceed()
-                try {
-                    val slider = chain.thisObject.reflect["mSlider"] as? View
-                    val sliderParent = slider?.parent as? FrameLayout
-                    if (sliderParent != null) {
-                        val volumeSeekBar = chain.thisObject.reflect["mVolumeSeekBar"]
-                        val progress = volumeSeekBar?.reflect?.get("progress") as? Int ?: 0
-                        textView = TextView(sliderParent.context).apply {
-                            setTextColor(Color.WHITE)
-                            text = progress.toString()
-                        }
-                        val layoutParams = FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.WRAP_CONTENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT
-                        ).apply {
-                            gravity = Gravity.END or Gravity.CENTER_VERTICAL
-                            marginEnd = TypedValue.applyDimension(
-                                TypedValue.COMPLEX_UNIT_DIP,
-                                8.0f,
-                                sliderParent.context.resources.displayMetrics
-                            ).roundToInt()
-                        }
-                        sliderParent.addView(textView, layoutParams)
+        val volumeBarClass = classLoader.loadClass("com.android.systemui.qs.bar.VolumeBar")
+        val inflateViewsMethod = volumeBarClass.getDeclaredMethod("inflateViews", ViewGroup::class.java)
+        xposedModule.hook(inflateViewsMethod).intercept { chain ->
+            val result = chain.proceed()
+            try {
+                val slider = chain.thisObject.reflect["mSlider"] as? View
+                val sliderParent = slider?.parent as? FrameLayout
+                if (sliderParent != null) {
+                    val volumeSeekBar = chain.thisObject.reflect["mVolumeSeekBar"]
+                    val progress = volumeSeekBar?.reflect?.get("progress") as? Int ?: 0
+                    textView = TextView(sliderParent.context).apply {
+                        setTextColor(Color.WHITE)
+                        text = progress.toString()
                     }
-                } catch (t: Throwable) {
-                    xlog(t)
+                    val layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                        marginEnd = TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            8.0f,
+                            sliderParent.context.resources.displayMetrics
+                        ).roundToInt()
+                    }
+                    sliderParent.addView(textView, layoutParams)
                 }
-                result
+            } catch (t: Throwable) {
+                xlog(t)
             }
+            result
+        }
 
-            val listenerClass = param.classLoader.loadClass(
-                $$"com.android.systemui.qs.bar.VolumeToggleSeekBar$VolumeSeekbarChangeListener"
-            )
-            val onProgressChangedMethod = listenerClass.getDeclaredMethod(
-                "onProgressChanged",
-                SeekBar::class.java,
-                Int::class.javaPrimitiveType,
-                Boolean::class.javaPrimitiveType
-            )
-            xposedModule.hook(onProgressChangedMethod).intercept { chain ->
-                val result = chain.proceed()
-                textView?.text = chain.args[1].toString()
-                result
-            }
-        } catch (t: Throwable) {
-            xlog(t)
+        val listenerClass = classLoader.loadClass(
+            $$"com.android.systemui.qs.bar.VolumeToggleSeekBar$VolumeSeekbarChangeListener"
+        )
+        val onProgressChangedMethod = listenerClass.getDeclaredMethod(
+            "onProgressChanged",
+            SeekBar::class.java,
+            Int::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType
+        )
+        xposedModule.hook(onProgressChangedMethod).intercept { chain ->
+            val result = chain.proceed()
+            textView?.text = chain.args[1].toString()
+            result
         }
     }
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun addBrightnessProgressToQsBar() {
-        if (param.packageName != Package.SYSTEMUI ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM ||
-            ONE_UI_VERSION >= 80500
-        ) return
+    context(xposedModule: XposedModule)
+    fun addBrightnessProgressToQsBar() = afterAttachTry(
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && ONE_UI_VERSION < 80500
+    ) {
         val textViewList = mutableListOf<TextView>()
 
-        try {
-            val controllerClass = param.classLoader.loadClass(
-                "com.android.systemui.settings.brightness.BrightnessSliderController"
-            )
-            val onViewAttachedMethod = controllerClass.getDeclaredMethod("onViewAttached")
-            xposedModule.hook(onViewAttachedMethod).intercept { chain ->
-                val result = chain.proceed()
-                try {
-                    val view = chain.thisObject.reflect["mView"]
-                    val slider = view?.reflect?.get("mSlider") as? View
-                    val frameLayout = slider?.parent as? FrameLayout
-                    if (frameLayout != null) {
-                        val textView = TextView(frameLayout.context).apply {
-                            setTextColor(Color.WHITE)
-                        }
-                        val layoutParams = FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.WRAP_CONTENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT
-                        ).apply {
-                            gravity = Gravity.END or Gravity.CENTER_VERTICAL
-                            marginEnd = TypedValue.applyDimension(
-                                TypedValue.COMPLEX_UNIT_DIP,
-                                8.0f,
-                                frameLayout.context.resources.displayMetrics
-                            ).roundToInt()
-                        }
-                        textViewList.add(textView)
-                        frameLayout.addView(textView, layoutParams)
+        val controllerClass = classLoader.loadClass(
+            "com.android.systemui.settings.brightness.BrightnessSliderController"
+        )
+        val onViewAttachedMethod = controllerClass.getDeclaredMethod("onViewAttached")
+        xposedModule.hook(onViewAttachedMethod).intercept { chain ->
+            val result = chain.proceed()
+            try {
+                val view = chain.thisObject.reflect["mView"]
+                val slider = view?.reflect?.get("mSlider") as? View
+                val frameLayout = slider?.parent as? FrameLayout
+                if (frameLayout != null) {
+                    val textView = TextView(frameLayout.context).apply {
+                        setTextColor(Color.WHITE)
                     }
-                } catch (t: Throwable) {
-                    xlog(t)
+                    val layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                        marginEnd = TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            8.0f,
+                            frameLayout.context.resources.displayMetrics
+                        ).roundToInt()
+                    }
+                    textViewList.add(textView)
+                    frameLayout.addView(textView, layoutParams)
                 }
-                result
+            } catch (t: Throwable) {
+                xlog(t)
             }
+            result
+        }
 
-            val listenerClass = param.classLoader.loadClass(
-                $$"com.android.systemui.settings.brightness.BrightnessSliderController$2"
-            )
-            val onProgressChangedMethod = listenerClass.getDeclaredMethod(
-                "onProgressChanged",
-                SeekBar::class.java,
-                Int::class.javaPrimitiveType,
-                Boolean::class.javaPrimitiveType
-            )
-            xposedModule.hook(onProgressChangedMethod).intercept { chain ->
-                val result = chain.proceed()
-                val progress = chain.args[1].toString()
-                textViewList.forEach {
-                    it.text = progress
-                }
-                result
+        val listenerClass = classLoader.loadClass(
+            $$"com.android.systemui.settings.brightness.BrightnessSliderController$2"
+        )
+        val onProgressChangedMethod = listenerClass.getDeclaredMethod(
+            "onProgressChanged",
+            SeekBar::class.java,
+            Int::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType
+        )
+        xposedModule.hook(onProgressChangedMethod).intercept { chain ->
+            val result = chain.proceed()
+            val progress = chain.args[1].toString()
+            textViewList.forEach {
+                it.text = progress
             }
-        } catch (t: Throwable) {
-            xlog(t)
+            result
         }
     }
 }
