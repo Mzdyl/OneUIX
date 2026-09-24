@@ -16,8 +16,8 @@ android {
         applicationId = providers.gradleProperty("oneuix.applicationId").get()
         minSdk = 33
         targetSdk = 37
-        versionCode = 10
-        versionName = "1.8.0"
+        versionCode = 11
+        versionName = "1.9.0"
 
         ndk {
             // ABI过滤，只加载 arm 架构 64 位动态链接库
