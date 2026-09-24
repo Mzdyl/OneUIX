@@ -160,12 +160,16 @@ class Main : XposedModule() {
                 if (preference.call.bypassSameWifiRestriction ||
                     preference.call.unlockCmcMobileNetwork ||
                     preference.call.bypassChinaSimRestriction ||
+                    preference.call.useChinaCmcServer ||
+                    preference.call.fixCmcPushToken ||
                     preference.call.mdecDeviceType != 0
                 ) {
                     MdecService.handleHooks(
                         bypassSameWifi = preference.call.bypassSameWifiRestriction,
                         unlockMobileNetwork = preference.call.unlockCmcMobileNetwork,
                         bypassChinaSim = preference.call.bypassChinaSimRestriction,
+                        useChinaCmcServer = preference.call.useChinaCmcServer,
+                        fixCmcPushToken = preference.call.fixCmcPushToken,
                         mdecDeviceType = preference.call.mdecDeviceType
                     )
                 } else if (preference.call.supportCallAndTextOnOtherDevices) {
@@ -547,7 +551,10 @@ class Main : XposedModule() {
             }
 
             Package.NFC -> {
-                Nfc.init(preference.nfc.enableSimulation)
+                Nfc.init(
+                    enableSimulation = preference.nfc.enableSimulation,
+                    bypassPrompt = preference.nfc.bypassPrompt
+                )
             }
         }
     }

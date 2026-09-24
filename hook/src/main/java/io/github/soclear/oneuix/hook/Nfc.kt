@@ -5,12 +5,16 @@ import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.xlog
 
+import io.github.soclear.oneuix.hook.util.reflect
+
 object Nfc {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun init(enableSimulation: Boolean) {
+    fun init(enableSimulation: Boolean, bypassPrompt: Boolean) {
         if (param.packageName != Package.NFC) return
 
-        bypassShellNfcPrompt()
+        if (bypassPrompt) {
+            bypassShellNfcPrompt()
+        }
 
         if (enableSimulation) {
             overrideRoutingOptions()
@@ -19,21 +23,50 @@ object Nfc {
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun bypassShellNfcPrompt() {
+        xlog("OneUIX: Initializing NFC prompt bypass hook")
         try {
             val adapterServiceClass = runCatching {
                 param.classLoader.loadClass("com.android.nfc.NfcService\$NfcAdapterService")
-            }.getOrNull() ?: return
+            }.getOrNull()
 
-            adapterServiceClass.declaredMethods.filter { it.name == "enable" }.forEach { method ->
+            adapterServiceClass?.declaredMethods?.filter { it.name == "enable" }?.forEach { method ->
                 xposedModule.hook(method).intercept { chain ->
                     val pkg = chain.args.firstOrNull() as? String
-                    if (pkg == "com.android.shell" || pkg == "io.github.soclear.oneuix" || pkg == "io.github.mzdyl.oneuix" || pkg == "root") {
-                        val newArgs = chain.args.toTypedArray()
-                        newArgs[0] = "com.android.settings"
-                        chain.proceed(newArgs)
-                    } else {
+                    xlog("OneUIX: Intercepted NfcAdapterService.enable(pkg=$pkg)")
+                    try {
+                        val thisObj = chain.thisObject
+                        val nfcService = thisObj.reflect["this$0"] ?: runCatching {
+                            param.classLoader.loadClass("com.android.nfc.NfcService")
+                                .getDeclaredMethod("getInstance").invoke(null)
+                        }.getOrNull()
+                        nfcService?.reflect?.call("enableNfc")
+                        true
+                    } catch (t: Throwable) {
+                        xlog(t)
                         chain.proceed()
                     }
+                }
+            }
+
+            val allowlistActivityClass = runCatching {
+                param.classLoader.loadClass("com.android.nfc.NfcEnableAllowlistActivity")
+            }.getOrNull()
+
+            allowlistActivityClass?.declaredMethods?.filter { it.name == "onCreate" }?.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val result = chain.proceed()
+                    try {
+                        xlog("OneUIX: Intercepted NfcEnableAllowlistActivity.onCreate - auto finishing")
+                        val nfcService = runCatching {
+                            param.classLoader.loadClass("com.android.nfc.NfcService")
+                                .getDeclaredMethod("getInstance").invoke(null)
+                        }.getOrNull()
+                        nfcService?.reflect?.call("enableNfc")
+                        (chain.thisObject as? android.app.Activity)?.finish()
+                    } catch (t: Throwable) {
+                        xlog(t)
+                    }
+                    result
                 }
             }
         } catch (t: Throwable) {

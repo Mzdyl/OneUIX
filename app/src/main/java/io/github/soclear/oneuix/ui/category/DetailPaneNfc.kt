@@ -63,6 +63,14 @@ fun DetailPaneNfc(
             .padding(bottom = 24.dp)
     ) {
         SwitchItem(
+            title = stringResource(R.string.nfc_bypass_prompt_title),
+            summary = stringResource(R.string.nfc_bypass_prompt_summary),
+            icon = ImageVector.vectorResource(R.drawable.shield_off),
+            checked = uiState.bypassPrompt,
+            onCheckedChange = { onEvent(NfcEvent.ToggleBypassPrompt(it)) },
+        )
+
+        SwitchItem(
             title = stringResource(R.string.nfc_simulation_title),
             summary = stringResource(R.string.nfc_simulation_summary),
             icon = ImageVector.vectorResource(R.drawable.ic_nfc),
@@ -576,6 +584,7 @@ private fun ManualAddCardDialog(
 }
 
 sealed interface NfcEvent {
+    data class ToggleBypassPrompt(val value: Boolean) : NfcEvent
     data class ToggleSimulation(val value: Boolean) : NfcEvent
     data class EmulateCard(val card: Preference.NfcCard) : NfcEvent
     data class AddCard(
@@ -593,6 +602,10 @@ sealed interface NfcEvent {
 fun SettingViewModel.onNfcEvent(event: NfcEvent) {
     viewModelScope.launch {
         when (event) {
+            is NfcEvent.ToggleBypassPrompt -> {
+                updateData { p -> p.copy(nfc = p.nfc.copy(bypassPrompt = event.value)) }
+            }
+
             is NfcEvent.ToggleSimulation -> {
                 if (event.value) {
                     val currentUid = preference.value.nfc.activeUid

@@ -71,6 +71,20 @@ fun DetailPaneCall(
             checked = uiState.bypassChinaSimRestriction,
             onCheckedChange = { onEvent(CallEvent.BypassChinaSimRestriction(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.globe),
+            title = stringResource(id = R.string.useChinaCmcServer_title),
+            summary = stringResource(id = R.string.useChinaCmcServer_summary),
+            checked = uiState.useChinaCmcServer,
+            onCheckedChange = { onEvent(CallEvent.UseChinaCmcServer(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.notifications),
+            title = stringResource(id = R.string.fixCmcPushToken_title),
+            summary = stringResource(id = R.string.fixCmcPushToken_summary),
+            checked = uiState.fixCmcPushToken,
+            onCheckedChange = { onEvent(CallEvent.FixCmcPushToken(it)) }
+        )
         SelectItem(
             icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
             title = stringResource(id = R.string.mdecDeviceType_title),
@@ -110,6 +124,12 @@ sealed interface CallEvent {
     value class BypassChinaSimRestriction(val value: Boolean) : CallEvent
 
     @JvmInline
+    value class UseChinaCmcServer(val value: Boolean) : CallEvent
+
+    @JvmInline
+    value class FixCmcPushToken(val value: Boolean) : CallEvent
+
+    @JvmInline
     value class SetMdecDeviceType(val value: Int) : CallEvent
 }
 
@@ -142,6 +162,14 @@ fun SettingViewModel.onCallEvent(event: CallEvent) {
 
             is CallEvent.BypassChinaSimRestriction -> {
                 it.copy(call = it.call.copy(bypassChinaSimRestriction = event.value))
+            }
+
+            is CallEvent.UseChinaCmcServer -> {
+                it.copy(call = it.call.copy(useChinaCmcServer = event.value))
+            }
+
+            is CallEvent.FixCmcPushToken -> {
+                it.copy(call = it.call.copy(fixCmcPushToken = event.value))
             }
 
             is CallEvent.SetMdecDeviceType -> {

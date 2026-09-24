@@ -215,6 +215,10 @@
     <string name="unlockCmcMobileNetwork_summary">解除“仅 WLAN”限制，允许使用移动蜂窝数据跨设备接打电话</string>
     <string name="bypassChinaSimRestriction_title">解除国行 SIM 卡限制</string>
     <string name="bypassChinaSimRestriction_summary">绕过国内 SIM 卡检测，允许国行卡开启跨设备通话和短信服务</string>
+    <string name="useChinaCmcServer_title">使用国内跨设备服务集群</string>
+    <string name="useChinaCmcServer_summary">将 CMC 服务器重定向至国内节点 (mdc-prd.cn)，以便与国行设备互联</string>
+    <string name="fixCmcPushToken_title">修复跨设备推送信标</string>
+    <string name="fixCmcPushToken_summary">针对海外版固件推送服务停用问题，自动提供 SPP 推送 Token 避免激活超时</string>
     <string name="mdecDeviceType_title">修改跨设备角色</string>
     <string name="mdecDeviceType_summary">切换本机在跨设备接打电话和收发短信中的角色</string>
     <string name="mdecDeviceType_default">默认（跟随系统）</string>
@@ -250,6 +254,8 @@
     <string name="enableGoogleQuickShare_title">开启 Google 快速分享支持</string>
     <string name="enableGoogleQuickShare_summary">在 S 互传中解除对 Google 快速分享能力的限制，实现国内互传联盟（小米/OPPO/vivo）与 Google Quick Share（Pixel/电脑等）双向并存。</string>
     <string name="nfc_label">NFC 门禁卡模拟</string>
+    <string name="nfc_bypass_prompt_title">免弹窗开启 NFC</string>
+    <string name="nfc_bypass_prompt_summary">允许 Shell、Root 及应用静默开启 NFC，无需手动确认系统弹窗</string>
     <string name="nfc_simulation_title">开启卡片模拟</string>
     <string name="nfc_simulation_summary">模拟指定卡号 (UID) 刷卡开门，支持 One UI 7+ / 8.5 (NXP 控制器)</string>
     <string name="nfc_active_card">当前模拟中卡片</string>

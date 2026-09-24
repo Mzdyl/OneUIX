@@ -215,6 +215,10 @@
     <string name="unlockCmcMobileNetwork_summary">Allow using mobile data to call and text across devices</string>
     <string name="bypassChinaSimRestriction_title">Bypass China SIM restriction</string>
     <string name="bypassChinaSimRestriction_summary">Allow China SIM cards to enable Call &amp; text on other devices</string>
+    <string name="useChinaCmcServer_title">Use China CMC server cluster</string>
+    <string name="useChinaCmcServer_summary">Redirect CMC servers to China cluster (mdc-prd.cn) to connect with CHC devices</string>
+    <string name="fixCmcPushToken_title">Fix CMC push token</string>
+    <string name="fixCmcPushToken_summary">Provide fallback SPP push token to prevent activation timeout on global firmware</string>
     <string name="mdecDeviceType_title">Device role</string>
     <string name="mdecDeviceType_summary">Choose role for Call &amp; text on other devices</string>
     <string name="mdecDeviceType_default">Default (System)</string>
@@ -250,6 +254,8 @@
     <string name="enableGoogleQuickShare_title">Enable Google Quick Share</string>
     <string name="enableGoogleQuickShare_summary">Enable Google Quick Share in S-Transfer. Allows transferring with Google Pixel, Android devices, and Windows PCs alongside China MTA.</string>
     <string name="nfc_label">NFC Card Simulation</string>
+    <string name="nfc_bypass_prompt_title">Bypass NFC Prompt</string>
+    <string name="nfc_bypass_prompt_summary">Allow Shell, Root, and apps to enable NFC silently without confirmation dialog</string>
     <string name="nfc_simulation_title">Enable Card Simulation</string>
     <string name="nfc_simulation_summary">Emulate specified UID to open doors, supports One UI 7+ / 8.5 (NXP controller)</string>
     <string name="nfc_active_card">Currently Emulated Card</string>

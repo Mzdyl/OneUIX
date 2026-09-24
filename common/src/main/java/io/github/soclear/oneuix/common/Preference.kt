@@ -138,6 +138,8 @@ data class Preference(
         val bypassSameWifiRestriction: Boolean = false,
         val unlockCmcMobileNetwork: Boolean = false,
         val bypassChinaSimRestriction: Boolean = false,
+        val useChinaCmcServer: Boolean = false,
+        val fixCmcPushToken: Boolean = false,
         val mdecDeviceType: Int = 0,
         val supportCallAndTextOnOtherDevices: Boolean = false,
     )
@@ -211,6 +213,7 @@ data class Preference(
     @Serializable
     data class Nfc(
         val enableSimulation: Boolean = false,
+        val bypassPrompt: Boolean = false,
         val activeUid: String = "",
         val activeCardName: String = "",
         val activeSak: String = "04",
