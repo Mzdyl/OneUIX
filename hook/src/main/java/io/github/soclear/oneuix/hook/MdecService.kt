@@ -16,6 +16,7 @@ object MdecService {
         bypassChinaSim: Boolean = false,
         useChinaCmcServer: Boolean = false,
         fixCmcPushToken: Boolean = false,
+        enableVirtualLanP2p: Boolean = false,
         mdecDeviceType: Int = 0
     ) {
         if (param.packageName != Package.MDEC_SERVICE) return
@@ -257,26 +258,25 @@ object MdecService {
             }.onFailure { xlog(it) }
         }
 
-        if (bypassSameWifi) {
+        if (bypassSameWifi || enableVirtualLanP2p) {
             runCatching {
                 val clazz = classLoader.loadClass("com.samsung.android.mdeccommon.utils.CommonUtils")
                 val method = clazz.getDeclaredMethod("isSameWifiRequiredForCall", Context::class.java)
                 xposedModule.hook(method).intercept { false }
             }.onFailure { xlog(it) }
 
-            if (!useChinaCmcServer) {
-                runCatching {
-                    val clazz = classLoader.loadClass("com.samsung.android.mdeccommon.utils.CommonUtils")
-                    val method = clazz.getDeclaredMethod("setSameWifiNetworkStatus", Context::class.java)
-                    xposedModule.hook(method).intercept { chain ->
-                        val ctx = chain.args[0] as? Context
-                        if (ctx != null) {
-                            Settings.Global.putInt(ctx.contentResolver, "cmc_same_wifi_network_status", 0)
-                        }
-                        null
+            runCatching {
+                val clazz = classLoader.loadClass("com.samsung.android.mdeccommon.utils.CommonUtils")
+                val method = clazz.getDeclaredMethod("setSameWifiNetworkStatus", Context::class.java)
+                xposedModule.hook(method).intercept { chain ->
+                    val ctx = chain.args[0] as? Context
+                    if (ctx != null) {
+                        val status = if (useChinaCmcServer || enableVirtualLanP2p) 1 else 0
+                        Settings.Global.putInt(ctx.contentResolver, "cmc_same_wifi_network_status", status)
                     }
-                }.onFailure { xlog(it) }
-            }
+                    null
+                }
+            }.onFailure { xlog(it) }
         }
 
         if (unlockMobileNetwork) {
@@ -299,7 +299,7 @@ object MdecService {
                 val result = chain.proceed()
                 runCatching {
                     val context = chain.thisObject as? Context ?: return@runCatching
-                    if (useChinaCmcServer) {
+                    if (useChinaCmcServer || enableVirtualLanP2p) {
                         Settings.Global.putInt(context.contentResolver, "cmc_same_wifi_network_status", 1)
                     } else if (bypassSameWifi) {
                         Settings.Global.putInt(context.contentResolver, "cmc_same_wifi_network_status", 0)

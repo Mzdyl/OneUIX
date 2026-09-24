@@ -219,6 +219,11 @@
     <string name="useChinaCmcServer_summary">将 CMC 服务器重定向至国内节点 (mdc-prd.cn)，以便与国行设备互联</string>
     <string name="fixCmcPushToken_title">修复跨设备推送信标</string>
     <string name="fixCmcPushToken_summary">针对海外版固件推送服务停用问题，自动提供 SPP 推送 Token 避免激活超时</string>
+    <string name="enableVirtualLanP2p_title">虚拟局域网 (ZeroTier) 跨公网通话</string>
+    <string name="enableVirtualLanP2p_summary">允许通过 ZeroTier/VPN 虚拟网卡进行端到端 P2P 呼叫，实现异地远程接打电话</string>
+    <string name="virtualLanPeerIp_title">对端虚拟局域网 IP</string>
+    <string name="virtualLanPeerIp_summary">对端设备的 ZeroTier IP（留空则自动从网络邻居与路由表探测）</string>
+    <string name="virtualLanPeerIp_hint">例如 10.0.0.130</string>
     <string name="mdecDeviceType_title">修改跨设备角色</string>
     <string name="mdecDeviceType_summary">切换本机在跨设备接打电话和收发短信中的角色</string>
     <string name="mdecDeviceType_default">默认（跟随系统）</string>

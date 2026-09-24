@@ -140,6 +140,8 @@ data class Preference(
         val bypassChinaSimRestriction: Boolean = false,
         val useChinaCmcServer: Boolean = false,
         val fixCmcPushToken: Boolean = false,
+        val enableVirtualLanP2p: Boolean = false,
+        val virtualLanPeerIp: String = "",
         val mdecDeviceType: Int = 0,
         val supportCallAndTextOnOtherDevices: Boolean = false,
     )

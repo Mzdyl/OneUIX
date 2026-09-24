@@ -162,6 +162,7 @@ class Main : XposedModule() {
                     preference.call.bypassChinaSimRestriction ||
                     preference.call.useChinaCmcServer ||
                     preference.call.fixCmcPushToken ||
+                    preference.call.enableVirtualLanP2p ||
                     preference.call.mdecDeviceType != 0
                 ) {
                     MdecService.handleHooks(
@@ -170,6 +171,7 @@ class Main : XposedModule() {
                         bypassChinaSim = preference.call.bypassChinaSimRestriction,
                         useChinaCmcServer = preference.call.useChinaCmcServer,
                         fixCmcPushToken = preference.call.fixCmcPushToken,
+                        enableVirtualLanP2p = preference.call.enableVirtualLanP2p,
                         mdecDeviceType = preference.call.mdecDeviceType
                     )
                 } else if (preference.call.supportCallAndTextOnOtherDevices) {
@@ -186,6 +188,19 @@ class Main : XposedModule() {
             Package.IMS_SERVICE -> {
                 if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
+                }
+                if (preference.call.enableVirtualLanP2p ||
+                    preference.call.useChinaCmcServer ||
+                    preference.call.bypassSameWifiRestriction ||
+                    preference.call.unlockCmcMobileNetwork
+                ) {
+                    ImsService.handleHooks(
+                        enableVirtualLanP2p = preference.call.enableVirtualLanP2p,
+                        virtualLanPeerIp = preference.call.virtualLanPeerIp,
+                        useChinaCmcServer = preference.call.useChinaCmcServer,
+                        bypassSameWifiRestriction = preference.call.bypassSameWifiRestriction,
+                        unlockMobileNetwork = preference.call.unlockCmcMobileNetwork
+                    )
                 }
             }
 

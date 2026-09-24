@@ -219,6 +219,11 @@
     <string name="useChinaCmcServer_summary">Redirect CMC servers to China cluster (mdc-prd.cn) to connect with CHC devices</string>
     <string name="fixCmcPushToken_title">Fix CMC push token</string>
     <string name="fixCmcPushToken_summary">Provide fallback SPP push token to prevent activation timeout on global firmware</string>
+    <string name="enableVirtualLanP2p_title">Virtual LAN (ZeroTier) P2P Calling</string>
+    <string name="enableVirtualLanP2p_summary">Enable P2P calling over ZeroTier/VPN virtual network for remote cross-device calling</string>
+    <string name="virtualLanPeerIp_title">Remote peer IP</string>
+    <string name="virtualLanPeerIp_summary">ZeroTier IP of the other device (auto-detected if empty)</string>
+    <string name="virtualLanPeerIp_hint">e.g. 10.0.0.130</string>
     <string name="mdecDeviceType_title">Device role</string>
     <string name="mdecDeviceType_summary">Choose role for Call &amp; text on other devices</string>
     <string name="mdecDeviceType_default">Default (System)</string>

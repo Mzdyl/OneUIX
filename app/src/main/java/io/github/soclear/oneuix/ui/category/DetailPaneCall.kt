@@ -9,6 +9,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.ui.SettingViewModel
@@ -85,6 +95,36 @@ fun DetailPaneCall(
             checked = uiState.fixCmcPushToken,
             onCheckedChange = { onEvent(CallEvent.FixCmcPushToken(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.globe),
+            title = stringResource(id = R.string.enableVirtualLanP2p_title),
+            summary = stringResource(id = R.string.enableVirtualLanP2p_summary),
+            checked = uiState.enableVirtualLanP2p,
+            onCheckedChange = { onEvent(CallEvent.EnableVirtualLanP2p(it)) }
+        )
+        AnimatedVisibility(visible = uiState.enableVirtualLanP2p) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+            ) {
+                var text by rememberSaveable(uiState.virtualLanPeerIp) {
+                    mutableStateOf(uiState.virtualLanPeerIp)
+                }
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = {
+                        text = it
+                        onEvent(CallEvent.SetVirtualLanPeerIp(it))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(id = R.string.virtualLanPeerIp_title)) },
+                    placeholder = { Text(stringResource(id = R.string.virtualLanPeerIp_hint)) },
+                    supportingText = { Text(stringResource(id = R.string.virtualLanPeerIp_summary)) },
+                    singleLine = true
+                )
+            }
+        }
         SelectItem(
             icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
             title = stringResource(id = R.string.mdecDeviceType_title),
@@ -130,6 +170,12 @@ sealed interface CallEvent {
     value class FixCmcPushToken(val value: Boolean) : CallEvent
 
     @JvmInline
+    value class EnableVirtualLanP2p(val value: Boolean) : CallEvent
+
+    @JvmInline
+    value class SetVirtualLanPeerIp(val value: String) : CallEvent
+
+    @JvmInline
     value class SetMdecDeviceType(val value: Int) : CallEvent
 }
 
@@ -170,6 +216,14 @@ fun SettingViewModel.onCallEvent(event: CallEvent) {
 
             is CallEvent.FixCmcPushToken -> {
                 it.copy(call = it.call.copy(fixCmcPushToken = event.value))
+            }
+
+            is CallEvent.EnableVirtualLanP2p -> {
+                it.copy(call = it.call.copy(enableVirtualLanP2p = event.value))
+            }
+
+            is CallEvent.SetVirtualLanPeerIp -> {
+                it.copy(call = it.call.copy(virtualLanPeerIp = event.value))
             }
 
             is CallEvent.SetMdecDeviceType -> {
