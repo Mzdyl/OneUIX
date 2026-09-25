@@ -304,6 +304,218 @@ object Call {
                                     }
                                 }
                             }
+
+                            val callLogsModelClassData = bridge.findClass {
+                                matcher {
+                                    usingStrings("CallLogsModel")
+                                }
+                            }.firstOrNull()
+
+                            if (callLogsModelClassData != null) {
+                                val modelClass = callLogsModelClassData.getInstance(classLoader)
+                                for (ctor in modelClass.declaredConstructors) {
+                                    xposedModule.hook(ctor).intercept { chain ->
+                                        val result = chain.proceed()
+                                        for (f in modelClass.declaredFields) {
+                                            if (!Modifier.isStatic(f.modifiers) && f.type == java.lang.Boolean.TYPE) {
+                                                if (f.name == "y") {
+                                                    f.isAccessible = true
+                                                    f.setBoolean(chain.thisObject, true)
+                                                }
+                                            }
+                                        }
+                                        result
+                                    }
+                                }
+                            }
+
+                            val callLogHelperClassData = bridge.findClass {
+                                matcher {
+                                    usingStrings("CallLogHelperCommon", "mTelephonyModel.getVoiceMailAlphaTag is null!!!")
+                                }
+                            }.firstOrNull()
+
+                            if (callLogHelperClassData != null) {
+                                val cMethod = bridge.findMethod {
+                                    matcher {
+                                        declaredClass(callLogHelperClassData.name)
+                                        usingStrings("mTelephonyModel.getVoiceMailAlphaTag is null!!!")
+                                    }
+                                }.firstOrNull()?.getMethodInstance(classLoader)
+
+                                val vClass = runCatching {
+                                    val itemLayout = classLoader.loadClass("com.samsung.android.dialer.calllog.view.widget.CallLogItemLayout")
+                                    itemLayout.declaredMethods.firstOrNull { it.name == "setThirdIcon" }?.parameterTypes?.firstOrNull()
+                                }.getOrNull() ?: runCatching {
+                                    classLoader.loadClass("com.samsung.android.dialtacts.model.data.V")
+                                }.getOrNull()
+
+                                val vCtor = vClass?.declaredConstructors?.firstOrNull {
+                                    it.parameterTypes.size == 2 && it.parameterTypes[0] == Int::class.javaPrimitiveType && it.parameterTypes[1] == Int::class.javaPrimitiveType
+                                }?.apply { isAccessible = true }
+
+                                val subBadgeFieldData = runCatching {
+                                    bridge.findField {
+                                        matcher {
+                                            type("java.lang.String")
+                                            readMethods {
+                                                add {
+                                                    addInvoke {
+                                                        declaredClass("com.samsung.android.dialer.calllog.view.widget.CallLogItemLayout")
+                                                        name("setSubTextBadge")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }.firstOrNull()
+                                }.getOrNull()
+
+                                val isBadgeVisibleFieldData = runCatching {
+                                    bridge.findField {
+                                        matcher {
+                                            type("boolean")
+                                            readMethods {
+                                                add {
+                                                    addInvoke {
+                                                        declaredClass("com.samsung.android.dialer.calllog.view.widget.CallLogItemLayout")
+                                                        name("setSubTextBadge")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }.firstOrNull()
+                                }.getOrNull()
+
+                                val thirdIconFieldData = runCatching {
+                                    bridge.findField {
+                                        matcher {
+                                            if (vClass != null) type(vClass.name)
+                                            readMethods {
+                                                add {
+                                                    addInvoke {
+                                                        declaredClass("com.samsung.android.dialer.calllog.view.widget.CallLogItemLayout")
+                                                        name("setThirdIcon")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }.firstOrNull()
+                                }.getOrNull()
+
+                                var cachedSubBadgeField: Field? = runCatching { subBadgeFieldData?.getFieldInstance(classLoader) }.getOrNull()
+                                var cachedBadgeVisibleField: Field? = runCatching { isBadgeVisibleFieldData?.getFieldInstance(classLoader) }.getOrNull()
+                                var cachedThirdIconField: Field? = runCatching { thirdIconFieldData?.getFieldInstance(classLoader) }.getOrNull()
+                                var cachedCmcTabletField: Field? = null
+                                var cachedLabeledField: Field? = null
+                                var cachedExpandedField: Field? = null
+                                var cachedActionDataField: Field? = null
+                                var fieldsInitialized = false
+
+                                xlog("OneUIX: callLogHelperClassData = ${callLogHelperClassData.name}, cMethod = ${cMethod?.name}")
+
+                                if (cMethod != null) {
+                                    xposedModule.hook(cMethod).intercept { chain ->
+                                        val result = chain.proceed()
+                                        val callLogViewItem = chain.args.getOrNull(0) ?: return@intercept result
+                                        val callLogGroup = chain.args.getOrNull(1) ?: return@intercept result
+
+                                        if (!fieldsInitialized) {
+                                            val itemClass = callLogViewItem.javaClass
+                                            if (cachedSubBadgeField == null) {
+                                                cachedSubBadgeField = itemClass.declaredFields.firstOrNull { it.name == "j" || it.name == "f28950j" }
+                                            }
+                                            if (cachedBadgeVisibleField == null || cachedBadgeVisibleField?.name == "R" || cachedBadgeVisibleField?.name == "f28925R") {
+                                                cachedBadgeVisibleField = itemClass.declaredFields.firstOrNull { it.name == "o" || it.name == "f28957o" } ?: cachedBadgeVisibleField
+                                            }
+                                            if (cachedCmcTabletField == null) {
+                                                cachedCmcTabletField = itemClass.declaredFields.firstOrNull { it.name == "g0" || it.name == "f28946g0" }
+                                            }
+                                            if (cachedLabeledField == null) {
+                                                cachedLabeledField = itemClass.declaredFields.firstOrNull { it.name == "n" || it.name == "f28956n" }
+                                            }
+                                            if (cachedExpandedField == null) {
+                                                cachedExpandedField = itemClass.declaredFields.firstOrNull { it.name == "V" || it.name == "f28929V" }
+                                            }
+                                            if (cachedThirdIconField == null) {
+                                                cachedThirdIconField = itemClass.declaredFields.firstOrNull { (it.name == "B" || it.name == "f28909B") && vClass?.isAssignableFrom(it.type) == true }
+                                            }
+                                            if (cachedActionDataField == null) {
+                                                cachedActionDataField = itemClass.declaredFields.firstOrNull {
+                                                    !Modifier.isStatic(it.modifiers) && runCatching {
+                                                        it.isAccessible = true
+                                                        val obj = it.get(callLogViewItem)
+                                                        obj != null && (obj.javaClass.name.contains("ActionData") || obj.javaClass.interfaces.any { iface -> iface.name.contains("Action") } || obj.javaClass.name.endsWith(".f"))
+                                                    }.getOrDefault(false)
+                                                }
+                                            }
+                                            cachedSubBadgeField?.isAccessible = true
+                                            cachedBadgeVisibleField?.isAccessible = true
+                                            cachedCmcTabletField?.isAccessible = true
+                                            cachedLabeledField?.isAccessible = true
+                                            cachedExpandedField?.isAccessible = true
+                                            cachedThirdIconField?.isAccessible = true
+                                            cachedActionDataField?.isAccessible = true
+                                            fieldsInitialized = true
+                                            xlog("OneUIX: Resolved CallLogViewItem fields: badge=${cachedSubBadgeField?.name}, visible=${cachedBadgeVisibleField?.name}, cmc=${cachedCmcTabletField?.name}, labeled=${cachedLabeledField?.name}, thirdIcon=${cachedThirdIconField?.name}, actionData=${cachedActionDataField?.name}")
+                                        }
+
+                                        val baseCallLog = try {
+                                            callLogGroup.javaClass.declaredMethods
+                                                .firstOrNull { it.parameterTypes.isEmpty() && it.returnType != java.lang.Void.TYPE && it.returnType != java.lang.Boolean.TYPE }
+                                                ?.invoke(callLogGroup)
+                                        } catch (_: Throwable) { null }
+
+                                        if (baseCallLog != null) {
+                                            var isCmc = false
+                                            for (field in baseCallLog.javaClass.declaredFields) {
+                                                if (Modifier.isStatic(field.modifiers)) continue
+                                                if (field.type != String::class.java) continue
+                                                field.isAccessible = true
+                                                val s = field.get(baseCallLog) as? String ?: continue
+                                                if (s.isEmpty()) continue
+
+                                                if (s.startsWith("CMC") || s.contains("mdecservice") || s.contains("cmc") || (field.name.contains("secCMC") && s.isNotEmpty())) {
+                                                    isCmc = true
+                                                    break
+                                                }
+                                            }
+
+                                            if (isCmc) {
+                                                cachedSubBadgeField?.set(callLogViewItem, "跨设备")
+                                                cachedBadgeVisibleField?.setBoolean(callLogViewItem, true)
+                                                cachedCmcTabletField?.setBoolean(callLogViewItem, true)
+                                                cachedLabeledField?.setBoolean(callLogViewItem, false)
+                                                cachedExpandedField?.setBoolean(callLogViewItem, false)
+
+                                                if (cachedThirdIconField != null && vCtor != null) {
+                                                    val helperInstance = chain.thisObject
+                                                    val ctx = helperInstance?.javaClass?.declaredFields
+                                                        ?.firstOrNull { Context::class.java.isAssignableFrom(it.type) }
+                                                        ?.let {
+                                                            it.isAccessible = true
+                                                            it.get(helperInstance) as? Context
+                                                        }
+                                                    val iconPdId = ctx?.resources?.getIdentifier("icon_device_pd", "drawable", "com.samsung.android.dialer") ?: 0x7f0802da
+                                                    val tintColorId = ctx?.resources?.getIdentifier("call_log_indicator_icon_tint_color", "color", "com.samsung.android.dialer") ?: 0x7f060168
+                                                    val tintedIcon = vCtor.newInstance(iconPdId, tintColorId)
+                                                    cachedThirdIconField?.set(callLogViewItem, tintedIcon)
+                                                }
+
+                                                val actionData = cachedActionDataField?.get(callLogViewItem)
+                                                if (actionData != null) {
+                                                    for (af in actionData.javaClass.declaredFields) {
+                                                        if (af.type == java.lang.Boolean.TYPE && (af.name == "s" || af.name == "f14022s")) {
+                                                            af.isAccessible = true
+                                                            af.setBoolean(actionData, true)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        result
+                                    }
+                                }
+                            }
                         }
                     } catch (t: Throwable) {
                         logError("setCallAndTextDeviceType: DexKit resolution failed", t)

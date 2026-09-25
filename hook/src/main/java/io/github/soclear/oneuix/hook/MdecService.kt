@@ -335,6 +335,29 @@ object MdecService {
         }.onFailure { xlog(it) }
 
         runCatching {
+            val daoClass = classLoader.loadClass("com.samsung.android.cmcsettings.db.dao.SecondaryDeviceDao_Impl")
+            daoClass.declaredMethods.filter { it.name == "getDeviceActiveStatus" || it.name == "getCallActiveStatus" }.forEach { m ->
+                xposedModule.hook(m).intercept { 1 }
+            }
+            daoClass.declaredMethods.filter { it.name == "addConnectedDevice" }.forEach { m ->
+                xposedModule.hook(m).intercept { chain ->
+                    val model = chain.args.firstOrNull()
+                    if (model != null) {
+                        try {
+                            model.javaClass.getDeclaredMethod("setDevice_active", Int::class.javaPrimitiveType).invoke(model, 1)
+                            model.javaClass.getDeclaredMethod("setCall_active", Int::class.javaPrimitiveType).invoke(model, 1)
+                        } catch (_: Throwable) {}
+                    }
+                    chain.proceed()
+                }
+            }
+            val modelClass = classLoader.loadClass("com.samsung.android.cmcsettings.db.entity.SecondaryDeviceModel")
+            modelClass.declaredMethods.filter { it.name == "getDevice_active" || it.name == "getCall_active" }.forEach { m ->
+                xposedModule.hook(m).intercept { 1 }
+            }
+        }.onFailure { xlog(it) }
+
+        runCatching {
             val method = Application::class.java.getDeclaredMethod("onCreate")
             xposedModule.hook(method).intercept { chain ->
                 val result = chain.proceed()
