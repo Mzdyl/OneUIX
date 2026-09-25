@@ -1,7 +1,9 @@
 package io.github.soclear.oneuix.hook
 
 import android.app.Application
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
 import android.provider.Settings
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -294,6 +296,45 @@ object MdecService {
         }
 
         runCatching {
+            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.database.provider.TelephonyStorageAdapter")
+            val insertMethod = clazz.getDeclaredMethod("insertToAndroidDB", Uri::class.java, ContentValues::class.java)
+            xposedModule.hook(insertMethod).intercept { chain ->
+                val uri = chain.args[0] as? Uri
+                val cv = chain.args[1] as? ContentValues
+                if (uri != null && cv != null && uri.toString().contains("call")) {
+                    val subComp = cv.getAsString("subscription_component_name")
+                    if (subComp == null || subComp.contains("mdecservice")) {
+                        cv.put("subscription_component_name", "com.android.phone/com.android.services.telephony.TelephonyConnectionService")
+                    }
+                    val subId = cv.getAsString("subscription_id")
+                    val newSubId = if (subId == "2") "CMC_1" else "CMC_0"
+                    cv.put("subscription_id", newSubId)
+                }
+                chain.proceed()
+            }
+
+            val updateMethod = clazz.getDeclaredMethod("update", Uri::class.java, ContentValues::class.java, String::class.java, Array<String>::class.java)
+            xposedModule.hook(updateMethod).intercept { chain ->
+                val uri = chain.args[0] as? Uri
+                val cv = chain.args[1] as? ContentValues
+                if (uri != null && cv != null && uri.toString().contains("call")) {
+                    if (cv.containsKey("subscription_component_name")) {
+                        val subComp = cv.getAsString("subscription_component_name")
+                        if (subComp == null || subComp.contains("mdecservice")) {
+                            cv.put("subscription_component_name", "com.android.phone/com.android.services.telephony.TelephonyConnectionService")
+                        }
+                    }
+                    if (cv.containsKey("subscription_id")) {
+                        val subId = cv.getAsString("subscription_id")
+                        val newSubId = if (subId == "2") "CMC_1" else "CMC_0"
+                        cv.put("subscription_id", newSubId)
+                    }
+                }
+                chain.proceed()
+            }
+        }.onFailure { xlog(it) }
+
+        runCatching {
             val method = Application::class.java.getDeclaredMethod("onCreate")
             xposedModule.hook(method).intercept { chain ->
                 val result = chain.proceed()
@@ -341,6 +382,28 @@ object MdecService {
                             }
                         }.onFailure { xlog(it) }
                     }
+                    runCatching {
+                        val cv0 = ContentValues().apply {
+                            put("subscription_id", "CMC_0")
+                            put("subscription_component_name", "com.android.phone/com.android.services.telephony.TelephonyConnectionService")
+                        }
+                        context.contentResolver.update(
+                            Uri.parse("content://call_log/calls"),
+                            cv0,
+                            "subscription_component_name = ? AND (subscription_id = ? OR subscription_id = ?)",
+                            arrayOf("com.samsung.android.mdecservice", "1", "0")
+                        )
+                        val cv1 = ContentValues().apply {
+                            put("subscription_id", "CMC_1")
+                            put("subscription_component_name", "com.android.phone/com.android.services.telephony.TelephonyConnectionService")
+                        }
+                        context.contentResolver.update(
+                            Uri.parse("content://call_log/calls"),
+                            cv1,
+                            "subscription_component_name = ? AND subscription_id = ?",
+                            arrayOf("com.samsung.android.mdecservice", "2")
+                        )
+                    }.onFailure { xlog(it) }
                 }.onFailure { xlog(it) }
                 result
             }

@@ -1,6 +1,7 @@
 package io.github.soclear.oneuix.hook
 
 import android.content.Context
+import android.os.Bundle
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
@@ -46,6 +47,82 @@ object ImsService {
                 val clazz = classLoader.loadClass("com.sec.internal.ims.core.handler.secims.CmcProfile")
                 clazz.declaredMethods.filter { it.name == "getCmcRelayType" }.forEach { method ->
                     xposedModule.hook(method).intercept { "priv-p2p" }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val clazz = classLoader.loadClass("com.sec.internal.ims.core.cmc.CmcAccessTokenStorage")
+                clazz.declaredMethods.filter { it.name == "getServerUrl" }.forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        val orig = chain.proceed() as? String
+                        if (orig.isNullOrEmpty() || !orig.contains(".cn")) {
+                            "cn-auth2.samsungosp.com.cn"
+                        } else {
+                            orig
+                        }
+                    }
+                }
+                val tokenClass = classLoader.loadClass("com.sec.internal.ims.core.cmc.CmcAccessTokenStorage\$CmcAccessToken")
+                val tokenCtor = tokenClass.getConstructor(String::class.java, String::class.java)
+                val getTokenMethod = tokenClass.getDeclaredMethod("getToken")
+                val getUrlMethod = tokenClass.getDeclaredMethod("getUrl")
+                clazz.declaredMethods.filter { it.name == "update" && it.parameterTypes.size == 1 }.forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        val tokenObj = chain.args[0]
+                        if (tokenObj != null) {
+                            val url = getUrlMethod.invoke(tokenObj) as? String
+                            if (url.isNullOrEmpty() || !url.contains(".cn")) {
+                                val token = getTokenMethod.invoke(tokenObj) as? String ?: ""
+                                chain.args[0] = tokenCtor.newInstance(token, "cn-auth2.samsungosp.com.cn")
+                            }
+                        }
+                        chain.proceed()
+                    }
+                }
+                clazz.declaredMethods.filter { it.name == "initFromPref" }.forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        chain.proceed()
+                        try {
+                            val storage = chain.thisObject
+                            val currentTokenObj = storage?.reflect?.get("mCmcAccessToken")
+                            val token = currentTokenObj?.reflect?.call("getToken") as? String ?: ""
+                            val url = currentTokenObj?.reflect?.call("getUrl") as? String ?: ""
+                            if (!url.contains(".cn")) {
+                                val newToken = tokenCtor.newInstance(token, "cn-auth2.samsungosp.com.cn")
+                                storage?.reflect?.set("mCmcAccessToken", newToken)
+                                storage?.reflect?.call("updatePref")
+                                xlog("OneUIX: CmcAccessTokenStorage corrected SA URL to cn-auth2.samsungosp.com.cn in pref")
+                            }
+                        } catch (t: Throwable) {
+                            xlog(t)
+                        }
+                        null
+                    }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val clazz = classLoader.loadClass("com.sec.internal.ims.core.cmc.CmcSAServiceImpl")
+                clazz.declaredMethods.filter { it.name == "handleAccessTokenSuccess" }.forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        val bundle = chain.args.getOrNull(1) as? Bundle
+                        if (bundle != null) {
+                            bundle.putString("api_server_url", "cn-auth2.samsungosp.com.cn")
+                            bundle.putString("auth_server_url", "cn-auth2.samsungosp.com.cn")
+                        }
+                        chain.proceed()
+                    }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val clazz = classLoader.loadClass("com.sec.internal.ims.core.cmc.CmcAccountManager")
+                clazz.declaredMethods.filter { it.name == "getCmcRegiConfigForUserAgent" }.forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        val bundle = chain.proceed() as? Bundle
+                        bundle?.putString("SA_SERVER_URL", "cn-auth2.samsungosp.com.cn")
+                        bundle
+                    }
                 }
             }.onFailure { xlog(it) }
         }
@@ -231,6 +308,18 @@ object ImsService {
                         val devMgrClass = classLoader.loadClass("com.samsung.android.cmcp2phelper.data.CphDeviceManager")
                         devMgrClass.getDeclaredMethod("addToCache", msgClass).invoke(null, msg)
                     } catch (_: Throwable) {}
+                    chain.proceed()
+                }
+            }.onFailure { xlog(it) }
+
+            // 监听 P2P 呼叫命令（event: 101, method: INVITE 等），输出即时链路状态日志
+            runCatching {
+                val clazz = classLoader.loadClass("com.sec.internal.ims.servicemodules.volte2.CmcP2pHelperManager\$p2pCommandListener")
+                val method = clazz.getDeclaredMethod("onReceiveCommand", String::class.java, String::class.java)
+                xposedModule.hook(method).intercept { chain ->
+                    val devId = chain.args.getOrNull(0) as? String
+                    val msg = chain.args.getOrNull(1) as? String
+                    xlog("OneUIX: P2P Command received from $devId: $msg")
                     chain.proceed()
                 }
             }.onFailure { xlog(it) }
