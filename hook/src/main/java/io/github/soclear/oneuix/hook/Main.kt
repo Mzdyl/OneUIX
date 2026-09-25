@@ -484,9 +484,6 @@ class Main : XposedModule() {
                     AOD.aodLockSupportLunar()
                 }
 
-                if (preference.systemUI.other.disableScreenshotCaptureSound) {
-                    Other.disableScreenshotCaptureSound()
-                }
                 if (preference.systemUI.notification.disableNotificationGrouping) {
                     Notification.disableNotificationGrouping()
                 }
@@ -504,6 +501,12 @@ class Main : XposedModule() {
                     PowerMenu.hookPowerMenuActions(
                         preference.systemUI.other.powerMenuActions,
                     )
+                }
+            }
+
+            Package.SYSTEMUI if (processName == "${Package.SYSTEMUI}:screenshot") -> {
+                if (preference.systemUI.other.disableScreenshotCaptureSound) {
+                    Other.disableScreenshotCaptureSound()
                 }
             }
 

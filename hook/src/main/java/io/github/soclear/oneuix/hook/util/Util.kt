@@ -11,6 +11,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import io.github.libxposed.api.XposedModule
 import java.io.File
+import java.lang.reflect.Method
 
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
 fun getSystemContext(): Context {
@@ -45,13 +46,27 @@ fun getPackageVersionCode(name: String = getCurrentPackageName()): Long {
 val Context.longVersionCode get() = packageManager.getPackageInfo(packageName, 0).longVersionCode
 
 @SuppressLint("DiscouragedPrivateApi")
+private val attachMethod: Method = Application::class.java.getDeclaredMethod("attach", Context::class.java)
+
 context(xposedModule: XposedModule)
 fun afterAttach(action: Context.() -> Unit) {
-    val method = Application::class.java.getDeclaredMethod("attach", Context::class.java)
-    xposedModule.hook(method).intercept { chain ->
+    xposedModule.hook(attachMethod).intercept { chain ->
         val result = chain.proceed()
         action(chain.args[0] as Context)
         result
+    }
+}
+
+context(xposedModule: XposedModule)
+fun afterAttachTry(canRunAction: Boolean = true, action: Context.() -> Unit) {
+    if (canRunAction) {
+        afterAttach {
+            try {
+                action()
+            } catch (t: Throwable) {
+                xlog(t)
+            }
+        }
     }
 }
 

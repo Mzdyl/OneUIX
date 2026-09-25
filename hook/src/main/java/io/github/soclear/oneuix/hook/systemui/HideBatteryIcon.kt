@@ -8,8 +8,8 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
-import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 import java.lang.reflect.Field
@@ -36,10 +36,8 @@ internal object HideBatteryIcon {
     private val originalBatteryPercentLayouts: MutableMap<TextView, BatteryIconLayout> =
         Collections.synchronizedMap(WeakHashMap())
 
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun apply() {
-        if (param.packageName != Package.SYSTEMUI) return
-
+    context(xposedModule: XposedModule)
+    fun apply() = afterAttachTry {
         val callback = XposedInterface.Hooker { chain ->
             val result = chain.proceed()
             applyBatteryIconVisibility(chain.thisObject)
@@ -47,7 +45,7 @@ internal object HideBatteryIcon {
         }
 
         try {
-            param.classLoader
+            classLoader
                 .loadClass("com.android.systemui.battery.BatteryMeterView")
                 .declaredConstructors
                 .forEach { xposedModule.hook(it).intercept(callback) }
@@ -64,7 +62,7 @@ internal object HideBatteryIcon {
             "scaleBatteryMeterViewsLegacy"
         ).forEach { methodName ->
             try {
-                param.classLoader
+                classLoader
                     .loadClass("com.android.systemui.battery.BatteryMeterView")
                     .declaredMethods
                     .filter { it.name == methodName }
@@ -74,7 +72,7 @@ internal object HideBatteryIcon {
         }
 
         try {
-            param.classLoader
+            classLoader
                 .loadClass("com.android.systemui.battery.BatteryMeterViewController$3")
                 .declaredMethods
                 .filter { it.name == "onBatteryLevelChanged" }
@@ -83,7 +81,7 @@ internal object HideBatteryIcon {
         }
 
         try {
-            param.classLoader
+            classLoader
                 .loadClass("com.android.systemui.battery.BatteryMeterView")
                 .declaredMethods
                 .filter { it.name == "updateColors" }
