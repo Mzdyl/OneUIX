@@ -77,7 +77,9 @@ object ImsService {
                             val url = getUrlMethod.invoke(tokenObj) as? String
                             if (url.isNullOrEmpty() || !url.contains(".cn")) {
                                 val token = getTokenMethod.invoke(tokenObj) as? String ?: ""
-                                chain.args[0] = tokenCtor.newInstance(token, "cn-auth2.samsungosp.com.cn")
+                                val newArgs = chain.args.toTypedArray()
+                                newArgs[0] = tokenCtor.newInstance(token, "cn-auth2.samsungosp.com.cn")
+                                return@intercept chain.proceed(newArgs)
                             }
                         }
                         chain.proceed()
@@ -617,8 +619,10 @@ object ImsService {
                     resipMiscHandlerRef = WeakReference(chain.thisObject)
                     val targetDelay = 60000
                     if (delay > targetDelay) {
-                        chain.args[1] = targetDelay
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[1] = targetDelay
                         xlog("OneUIX: Clamped IMS keepalive timer from $delay ms to $targetDelay ms (id=$id)")
+                        return@intercept chain.proceed(newArgs)
                     }
                 }
                 chain.proceed()
@@ -633,8 +637,10 @@ object ImsService {
                 val msg = chain.args[0] as? Message
                 val delay = chain.args[1] as? Long ?: 0L
                 if (msg?.what == 38 && delay > 4000L) {
-                    chain.args[1] = 4000L
+                    val newArgs = chain.args.toTypedArray()
+                    newArgs[1] = 4000L
                     xlog("OneUIX: Clamped CMC P2P SIP delay timer from $delay ms to 4000 ms")
+                    return@intercept chain.proceed(newArgs)
                 }
                 chain.proceed()
             }
