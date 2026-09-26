@@ -2,18 +2,22 @@ package io.github.soclear.oneuix.hook
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Message
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 import java.io.File
+import java.lang.ref.WeakReference
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.concurrent.ConcurrentHashMap
 
 object ImsService {
     private val cachedPeerIps = ConcurrentHashMap.newKeySet<String>()
+    @Volatile private var latestKeepaliveAlarmId: Int? = null
+    @Volatile private var resipMiscHandlerRef: WeakReference<Any>? = null
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun handleHooks(
@@ -312,7 +316,7 @@ object ImsService {
                 }
             }.onFailure { xlog(it) }
 
-            // 监听 P2P 呼叫命令（event: 101, method: INVITE 等），输出即时链路状态日志
+            // 监听 P2P 呼叫命令（event: 101, method: INVITE 等），输出即时链路状态日志并主动唤醒 SIP KeepAlive 栈
             runCatching {
                 val clazz = classLoader.loadClass("com.sec.internal.ims.servicemodules.volte2.CmcP2pHelperManager\$p2pCommandListener")
                 val method = clazz.getDeclaredMethod("onReceiveCommand", String::class.java, String::class.java)
@@ -320,6 +324,9 @@ object ImsService {
                     val devId = chain.args.getOrNull(0) as? String
                     val msg = chain.args.getOrNull(1) as? String
                     xlog("OneUIX: P2P Command received from $devId: $msg")
+                    if (msg?.contains("\"event\":101") == true && msg.contains("\"INVITE\"")) {
+                        wakeUpKeepAliveStack()
+                    }
                     chain.proceed()
                 }
             }.onFailure { xlog(it) }
@@ -590,6 +597,68 @@ object ImsService {
                     }
                 }
             }.onFailure { xlog(it) }
+        }
+
+        // 优化 SIP KeepAlive 心跳间隔：将 300,000ms (5分钟) 钳制到 60,000ms (60秒)，彻底解决路由器/NAT 超时丢弃 TLS 映射导致首次来电接不通
+        runCatching {
+            val clazz = classLoader.loadClass("com.sec.internal.ims.core.handler.secims.ResipMiscHandler")
+            val method = clazz.getDeclaredMethod(
+                "onAlarmRequested",
+                Int::class.javaPrimitiveType,
+                Int::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType
+            )
+            xposedModule.hook(method).intercept { chain ->
+                val id = chain.args[0] as? Int ?: 0
+                val delay = chain.args[1] as? Int ?: 0
+                val isKeepAlive = chain.args[2] as? Boolean ?: false
+                if (isKeepAlive) {
+                    latestKeepaliveAlarmId = id
+                    resipMiscHandlerRef = WeakReference(chain.thisObject)
+                    val targetDelay = 60000
+                    if (delay > targetDelay) {
+                        chain.args[1] = targetDelay
+                        xlog("OneUIX: Clamped IMS keepalive timer from $delay ms to $targetDelay ms (id=$id)")
+                    }
+                }
+                chain.proceed()
+            }
+        }.onFailure { xlog(it) }
+
+        // 优化 CMC P2P 呼叫 SIP 超时时间：将 10,000ms 钳制到 4,000ms，加速链路自愈与故障恢复
+        runCatching {
+            val clazz = classLoader.loadClass("com.sec.internal.helper.PreciseAlarmManager")
+            val method = clazz.getDeclaredMethod("sendMessageDelayed", Message::class.java, Long::class.javaPrimitiveType)
+            xposedModule.hook(method).intercept { chain ->
+                val msg = chain.args[0] as? Message
+                val delay = chain.args[1] as? Long ?: 0L
+                if (msg?.what == 38 && delay > 4000L) {
+                    chain.args[1] = 4000L
+                    xlog("OneUIX: Clamped CMC P2P SIP delay timer from $delay ms to 4000 ms")
+                }
+                chain.proceed()
+            }
+        }.onFailure { xlog(it) }
+    }
+
+    context(xposedModule: XposedModule)
+    private fun wakeUpKeepAliveStack() {
+        val handler = resipMiscHandlerRef?.get() ?: return
+        val alarmId = latestKeepaliveAlarmId ?: return
+        try {
+            @Suppress("UNCHECKED_CAST")
+            val alarmMsgList = handler.reflect.get("mAlarmMessageList") as? android.util.SparseArray<Message>
+            val msg = alarmMsgList?.get(alarmId)
+            if (msg != null) {
+                val alarmManager = handler.reflect.get("mAlarmManager")
+                alarmManager?.reflect?.call("removeMessage", msg)
+                alarmMsgList.remove(alarmId)
+            }
+            val stackIF = handler.reflect.get("mStackIF")
+            stackIF?.reflect?.call("sendAlarmWakeUp", alarmId)
+            xlog("OneUIX: Proactive wakeUpKeepAliveStack sent for alarmId=$alarmId")
+        } catch (t: Throwable) {
+            xlog("OneUIX: wakeUpKeepAliveStack failed: $t")
         }
     }
 
