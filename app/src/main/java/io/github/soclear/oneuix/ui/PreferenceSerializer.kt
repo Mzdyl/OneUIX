@@ -21,9 +21,12 @@ object PreferenceSerializer : Serializer<Preference> {
     override suspend fun readFrom(input: InputStream): Preference = try {
         val service = XposedServiceManager.xposedService ?: return defaultValue
         val parcelFileDescriptor = service.openRemoteFile(Preference.FILE_NAME)
+        if (parcelFileDescriptor.statSize <= 0L) {
+            parcelFileDescriptor.close()
+            return defaultValue
+        }
 
         ParcelFileDescriptor.AutoCloseInputStream(parcelFileDescriptor).use { inputStream ->
-            if (inputStream.channel.size() == 0L) return defaultValue
             IgnoreUnknownKeysJson.decodeFromStream<Preference>(inputStream)
         }
     } catch (e: Exception) {

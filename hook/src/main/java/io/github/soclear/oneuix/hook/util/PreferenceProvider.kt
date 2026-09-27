@@ -14,13 +14,14 @@ object PreferenceProvider {
     context(xposedModule: XposedModule)
     fun loadPreference(): Preference? = try {
         val parcelFileDescriptor = xposedModule.openRemoteFile(Preference.FILE_NAME)
+        if (parcelFileDescriptor.statSize <= 0L) {
+            parcelFileDescriptor.close()
+            return null
+        }
         ParcelFileDescriptor.AutoCloseInputStream(parcelFileDescriptor).use { inputStream ->
-            if (inputStream.channel.size() == 0L) {
-                return null
-            }
             IgnoreUnknownKeysJson.decodeFromStream<Preference>(inputStream)
         }
-    } catch (_: java.io.FileNotFoundException) {
+    } catch (_: Exception) {
         null
     } catch (t: Throwable) {
         xlog(t)
