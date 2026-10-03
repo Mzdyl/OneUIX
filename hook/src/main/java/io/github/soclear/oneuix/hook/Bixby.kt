@@ -7,6 +7,8 @@ import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.bixby.BixbyModern
+import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.DebugFileLogger
 import java.io.File
 import java.lang.reflect.Array as ReflectArray
@@ -42,10 +44,18 @@ object Bixby {
         if (p.injectModel) hookInjectModel()
         if (p.labsMgr) {
             hookLabsFeatureManager()
-            hookWakeupKeywordTypeBridge()
-            hookAgentCustomPhraseBridge()
-            hookCustomWakeupResourceDownload()
-            hookAgentEnrollmentFlow()
+            if (hasLegacyAgentBindings(param.classLoader)) {
+                hookWakeupKeywordTypeBridge()
+                hookAgentCustomPhraseBridge()
+                hookCustomWakeupResourceDownload()
+                hookAgentEnrollmentFlow()
+            } else {
+                afterAttachTry {
+                    wakeupTextProviderReader = BixbyModern.installAgent(this) { text ->
+                        updateWakeupTextCache(text)
+                    }
+                }
+            }
         }
         if (p.wwvBypass) hookWakeupWordValidator()
     }
@@ -54,14 +64,32 @@ object Bixby {
     private fun initBixbyWakeup(p: Preference.Bixby) {
         if (p.labsMgr) {
             hookWakeupCustomPhrase()
-            hookCustomWakeupTrainers()
-            hookWakeupSpotterFlow()
+            if (hasNativeWakeupTrainers(param.classLoader)) {
+                android.util.Log.i("OneUIX-Bixby", "Native wake-up trainers retained; custom phrase, locale and keyword hooks enabled")
+            } else {
+                hookCustomWakeupTrainers()
+                hookWakeupSpotterFlow()
+            }
         }
         if (p.wwvBypass) {
             hookWakeupWordTypeValidator()
             hookKwdAsianTextFix()
         }
     }
+
+    private fun hasLegacyAgentBindings(loader: ClassLoader): Boolean = runCatching {
+        val getter = loader.loadClass("ut.m").getDeclaredMethod("a")
+        val manager = loader.loadClass("eh0.w")
+        Modifier.isStatic(getter.modifiers) && getter.returnType == String::class.java &&
+            manager.getDeclaredMethod("prepare").returnType == Boolean::class.javaPrimitiveType
+    }.getOrDefault(false)
+
+    private fun hasNativeWakeupTrainers(loader: ClassLoader): Boolean = runCatching {
+        listOf("CustomKwdTrainer", "CustomKwvTrainer").all { name ->
+            loader.loadClass("com.samsung.android.voicewakeup.enroll.train.$name")
+                .getDeclaredMethod("release").parameterCount == 0
+        }
+    }.getOrDefault(false)
 
     // ═══════ injectModel: 注入 Build.MODEL 到设备白名单缓存 ═══════
 
