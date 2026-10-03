@@ -20,8 +20,7 @@ object NfcController {
 
     fun validateUid(raw: String): Boolean {
         val clean = cleanUid(raw)
-        val bytes = clean.length / 2
-        return (bytes == 4 || bytes == 7) && clean.all { it in "0123456789ABCDEF" }
+        return (clean.length == 8 || clean.length == 14) && clean.all { it in "0123456789ABCDEF" }
     }
 
     suspend fun ensureModuleDeployed(context: Context): Boolean = withContext(Dispatchers.IO) {
@@ -64,10 +63,17 @@ EOF
         if (!validateUid(clean)) {
             return@withContext Result.failure(IllegalArgumentException("Invalid UID"))
         }
-        ensureModuleDeployed(context)
-        val formatted = formatUid(clean)
         val cleanSak = sak.trim().uppercase().ifEmpty { "04" }
         val cleanAtqa = atqa.trim().uppercase().ifEmpty { "00" }
+        if (!cleanSak.matches(Regex("[0-9A-F]{1,2}")) ||
+            !cleanAtqa.matches(Regex("(?:[0-9A-F]{1,2}|[0-9A-F]{4})"))
+        ) {
+            return@withContext Result.failure(IllegalArgumentException("Invalid SAK or ATQA"))
+        }
+        if (!ensureModuleDeployed(context)) {
+            return@withContext Result.failure(IllegalStateException("NFC module deployment failed"))
+        }
+        val formatted = formatUid(clean)
         val res = runSuCommand("$CLI_PATH set $formatted $cleanSak $cleanAtqa")
         if (res.isSuccess) {
             Result.success(formatted)

@@ -97,4 +97,50 @@ class PreferenceCodecTest {
 
         assertTrue(preference.other.showMorePlaybackSpeeds)
     }
+
+    @Test
+    fun legacyCmcSwitchEnablesGranularOptions() {
+        val preference = decodePreference("""{"call":{"supportCallAndTextOnOtherDevices":true}}""")
+
+        assertTrue(preference.call.bypassSameWifiRestriction)
+        assertTrue(preference.call.unlockCmcMobileNetwork)
+        assertTrue(preference.call.bypassChinaSimRestriction)
+    }
+
+    @Test
+    fun explicitCmcChoicesSurviveLegacyMigration() {
+        val preference = decodePreference(
+            """{"call":{"supportCallAndTextOnOtherDevices":true,"bypassSameWifiRestriction":false,"unlockCmcMobileNetwork":false,"bypassChinaSimRestriction":false,"mdecDeviceType":2}}"""
+        )
+
+        assertFalse(preference.call.bypassSameWifiRestriction)
+        assertFalse(preference.call.unlockCmcMobileNetwork)
+        assertFalse(preference.call.bypassChinaSimRestriction)
+        assertEquals(2, preference.call.mdecDeviceType)
+    }
+
+    @Test
+    fun selfFeaturesSurviveBackupRoundTrip() {
+        val preference = decodePreference(
+            """
+            {
+              "bixby":{"injectModel":true,"labsMgr":true,"wwvBypass":true},
+              "call":{"mdecDeviceType":2,"enableVirtualLanP2p":true,"virtualLanPeerIp":"10.0.0.160"},
+              "other":{"useSPenGoogleTranslate":true,"bypassWatchPairingRegionCheck":true,"watchPairingConnectionMode":2,"supportGalleryGoogleSync":true,"enableGoogleQuickShare":true},
+              "nfc":{"enableSimulation":false,"activeUid":"01:02:03:04"},
+              "futureUpstreamOption":true
+            }
+            """.trimIndent()
+        )
+        val backup = io.github.soclear.oneuix.common.IgnoreUnknownKeysJson.encodeToString(
+            Preference.serializer(), preference
+        )
+
+        assertEquals(preference, decodePreference(backup))
+        assertTrue(preference.bixby.labsMgr)
+        assertTrue(preference.call.enableVirtualLanP2p)
+        assertTrue(preference.other.useSPenGoogleTranslate)
+        assertEquals("01:02:03:04", preference.nfc.activeUid)
+    }
+
 }

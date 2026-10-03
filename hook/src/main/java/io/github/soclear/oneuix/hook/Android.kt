@@ -205,7 +205,9 @@ object Android {
                                     action.endsWith(".android.c2dm.intent.RECEIVE")
                                 )) {
                                     if (chain.args.isNotEmpty() && chain.args[0] is Int) {
-                                        chain.args[0] = 0
+                                        val newArgs = chain.args.toTypedArray()
+                                        newArgs[0] = 0
+                                        return@intercept chain.proceed(newArgs)
                                     }
                                 }
                                 break

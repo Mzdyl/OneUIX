@@ -1,14 +1,19 @@
 package io.github.soclear.oneuix.hook
 
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.UserManager
 import android.provider.Settings
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.xlog
+import java.util.concurrent.atomic.AtomicBoolean
 
 object MdecService {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
@@ -134,7 +139,9 @@ object MdecService {
                 xposedModule.hook(method).intercept { chain ->
                     val addr = chain.args[1] as? String
                     if (addr != null && addr.contains("samsungmdec.com")) {
-                        chain.args[1] = "acs-central-cn1.mdc-prd.cn"
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[1] = "acs-central-cn1.mdc-prd.cn"
+                        return@intercept chain.proceed(newArgs)
                     }
                     chain.proceed()
                 }
@@ -146,7 +153,9 @@ object MdecService {
                 xposedModule.hook(method).intercept { chain ->
                     val addr = chain.args[1] as? String
                     if (addr != null && addr.contains("samsungmdec.com")) {
-                        chain.args[1] = "es-central-cn1.mdc-prd.cn"
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[1] = "es-central-cn1.mdc-prd.cn"
+                        return@intercept chain.proceed(newArgs)
                     }
                     chain.proceed()
                 }
@@ -158,7 +167,9 @@ object MdecService {
                 xposedModule.hook(method).intercept { chain ->
                     val addr = chain.args[1] as? String
                     if (addr != null && addr.contains("samsungmdec.com")) {
-                        chain.args[1] = "acs-central-cn1.mdc-prd.cn"
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[1] = "acs-central-cn1.mdc-prd.cn"
+                        return@intercept chain.proceed(newArgs)
                     }
                     chain.proceed()
                 }
@@ -170,7 +181,9 @@ object MdecService {
                 xposedModule.hook(method).intercept { chain ->
                     val addr = chain.args[1] as? String
                     if (addr != null && addr.contains("samsungmdec.com")) {
-                        chain.args[1] = "https://es-central-cn1.mdc-prd.cn"
+                        val newArgs = chain.args.toTypedArray()
+                        newArgs[1] = "https://es-central-cn1.mdc-prd.cn"
+                        return@intercept chain.proceed(newArgs)
                     }
                     chain.proceed()
                 }
@@ -197,7 +210,9 @@ object MdecService {
                         if (chain.args.size >= 4) {
                             val authServerUrl = chain.args[3] as? String
                             if (authServerUrl != null && !authServerUrl.contains(".cn")) {
-                                chain.args[3] = "cn-auth2.samsungosp.com.cn"
+                                val newArgs = chain.args.toTypedArray()
+                                newArgs[3] = "cn-auth2.samsungosp.com.cn"
+                                return@intercept chain.proceed(newArgs)
                             }
                         }
                         chain.proceed()
@@ -405,28 +420,7 @@ object MdecService {
                             }
                         }.onFailure { xlog(it) }
                     }
-                    runCatching {
-                        val cv0 = ContentValues().apply {
-                            put("subscription_id", "CMC_0")
-                            put("subscription_component_name", "com.android.phone/com.android.services.telephony.TelephonyConnectionService")
-                        }
-                        context.contentResolver.update(
-                            Uri.parse("content://call_log/calls"),
-                            cv0,
-                            "subscription_component_name = ? AND (subscription_id = ? OR subscription_id = ?)",
-                            arrayOf("com.samsung.android.mdecservice", "1", "0")
-                        )
-                        val cv1 = ContentValues().apply {
-                            put("subscription_id", "CMC_1")
-                            put("subscription_component_name", "com.android.phone/com.android.services.telephony.TelephonyConnectionService")
-                        }
-                        context.contentResolver.update(
-                            Uri.parse("content://call_log/calls"),
-                            cv1,
-                            "subscription_component_name = ? AND subscription_id = ?",
-                            arrayOf("com.samsung.android.mdecservice", "2")
-                        )
-                    }.onFailure { xlog(it) }
+                    migrateCallLogsWhenUnlocked(context)
                 }.onFailure { xlog(it) }
                 result
             }
@@ -435,6 +429,58 @@ object MdecService {
         if (mdecDeviceType != 0) {
             hookDeviceType(classLoader, mdecDeviceType)
         }
+    }
+
+    context(xposedModule: XposedModule)
+    private fun migrateCallLogsWhenUnlocked(context: Context) {
+        val userManager = context.getSystemService(UserManager::class.java) ?: return
+        if (userManager.isUserUnlocked) {
+            migrateCallLogs(context)
+            return
+        }
+        val pending = AtomicBoolean(true)
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == Intent.ACTION_USER_UNLOCKED && pending.compareAndSet(true, false)) {
+                    context.unregisterReceiver(this)
+                    migrateCallLogs(context)
+                }
+            }
+        }
+        context.registerReceiver(receiver, IntentFilter(Intent.ACTION_USER_UNLOCKED), Context.RECEIVER_NOT_EXPORTED)
+        if (userManager.isUserUnlocked && pending.compareAndSet(true, false)) {
+            context.unregisterReceiver(receiver)
+            migrateCallLogs(context)
+        }
+    }
+
+    context(xposedModule: XposedModule)
+    private fun migrateCallLogs(context: Context) {
+        Thread({
+            runCatching {
+                val component = "${Package.PHONE}/com.android.services.telephony.TelephonyConnectionService"
+                val cv0 = ContentValues().apply {
+                    put("subscription_id", "CMC_0")
+                    put("subscription_component_name", component)
+                }
+                context.contentResolver.update(
+                    android.provider.CallLog.Calls.CONTENT_URI,
+                    cv0,
+                    "subscription_component_name = ? AND (subscription_id = ? OR subscription_id = ?)",
+                    arrayOf(Package.MDEC_SERVICE, "1", "0")
+                )
+                val cv1 = ContentValues().apply {
+                    put("subscription_id", "CMC_1")
+                    put("subscription_component_name", component)
+                }
+                context.contentResolver.update(
+                    android.provider.CallLog.Calls.CONTENT_URI,
+                    cv1,
+                    "subscription_component_name = ? AND subscription_id = ?",
+                    arrayOf(Package.MDEC_SERVICE, "2")
+                )
+            }.onFailure { xlog(it) }
+        }, "OneUIX-CallLogMigration").start()
     }
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)

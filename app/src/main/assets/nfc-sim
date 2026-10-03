@@ -59,7 +59,7 @@ validate_uid() {
     CLEAN=$(clean_uid "$1")
     LEN=${#CLEAN}
     BYTES=$((LEN / 2))
-    if [ "$BYTES" -ne 4 ] && [ "$BYTES" -ne 7 ]; then
+    if [ "$LEN" -ne 8 ] && [ "$LEN" -ne 14 ]; then
         echo "错误: UID 必须是 4 字节（8 位十六进制）或 7 字节（14 位十六进制）！" >&2
         echo "输入: $1 (解析为 $BYTES 字节: $CLEAN)" >&2
         return 1
@@ -327,6 +327,8 @@ reset_uid() {
 
 show_status() {
     init_env
+    NXP_MOUNTED=$(awk -v target="$TARGET_NXP" '$2 == target { found = 1 } END { print found + 0 }' /proc/mounts)
+    NCI_MOUNTED=$(awk -v target="$TARGET_NCI" '$2 == target { found = 1 } END { print found + 0 }' /proc/mounts)
     echo "================ NFC 模拟状态 ================"
     if [ -f "$STATUS_FILE" ]; then
         ACT=$(cat "$STATUS_FILE")
@@ -335,7 +337,11 @@ show_status() {
         ATQA_P=$(echo "$ACT" | cut -d',' -f3)
         [ -z "$SAK_P" ] || [ "$SAK_P" = "$UID_P" ] && SAK_P="04"
         [ -z "$ATQA_P" ] && ATQA_P="00"
-        echo "当前模拟卡号 : $UID_P [已生效] (SAK: $SAK_P, ATQA: $ATQA_P)"
+        if cmp -s "$ACTIVE_NXP" "$TARGET_NXP" && cmp -s "$ACTIVE_NCI" "$TARGET_NCI"; then
+            echo "当前模拟卡号 : $UID_P [系统配置已匹配，刷卡待验证] (SAK: $SAK_P, ATQA: $ATQA_P)"
+        else
+            echo "已保存卡号 : $UID_P [系统配置未匹配，未确认生效] (SAK: $SAK_P, ATQA: $ATQA_P)"
+        fi
     else
         echo "当前模拟状态 : 默认模式（未激活模拟）"
     fi
@@ -345,8 +351,8 @@ show_status() {
     echo "NFC HAL 进程 : PID $HAL_PID"
     echo "NFC 服务进程 : PID $NFC_PID"
     
-    NXP_MNT=$(grep -q "$TARGET_NXP" /proc/mounts && echo "已挂载 (Active)" || echo "未挂载")
-    NCI_MNT=$(grep -q "$TARGET_NCI" /proc/mounts && echo "已挂载 (Active)" || echo "未挂载")
+    NXP_MNT=$([ "$NXP_MOUNTED" -eq 1 ] && echo "已挂载 (Active)" || echo "未挂载")
+    NCI_MNT=$([ "$NCI_MOUNTED" -eq 1 ] && echo "已挂载 (Active)" || echo "未挂载")
     echo "NXP 配置挂载 : $NXP_MNT"
     echo "NCI 配置挂载 : $NCI_MNT"
     

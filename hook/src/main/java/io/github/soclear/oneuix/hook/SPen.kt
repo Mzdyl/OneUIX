@@ -24,6 +24,7 @@ object SPen {
             xposedModule.hook(
                 validationClass.getDeclaredMethod("getCountryCode", String::class.java)
             ).intercept { "CN" }
+        } catch (_: ClassNotFoundException) {
         } catch (t: Throwable) {
             xlog(t)
         }
