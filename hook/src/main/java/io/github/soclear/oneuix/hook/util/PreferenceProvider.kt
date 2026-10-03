@@ -2,15 +2,11 @@ package io.github.soclear.oneuix.hook.util
 
 import android.os.ParcelFileDescriptor
 import io.github.libxposed.api.XposedModule
-import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.common.decodePreference
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.decodeFromStream
 import java.io.File
 
 object PreferenceProvider {
-    @OptIn(ExperimentalSerializationApi::class)
     context(xposedModule: XposedModule)
     fun loadPreference(): Preference? {
         val remotePref = try {
@@ -20,9 +16,10 @@ object PreferenceProvider {
                 null
             }
             if (parcelFileDescriptor != null) {
+                val size = parcelFileDescriptor.statSize
                 ParcelFileDescriptor.AutoCloseInputStream(parcelFileDescriptor).use { inputStream ->
-                    if (inputStream.channel.size() > 0L) {
-                        IgnoreUnknownKeysJson.decodeFromStream<Preference>(inputStream)
+                    if (size != 0L) {
+                        decodePreference(inputStream.readBytes().decodeToString())
                     } else null
                 }
             } else null

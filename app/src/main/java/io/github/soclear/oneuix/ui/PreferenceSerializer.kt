@@ -9,6 +9,7 @@ import io.github.soclear.oneuix.XposedServiceManager
 import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.common.decodePreference
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.encodeToStream
 import java.io.InputStream
@@ -31,43 +32,42 @@ object PreferenceSerializer : Serializer<Preference> {
 
     @OptIn(ExperimentalSerializationApi::class)
     override suspend fun readFrom(input: InputStream): Preference = try {
-        val service = XposedServiceManager.xposedService
-        val remotePreference = if (service != null) {
-            val parcelFileDescriptor: ParcelFileDescriptor? = try {
-                service.openRemoteFile(Preference.FILE_NAME)
-            } catch (_: Throwable) {
-                null
-            }
-            if (parcelFileDescriptor != null) {
-                ParcelFileDescriptor.AutoCloseInputStream(parcelFileDescriptor).use { inputStream ->
-                    if (inputStream.channel.size() > 0L) {
-                        val jsonString = inputStream.readBytes().decodeToString()
-                        if (jsonString.isNotBlank() && jsonString != "{}") {
-                            decodePreference(jsonString)
-                        } else null
+        val service = XposedServiceManager.awaitXposedService()
+        val parcelFileDescriptor = try {
+            service.openRemoteFile(Preference.FILE_NAME)
+        } catch (_: java.io.FileNotFoundException) {
+            null
+        }
+        val remotePreference = parcelFileDescriptor?.let { descriptor ->
+            val size = descriptor.statSize
+            ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { inputStream ->
+                if (size != 0L) {
+                    val jsonString = inputStream.readBytes().decodeToString()
+                    if (jsonString.isNotBlank() && jsonString.trim() != "{}") {
+                        decodePreference(jsonString)
                     } else null
-                }
-            } else null
-        } else null
+                } else null
+            }
+        }
 
         if (remotePreference != null) {
             remotePreference
         } else {
             val legacy = readLegacyFile()
-            if (legacy != null && service != null) {
+            if (legacy != null) {
                 try {
                     val pfd = service.openRemoteFile(Preference.FILE_NAME)
-                    if (pfd != null) {
-                        ParcelFileDescriptor.AutoCloseOutputStream(pfd).use { out ->
-                            out.channel.truncate(0)
-                            IgnoreUnknownKeysJson.encodeToStream(Preference.serializer(), legacy, out)
-                            out.channel.force(true)
-                        }
+                    ParcelFileDescriptor.AutoCloseOutputStream(pfd).use { out ->
+                        out.channel.truncate(0)
+                        IgnoreUnknownKeysJson.encodeToStream(Preference.serializer(), legacy, out)
+                        out.channel.force(true)
                     }
                 } catch (_: Throwable) {}
             }
             legacy ?: defaultValue
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Log.e(TAG, "readFrom", e)
         readLegacyFile() ?: defaultValue

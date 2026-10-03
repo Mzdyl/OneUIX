@@ -7,6 +7,10 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
+import io.github.soclear.oneuix.common.Preference
+import io.github.soclear.oneuix.ui.category.Category
+import io.github.soclear.oneuix.ui.category.CategoryAppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,11 +20,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
-import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.common.decodePreference
-import io.github.soclear.oneuix.ui.category.Category
-import io.github.soclear.oneuix.ui.category.CategoryAppInfo
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.encodeToStream
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -61,11 +63,12 @@ class SettingViewModel(val application: Application) : ViewModel() {
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     suspend fun backupTo(output: OutputStream) = withContext(Dispatchers.IO) {
-        output.write(
-            IgnoreUnknownKeysJson.encodeToString(
-                Preference.serializer(), dataStore.data.first()
-            ).encodeToByteArray()
+        IgnoreUnknownKeysJson.encodeToStream(
+            Preference.serializer(),
+            dataStore.data.first(),
+            output
         )
     }
 

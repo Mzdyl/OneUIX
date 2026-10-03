@@ -110,13 +110,11 @@ object Launcher {
             val freePercentage = (freeBytesDouble / totalBytes * 100).roundToInt()
             val usedGB = (totalBytesDouble - freeBytesDouble) / divisor
             val usedPercentage = 100 - freePercentage
-            val totalGB = totalBytesDouble / divisor
-            return "%.2fG %d%% %.2fG %d%% %.2fG".format(
+            return "%.2fG %d%% %.2fG %d%%".format(
                 freeGB,
                 freePercentage,
                 usedGB,
-                usedPercentage,
-                totalGB
+                usedPercentage
             )
         }
 

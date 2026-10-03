@@ -19,7 +19,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import android.widget.Toast
 import io.github.soclear.oneuix.ui.SettingScreen
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.category.NfcScanChannel
@@ -40,9 +39,6 @@ class MainActivity : ComponentActivity() {
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         setSettingScreen()
-        if (!XposedServiceManager.isModuleActive) {
-            Toast.makeText(this, R.string.module_disabled_tip, Toast.LENGTH_LONG).show()
-        }
         handleNfcIntent(getIntent())
     }
 
