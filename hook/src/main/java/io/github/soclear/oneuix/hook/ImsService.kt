@@ -6,16 +6,16 @@ import android.os.Message
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.hook.cmc.PeerAddressCache
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 import java.io.File
 import java.lang.ref.WeakReference
 import java.net.Inet4Address
 import java.net.NetworkInterface
-import java.util.concurrent.ConcurrentHashMap
 
 object ImsService {
-    private val cachedPeerIps = ConcurrentHashMap.newKeySet<String>()
+    private val peerAddresses = PeerAddressCache()
     @Volatile private var latestKeepaliveAlarmId: Int? = null
     @Volatile private var resipMiscHandlerRef: WeakReference<Any>? = null
 
@@ -307,8 +307,9 @@ object ImsService {
                     try {
                         val msg = chain.args[0]
                         val ip = msg?.reflect?.call("getResponderIP") as? String
-                        if (!ip.isNullOrBlank() && ip != "0.0.0.0" && ip != "127.0.0.1") {
-                            cachedPeerIps.add(ip)
+                        if (!ip.isNullOrBlank() && ip != getVirtualLanIp()) {
+                            val deviceId = runCatching { msg.reflect.call("getDeviceId") as? String }.getOrNull()
+                            peerAddresses.remember(deviceId, ip)
                         }
                         // 无论消息类型（Discovery 探测或 Command 呼叫命令），强制将发送方加入 CphDeviceManager 的 cacheMap，确保主副设备对等互通
                         val devMgrClass = classLoader.loadClass("com.samsung.android.cmcp2phelper.data.CphDeviceManager")
@@ -339,11 +340,12 @@ object ImsService {
                 val method = devMgrClass.getDeclaredMethod("getTargetIpAddress", String::class.java)
                 xposedModule.hook(method).intercept { chain ->
                     val result = chain.proceed() as? String
-                    if (result.isNullOrEmpty()) {
-                        val fallbackIp = cachedPeerIps.firstOrNull()
-                            ?: virtualLanPeerIp.takeIf { it.isNotBlank() }?.trim()
-                            ?: getZeroTierArpIps().firstOrNull()
-                            ?: ""
+                    if (result.isNullOrEmpty() || virtualLanPeerIp.isNotBlank()) {
+                        val fallbackIp = peerAddresses.resolve(
+                            manualAddress = virtualLanPeerIp,
+                            deviceId = chain.args.firstOrNull() as? String,
+                            localAddress = getVirtualLanIp()
+                        ) ?: return@intercept result
                         if (fallbackIp.isNotEmpty()) {
                             xlog("OneUIX: Fallback getTargetIpAddress for ${chain.args[0]} -> $fallbackIp")
                         }
@@ -362,10 +364,10 @@ object ImsService {
                     @Suppress("UNCHECKED_CAST")
                     val result = chain.proceed() as? Collection<Any>
                     if (result.isNullOrEmpty()) {
-                        val peerIp = cachedPeerIps.firstOrNull()
-                            ?: virtualLanPeerIp.takeIf { it.isNotBlank() }?.trim()
-                            ?: getZeroTierArpIps().firstOrNull()
-                        if (peerIp != null) {
+                        val localIp = getVirtualLanIp()
+                        if (peerAddresses.resolve(virtualLanPeerIp, localAddress = localIp) != null ||
+                            peerAddresses.addresses(localIp).isNotEmpty()
+                        ) {
                             try {
                                 val infoClass = classLoader.loadClass("com.samsung.android.cmcp2phelper.DiscoveredDeviceInfo")
                                 val imsRegistryClass = classLoader.loadClass("com.sec.internal.ims.registry.ImsRegistry")
@@ -380,7 +382,14 @@ object ImsService {
                                     listOf((cmcInfo?.reflect?.get("mLineOwnerDeviceId") as? String) ?: "")
                                 }
                                 val constructor = infoClass.getConstructor(String::class.java, String::class.java, Boolean::class.javaPrimitiveType)
-                                val fallbackList = targetDevIds.filter { it.isNotBlank() }.map { constructor.newInstance(lineId, it, true) }
+                                val candidates = targetDevIds.filter { it.isNotBlank() }.distinct()
+                                val fallbackList = candidates.filter { deviceId ->
+                                    peerAddresses.resolve(
+                                        manualAddress = if (candidates.size == 1) virtualLanPeerIp else "",
+                                        deviceId = deviceId,
+                                        localAddress = localIp
+                                    ) != null
+                                }.map { constructor.newInstance(lineId, it, true) }
                                 if (fallbackList.isNotEmpty()) {
                                     xlog("OneUIX: Fallback getDeviceList provided simulated peers: $targetDevIds for line $lineId")
                                     fallbackList
@@ -406,16 +415,11 @@ object ImsService {
                     xposedModule.hook(method).intercept { chain ->
                         @Suppress("UNCHECKED_CAST")
                         val originalList = chain.args[0] as? List<String> ?: emptyList()
-                        val extraIps = mutableSetOf<String>()
-                        if (virtualLanPeerIp.isNotBlank()) {
-                            val manualIp = virtualLanPeerIp.trim()
-                            extraIps.add(manualIp)
-                            cachedPeerIps.add(manualIp)
-                        }
-                        val arpIps = getZeroTierArpIps()
-                        extraIps.addAll(arpIps)
-                        cachedPeerIps.addAll(arpIps)
-                        extraIps.addAll(cachedPeerIps)
+                        val localIp = getVirtualLanIp()
+                        val extraIps = linkedSetOf<String>()
+                        PeerAddressCache.validAddress(virtualLanPeerIp)?.takeUnless { it == localIp }?.let(extraIps::add)
+                        extraIps.addAll(peerAddresses.addresses(localIp))
+                        extraIps.addAll(getZeroTierArpIps().filterNot { it == localIp })
 
                         val combinedList = ArrayList(originalList)
                         for (ip in extraIps) {
@@ -480,10 +484,12 @@ object ImsService {
                 val mediaHandlerClass = classLoader.loadClass("com.sec.internal.ims.core.handler.secims.ResipMediaHandler")
                 mediaHandlerClass.declaredMethods.filter { it.name == "saeCreateChannel" || it.name == "saeUpdateChannel" }.forEach { method ->
                     xposedModule.hook(method).intercept { chain ->
-                        val peerIp = getPeerVirtualLanIp(virtualLanPeerIp)
-                        val localVlanIp = getVirtualLanIp()
                         val origLocalIp = chain.args[2] as? String
                         val origRemoteIp = chain.args[4] as? String
+                        val peerIp = getPeerVirtualLanIp(virtualLanPeerIp, origRemoteIp)
+                            ?: return@intercept chain.proceed()
+                        val localVlanIp = getVirtualLanIp()
+                            ?: return@intercept chain.proceed()
                         xlog("OneUIX: ${method.name} before: localIp=$origLocalIp, remoteIp=$origRemoteIp, peerIp=$peerIp, localVlanIp=$localVlanIp")
                         val newArgs = chain.args.toTypedArray()
                         if (!peerIp.isNullOrEmpty()) {
@@ -531,8 +537,10 @@ object ImsService {
                         val streamType = chain.args[2] as? Int ?: 0
                         val origLocalIp = chain.args[3] as? String
                         val origRemoteIp = chain.args[5] as? String
-                        val peerIp = getPeerVirtualLanIp(virtualLanPeerIp)
+                        val peerIp = getPeerVirtualLanIp(virtualLanPeerIp, origRemoteIp)
+                            ?: return@intercept chain.proceed()
                         val localVlanIp = getVirtualLanIp()
+                            ?: return@intercept chain.proceed()
                         xlog("OneUIX: sreCreateStream before: streamType=$streamType, localIp=$origLocalIp, remoteIp=$origRemoteIp, peerIp=$peerIp, localVlanIp=$localVlanIp")
                         // 严禁篡改运营商 VoLTE 流（IPv6 240e:...），仅对 CMC 流（IPv4 地址）替换虚拟局域网 IP
                         val isCmcStream = (origLocalIp != null && !origLocalIp.contains(":") && origRemoteIp != null && !origRemoteIp.contains(":"))
@@ -688,13 +696,12 @@ object ImsService {
         null
     }
 
-    private fun getPeerVirtualLanIp(virtualLanPeerIp: String): String? {
-        if (virtualLanPeerIp.isNotBlank()) return virtualLanPeerIp.trim()
-        val localIp = getVirtualLanIp()
-        return cachedPeerIps.lastOrNull { it != localIp }
-            ?: getZeroTierArpIps().firstOrNull { it != localIp && it != "10.0.0.120" && it != "10.0.0.150" }
-            ?: getZeroTierArpIps().firstOrNull { it != localIp }
-    }
+    private fun getPeerVirtualLanIp(virtualLanPeerIp: String, currentAddress: String? = null): String? =
+        peerAddresses.resolve(
+            manualAddress = virtualLanPeerIp,
+            localAddress = getVirtualLanIp(),
+            currentAddress = currentAddress
+        )
 
     private fun getZeroTierArpIps(): List<String> = try {
         File("/proc/net/arp").readLines().mapNotNull { line ->
@@ -706,7 +713,7 @@ object ImsService {
                 // 仅采纳 flags 非 0x0（已解析完成）的条目
                 if (flags != "0x0" &&
                     (dev.startsWith("zt") || dev.startsWith("tun") || dev.startsWith("wg")) &&
-                    ip.matches(Regex("\\d+\\.\\d+\\.\\d+\\.\\d+"))
+                    PeerAddressCache.validAddress(ip) != null
                 ) {
                     ip
                 } else null

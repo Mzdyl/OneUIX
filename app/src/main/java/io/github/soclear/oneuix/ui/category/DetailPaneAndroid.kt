@@ -23,7 +23,6 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.common.Preference
-import io.github.soclear.oneuix.util.setNavigationBarGestureHint
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import kotlin.math.roundToInt
@@ -32,7 +31,8 @@ import kotlin.math.roundToInt
 fun DetailPaneAndroid(
     uiState: Preference.Android,
     onEvent: (AndroidEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navigationBarBusy: Boolean = false
 ) {
     Column(
         modifier = modifier
@@ -125,12 +125,11 @@ fun DetailPaneAndroid(
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.expand),
             title = stringResource(id = R.string.hideNavigationBarGestureHint_title),
-            summary = stringResource(id = R.string.hideNavigationBarGestureHint_summary),
+            summary = stringResource(if (navigationBarBusy) R.string.operation_in_progress else R.string.hideNavigationBarGestureHint_summary),
+            enabled = !navigationBarBusy,
             checked = uiState.hideNavigationBarGestureHint,
             onCheckedChange = {
-                if (setNavigationBarGestureHint(it)) {
-                    onEvent(AndroidEvent.HideNavigationBarGestureHint(it))
-                }
+                onEvent(AndroidEvent.HideNavigationBarGestureHint(it))
             }
         )
         SwitchItem(
@@ -188,6 +187,10 @@ sealed interface AndroidEvent {
 }
 
 fun SettingViewModel.onAndroidEvent(event: AndroidEvent) {
+    if (event is AndroidEvent.HideNavigationBarGestureHint) {
+        changeNavigationBarGestureHint(event.value)
+        return
+    }
     updateData { preference ->
         when (event) {
             is AndroidEvent.DisablePinVerifyPer72h -> {

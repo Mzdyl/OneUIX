@@ -1,10 +1,12 @@
 package io.github.soclear.oneuix.util
 
 import android.content.Context
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
 
 object NfcController {
     private const val MODULE_DIR = "/data/adb/modules/nfc_sim"
@@ -34,8 +36,9 @@ object NfcController {
             tempScript.setExecutable(true, false)
 
             val deployCmd = """
+                set -e
                 mkdir -p $MODULE_DIR/system/bin
-                cp -f ${tempScript.absolutePath} $CLI_PATH
+                cp -f "${tempScript.absolutePath}" $CLI_PATH
                 chmod 755 $CLI_PATH
                 ln -sf $CLI_PATH $MODULE_DIR/system/bin/nfc-sim
                 cat << 'EOF' > $MODULE_DIR/module.prop
@@ -47,8 +50,10 @@ author=OneUIX
 description=NFC UID simulation module for Samsung One UI 7+ / 8.5 (NXP SN100/SN220).
 EOF
             """.trimIndent()
-            runSuCommand(deployCmd).isSuccess
-        } catch (_: Throwable) {
+            runSuCommand(context, deployCmd).isSuccess
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
             false
         }
     }
@@ -74,7 +79,7 @@ EOF
             return@withContext Result.failure(IllegalStateException("NFC module deployment failed"))
         }
         val formatted = formatUid(clean)
-        val res = runSuCommand("$CLI_PATH set $formatted $cleanSak $cleanAtqa")
+        val res = runSuCommand(context, "$CLI_PATH set $formatted $cleanSak $cleanAtqa")
         if (res.isSuccess) {
             Result.success(formatted)
         } else {
@@ -83,8 +88,10 @@ EOF
     }
 
     suspend fun reset(context: Context): Result<String> = withContext(Dispatchers.IO) {
-        ensureModuleDeployed(context)
-        val res = runSuCommand("$CLI_PATH reset")
+        if (!ensureModuleDeployed(context)) {
+            return@withContext Result.failure(IllegalStateException("NFC module deployment failed"))
+        }
+        val res = runSuCommand(context, "$CLI_PATH reset")
         if (res.isSuccess) {
             Result.success(res.output)
         } else {
@@ -92,8 +99,8 @@ EOF
         }
     }
 
-    suspend fun getStatus(): NfcStatus = withContext(Dispatchers.IO) {
-        val res = runSuCommand("$CLI_PATH status")
+    suspend fun getStatus(context: Context): NfcStatus = withContext(Dispatchers.IO) {
+        val res = runSuCommand(context, "$CLI_PATH status")
         var activeUid = ""
         var halPid = ""
         var nfcPid = ""
@@ -119,29 +126,17 @@ EOF
         NfcStatus(activeUid = activeUid, halPid = halPid, nfcPid = nfcPid, defaultRoute = defaultRoute)
     }
 
-    private fun runSuCommand(command: String): SuResult {
-        return try {
-            val process = try {
-                ProcessBuilder("su", "-mm", "-c", command).start()
-            } catch (_: Throwable) {
-                ProcessBuilder("su", "-c", command).start()
-            }
-            val stdout = process.inputStream.bufferedReader().readText()
-            val stderr = process.errorStream.bufferedReader().readText()
-            val exit = process.waitFor()
-            if (exit == 0) {
-                SuResult(isSuccess = true, output = stdout.ifEmpty { stderr })
-            } else {
-                val fallbackProcess = ProcessBuilder("su", "-c", command).start()
-                val fbStdout = fallbackProcess.inputStream.bufferedReader().readText()
-                val fbStderr = fallbackProcess.errorStream.bufferedReader().readText()
-                val fbExit = fallbackProcess.waitFor()
-                SuResult(isSuccess = fbExit == 0, output = fbStdout.ifEmpty { fbStderr })
-            }
-        } catch (e: Throwable) {
+    private suspend fun runSuCommand(context: Context, command: String): SuResult = runInterruptible(Dispatchers.IO) {
+        try {
+            val result = runRootCommand(command, outputDirectory = context.cacheDir, globalMountNamespace = true)
+            SuResult(isSuccess = result.isSuccess, output = result.output)
+        } catch (e: InterruptedException) {
+            throw e
+        } catch (e: Exception) {
             SuResult(isSuccess = false, output = e.message ?: "Execution error")
         }
     }
+
 }
 
 data class SuResult(val isSuccess: Boolean, val output: String)

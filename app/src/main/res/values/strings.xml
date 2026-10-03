@@ -301,4 +301,6 @@
     <string name="translation_baidu">Baidu Translate</string>
     <string name="sPenTranslationSource_title">S Pen translation provider</string>
     <string name="sPenTranslationSource_summary">Choose the translation provider for either China or international firmware. Restart S Pen translation to apply.</string>
+    <string name="operation_in_progress">Applying…</string>
+    <string name="operation_failed">Operation failed. Check the current state and try again.</string>
 </resources>

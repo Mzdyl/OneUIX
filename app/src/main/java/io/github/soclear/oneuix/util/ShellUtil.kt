@@ -1,6 +1,9 @@
 package io.github.soclear.oneuix.util
 
 import android.util.Log
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
 
 private const val TAG = "OneUIX-Shell"
 
@@ -41,25 +44,23 @@ fun launchActivity(packageName: String, activityName: String): Boolean {
     }
 }
 
-fun setNavigationBarGestureHint(hide: Boolean): Boolean {
-    var allSuccess = true
-
+suspend fun setNavigationBarGestureHint(hide: Boolean, cacheDirectory: File): Boolean = runInterruptible(Dispatchers.IO) {
     val hintValue = if (hide) "0" else "1"
-    if (!putSettings("global", "navigation_bar_gesture_hint", hintValue)) {
-        allSuccess = false
-    }
-
     val switchValue = if (hide) "1" else "0"
-    if (!putSettings("global", "navigationbar_switch_apps_when_hint_hidden", switchValue)) {
-        allSuccess = false
-    }
-
     val flagsValue = if (hide) "4" else "0"
-    if (!putSettings("global", "navigationbar_splugin_flags", flagsValue)) {
-        allSuccess = false
+    try {
+        runRootCommand(
+            "settings put global navigation_bar_gesture_hint $hintValue && " +
+                "settings put global navigationbar_switch_apps_when_hint_hidden $switchValue && " +
+                "settings put global navigationbar_splugin_flags $flagsValue",
+            outputDirectory = cacheDirectory
+        ).isSuccess
+    } catch (e: InterruptedException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to set navigation bar gesture hint", e)
+        false
     }
-
-    return allSuccess
 }
 
 fun restartSystemUI(): Boolean {

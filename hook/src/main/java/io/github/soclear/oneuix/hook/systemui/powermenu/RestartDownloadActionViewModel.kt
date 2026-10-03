@@ -8,14 +8,14 @@ import com.samsung.android.globalactions.presentation.viewmodel.ActionInfo
 import com.samsung.android.globalactions.presentation.viewmodel.ActionViewModel
 import com.samsung.android.globalactions.presentation.viewmodel.ViewType
 import io.github.soclear.oneuix.RebootActivity
-import io.github.soclear.oneuix.common.BuildConfig
 import io.github.soclear.oneuix.common.PowerMenuAction
+import io.github.soclear.oneuix.common.R as CommonR
 import io.github.soclear.oneuix.hook.R
 import io.github.soclear.oneuix.hook.util.currentContext
-import io.github.soclear.oneuix.common.R as CommonR
 
 class RestartDownloadActionViewModel(
     private val globalActions: SamsungGlobalActions,
+    private val modulePackageName: String,
 ) : ActionViewModel {
     private val actionInfo = ActionInfo().apply {
         val context = currentContext()
@@ -36,7 +36,7 @@ class RestartDownloadActionViewModel(
         globalActions.dismissDialog(false)
         Handler(Looper.getMainLooper()).postDelayed({
             val intent = Intent("download").apply {
-                setClassName(BuildConfig.MODULE_APPLICATION_ID, RebootActivity::class.java.name)
+                setClassName(modulePackageName, RebootActivity::class.java.name)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
             currentContext().startActivity(intent)

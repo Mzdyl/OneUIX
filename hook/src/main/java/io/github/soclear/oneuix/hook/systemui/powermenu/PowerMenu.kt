@@ -43,6 +43,7 @@ object PowerMenu {
             return
         }
         try {
+            val modulePackageName = xposedModule.moduleApplicationInfo.packageName
             val presenterClass = param.classLoader.loadClass(
                 "com.samsung.android.globalactions.presentation.SamsungGlobalActionsPresenter"
             )
@@ -54,7 +55,7 @@ object PowerMenu {
                     PowerMenuAction.DEFAULT_ORDER.forEach(presenter::clearActions)
                     visibleActions.forEachIndexed { index, action ->
                         runCatching {
-                            presenter.addAction(createAction(presenter, action.name, index))
+                            presenter.addAction(createAction(presenter, action.name, index, modulePackageName))
                         }.onFailure {
                             xlog(it)
                         }
@@ -72,11 +73,12 @@ object PowerMenu {
         globalActions: SamsungGlobalActions,
         actionName: String,
         index: Int,
+        modulePackageName: String,
     ): ActionViewModel {
         val action = when (actionName) {
             PowerMenuAction.RESTART_SYSTEMUI -> RestartSystemUIActionViewModel(globalActions)
-            PowerMenuAction.RESTART_RECOVERY -> RestartRecoveryActionViewModel(globalActions)
-            PowerMenuAction.RESTART_DOWNLOAD -> RestartDownloadActionViewModel(globalActions)
+            PowerMenuAction.RESTART_RECOVERY -> RestartRecoveryActionViewModel(globalActions, modulePackageName)
+            PowerMenuAction.RESTART_DOWNLOAD -> RestartDownloadActionViewModel(globalActions, modulePackageName)
             else -> systemAction(actionName)(globalActions)
         }
         action.getActionInfo().viewType = centerViewTypes.getOrElse(index) {

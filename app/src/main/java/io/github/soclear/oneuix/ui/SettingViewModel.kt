@@ -2,29 +2,37 @@ package io.github.soclear.oneuix.ui
 
 import android.app.Application
 import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
 import io.github.soclear.oneuix.common.Preference
+import io.github.soclear.oneuix.common.decodePreference
 import io.github.soclear.oneuix.ui.category.Category
 import io.github.soclear.oneuix.ui.category.CategoryAppInfo
+import io.github.soclear.oneuix.util.NfcController
+import io.github.soclear.oneuix.util.NfcStateManager
+import io.github.soclear.oneuix.util.setNavigationBarGestureHint
+import java.io.InputStream
+import java.io.OutputStream
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.github.soclear.oneuix.common.decodePreference
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.encodeToStream
-import java.io.InputStream
-import java.io.OutputStream
 
 class SettingViewModel(val application: Application) : ViewModel() {
     val categoryAppInfoList: StateFlow<List<CategoryAppInfo>> = flow {
@@ -59,6 +67,38 @@ class SettingViewModel(val application: Application) : ViewModel() {
         viewModelScope.launch {
             dataStore.updateData {
                 nextPreference(it)
+            }
+        }
+    }
+
+    val nfcStateManager = NfcStateManager(
+        read = { dataStore.data.first().nfc },
+        update = { transform ->
+            dataStore.updateData { it.copy(nfc = transform(it.nfc)) }
+        },
+        applyCard = { NfcController.setUid(application, it.uid, it.sak, it.atqa) },
+        resetCard = { NfcController.reset(application) }
+    )
+
+    private val navigationBarBusyState = MutableStateFlow(false)
+    val navigationBarBusy = navigationBarBusyState.asStateFlow()
+
+    fun changeNavigationBarGestureHint(hide: Boolean) {
+        if (navigationBarBusyState.value) return
+        navigationBarBusyState.value = true
+        viewModelScope.launch {
+            try {
+                if (!setNavigationBarGestureHint(hide, application.cacheDir)) {
+                    Toast.makeText(application, R.string.operation_failed, Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+                dataStore.updateData { it.copy(android = it.android.copy(hideNavigationBarGestureHint = hide)) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Toast.makeText(application, R.string.operation_failed, Toast.LENGTH_LONG).show()
+            } finally {
+                navigationBarBusyState.value = false
             }
         }
     }

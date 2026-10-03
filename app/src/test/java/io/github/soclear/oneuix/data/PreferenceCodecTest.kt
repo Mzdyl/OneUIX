@@ -4,8 +4,12 @@ import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.common.PreferenceJson
 import io.github.soclear.oneuix.common.SPenTranslationSource
 import io.github.soclear.oneuix.common.decodePreference
+import io.github.soclear.oneuix.common.decodeStoredPreference
+import kotlinx.serialization.SerializationException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -196,5 +200,22 @@ class PreferenceCodecTest {
             """{"other":{"sPenTranslationSource":"FUTURE","useSPenGoogleTranslate":true}}"""
         )
         assertEquals(SPenTranslationSource.DEFAULT, preference.other.sPenTranslationSource)
+    }
+
+    @Test
+    fun savedDefaultsAreValidRemotePreferencesRatherThanMissingData() {
+        val json = io.github.soclear.oneuix.common.IgnoreUnknownKeysJson.encodeToString(
+            Preference.serializer(), Preference()
+        )
+        assertEquals("{}", json)
+        assertEquals(Preference(), decodeStoredPreference(json))
+        assertEquals(Preference(), decodeStoredPreference("  { }  "))
+    }
+
+    @Test
+    fun onlyBlankStoredPreferencesAreMissingAndCorruptionRemainsAnError() {
+        assertNull(decodeStoredPreference(""))
+        assertNull(decodeStoredPreference(" \n\t"))
+        assertThrows(SerializationException::class.java) { decodeStoredPreference("{broken") }
     }
 }

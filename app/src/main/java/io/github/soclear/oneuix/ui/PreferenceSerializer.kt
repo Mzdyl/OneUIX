@@ -9,11 +9,12 @@ import io.github.soclear.oneuix.XposedServiceManager
 import io.github.soclear.oneuix.common.IgnoreUnknownKeysJson
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.common.decodePreference
+import io.github.soclear.oneuix.common.decodeStoredPreference
+import java.io.InputStream
+import java.io.OutputStream
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.encodeToStream
-import java.io.InputStream
-import java.io.OutputStream
 
 object PreferenceSerializer : Serializer<Preference> {
     private const val TAG = "PreferenceSerializer"
@@ -43,9 +44,7 @@ object PreferenceSerializer : Serializer<Preference> {
             ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { inputStream ->
                 if (size != 0L) {
                     val jsonString = inputStream.readBytes().decodeToString()
-                    if (jsonString.isNotBlank() && jsonString.trim() != "{}") {
-                        decodePreference(jsonString)
-                    } else null
+                    decodeStoredPreference(jsonString)
                 } else null
             }
         }

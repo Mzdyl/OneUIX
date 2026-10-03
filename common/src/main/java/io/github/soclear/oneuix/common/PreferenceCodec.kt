@@ -94,3 +94,6 @@ private fun migrateLegacyChoices(root: JsonObject): JsonObject {
     val migratedOther = JsonObject(other + ("sPenTranslationSource" to JsonPrimitive(source.name)))
     return JsonObject(root + ("other" to migratedOther))
 }
+
+fun decodeStoredPreference(string: String): Preference? =
+    string.takeUnless { it.isBlank() }?.let(::decodePreference)

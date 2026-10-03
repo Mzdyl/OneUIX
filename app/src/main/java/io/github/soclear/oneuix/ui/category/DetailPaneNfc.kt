@@ -22,9 +22,9 @@ import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import io.github.soclear.oneuix.util.NfcController
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 data class ScannedNfcCard(
     val uid: String,
@@ -49,7 +49,8 @@ object NfcScanChannel {
 fun DetailPaneNfc(
     uiState: Preference.Nfc,
     onEvent: (NfcEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    busy: Boolean = false
 ) {
     var showScanDialog by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
@@ -72,11 +73,16 @@ fun DetailPaneNfc(
 
         SwitchItem(
             title = stringResource(R.string.nfc_simulation_title),
-            summary = stringResource(R.string.nfc_simulation_summary),
+            summary = stringResource(if (busy) R.string.operation_in_progress else R.string.nfc_simulation_summary),
             icon = ImageVector.vectorResource(R.drawable.ic_nfc),
             checked = uiState.enableSimulation,
+            enabled = !busy,
             onCheckedChange = { onEvent(NfcEvent.ToggleSimulation(it)) },
         )
+
+        if (busy) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
+        }
 
         ElevatedCard(
             modifier = Modifier
@@ -131,6 +137,7 @@ fun DetailPaneNfc(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
+                        enabled = !busy,
                         onClick = { onEvent(NfcEvent.ResetSimulation) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -247,10 +254,10 @@ fun DetailPaneNfc(
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TextButton(onClick = { cardToRename = card }) {
+                            TextButton(enabled = !busy, onClick = { cardToRename = card }) {
                                 Text(text = stringResource(R.string.nfc_dialog_rename_title))
                             }
-                            TextButton(onClick = { cardToDelete = card }) {
+                            TextButton(enabled = !busy, onClick = { cardToDelete = card }) {
                                 Text(
                                     text = stringResource(R.string.delete),
                                     color = MaterialTheme.colorScheme.error
@@ -262,7 +269,7 @@ fun DetailPaneNfc(
                                     Text(text = stringResource(R.string.nfc_btn_deactivate))
                                 }
                             } else {
-                                Button(onClick = { onEvent(NfcEvent.EmulateCard(card)) }) {
+                                Button(enabled = !busy, onClick = { onEvent(NfcEvent.EmulateCard(card)) }) {
                                     Text(text = stringResource(R.string.nfc_emulate_this))
                                 }
                             }
@@ -601,99 +608,14 @@ sealed interface NfcEvent {
 
 fun SettingViewModel.onNfcEvent(event: NfcEvent) {
     viewModelScope.launch {
-        when (event) {
-            is NfcEvent.ToggleBypassPrompt -> {
-                updateData { p -> p.copy(nfc = p.nfc.copy(bypassPrompt = event.value)) }
-            }
-
-            is NfcEvent.ToggleSimulation -> {
-                if (event.value) {
-                    val currentUid = preference.value.nfc.activeUid
-                    val currentSak = preference.value.nfc.activeSak
-                    val currentAtqa = preference.value.nfc.activeAtqa
-                    if (currentUid.isNotEmpty()) {
-                        updateData { p -> p.copy(nfc = p.nfc.copy(enableSimulation = true)) }
-                        Toast.makeText(application, R.string.nfc_toast_applying_sim, Toast.LENGTH_SHORT).show()
-                        val result = NfcController.setUid(application, currentUid, currentSak, currentAtqa)
-                        if (result.isSuccess) {
-                            Toast.makeText(
-                                application,
-                                application.getString(R.string.nfc_toast_sim_success, currentUid),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            updateData { p -> p.copy(nfc = p.nfc.copy(enableSimulation = false)) }
-                            Toast.makeText(application, R.string.nfc_toast_need_root, Toast.LENGTH_LONG).show()
-                        }
-                    } else if (preference.value.nfc.cards.isNotEmpty()) {
-                        val firstCard = preference.value.nfc.cards.first()
-                        updateData { p ->
-                            p.copy(
-                                nfc = p.nfc.copy(
-                                    enableSimulation = true,
-                                    activeUid = firstCard.uid,
-                                    activeCardName = firstCard.name,
-                                    activeSak = firstCard.sak,
-                                    activeAtqa = firstCard.atqa
-                                )
-                            )
-                        }
-                        Toast.makeText(application, R.string.nfc_toast_applying_sim, Toast.LENGTH_SHORT).show()
-                        val result = NfcController.setUid(application, firstCard.uid, firstCard.sak, firstCard.atqa)
-                        if (result.isSuccess) {
-                            Toast.makeText(
-                                application,
-                                application.getString(R.string.nfc_toast_sim_success, firstCard.uid),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            updateData { p -> p.copy(nfc = p.nfc.copy(enableSimulation = false)) }
-                            Toast.makeText(application, R.string.nfc_toast_need_root, Toast.LENGTH_LONG).show()
-                        }
-                    } else {
-                        Toast.makeText(application, R.string.nfc_empty_cards, Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    updateData { p -> p.copy(nfc = p.nfc.copy(enableSimulation = false)) }
-                    NfcController.reset(application)
-                    Toast.makeText(application, R.string.nfc_toast_reset_success, Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            is NfcEvent.EmulateCard -> {
-                updateData { p ->
-                    p.copy(
-                        nfc = p.nfc.copy(
-                            enableSimulation = true,
-                            activeUid = event.card.uid,
-                            activeCardName = event.card.name,
-                            activeSak = event.card.sak,
-                            activeAtqa = event.card.atqa
-                        )
-                    )
-                }
-                Toast.makeText(application, R.string.nfc_toast_applying_sim, Toast.LENGTH_SHORT).show()
-                val result = NfcController.setUid(application, event.card.uid, event.card.sak, event.card.atqa)
-                if (result.isSuccess) {
-                    Toast.makeText(
-                        application,
-                        application.getString(R.string.nfc_toast_sim_success, event.card.uid),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    updateData { p ->
-                        p.copy(nfc = p.nfc.copy(enableSimulation = false, activeUid = ""))
-                    }
-                    Toast.makeText(application, R.string.nfc_toast_need_root, Toast.LENGTH_LONG).show()
-                }
-            }
-
-            is NfcEvent.ResetSimulation -> {
-                updateData { p -> p.copy(nfc = p.nfc.copy(enableSimulation = false, activeUid = "")) }
-                NfcController.reset(application)
-                Toast.makeText(application, R.string.nfc_toast_reset_success, Toast.LENGTH_SHORT).show()
-            }
-
+        val manager = nfcStateManager
+        val result = when (event) {
+            is NfcEvent.ToggleBypassPrompt -> manager.setBypassPrompt(event.value)
+            is NfcEvent.ToggleSimulation -> manager.setEnabled(event.value)
+            is NfcEvent.EmulateCard -> manager.emulate(event.card)
+            is NfcEvent.ResetSimulation -> manager.reset()
+            is NfcEvent.DeleteCard -> manager.delete(event.card)
+            is NfcEvent.RenameCard -> manager.rename(event.card, event.newName)
             is NfcEvent.AddCard -> {
                 val clean = NfcController.cleanUid(event.uid)
                 if (!NfcController.validateUid(clean)) {
@@ -701,88 +623,35 @@ fun SettingViewModel.onNfcEvent(event: NfcEvent) {
                     return@launch
                 }
                 val formatted = NfcController.formatUid(clean)
-                val cleanSak = event.sak.trim().uppercase().ifEmpty { "04" }
-                val cleanAtqa = event.atqa.trim().uppercase().ifEmpty { "00" }
-                val newCard = Preference.NfcCard(
+                val card = Preference.NfcCard(
                     id = UUID.randomUUID().toString(),
-                    name = event.name.ifBlank { "卡片 ${formatted.takeLast(5)}" },
+                    name = event.name.ifBlank { formatted },
                     uid = formatted,
-                    sak = cleanSak,
-                    atqa = cleanAtqa
+                    sak = event.sak.trim().uppercase().ifEmpty { "04" },
+                    atqa = event.atqa.trim().uppercase().ifEmpty { "00" }
                 )
-
-                // 立即乐观保存卡片与状态，保证界面 0 延时实时刷新
-                updateData { p ->
-                    val existingIndex = p.nfc.cards.indexOfFirst {
-                        NfcController.cleanUid(it.uid) == clean
-                    }
-                    val updatedCards = if (existingIndex >= 0) {
-                        p.nfc.cards.toMutableList().apply {
-                            set(existingIndex, newCard.copy(id = p.nfc.cards[existingIndex].id))
-                        }
-                    } else {
-                        p.nfc.cards + newCard
-                    }
-                    p.copy(
-                        nfc = p.nfc.copy(
-                            cards = updatedCards,
-                            enableSimulation = if (event.emulateImmediately) true else p.nfc.enableSimulation,
-                            activeUid = if (event.emulateImmediately) formatted else p.nfc.activeUid,
-                            activeCardName = if (event.emulateImmediately) newCard.name else p.nfc.activeCardName,
-                            activeSak = if (event.emulateImmediately) cleanSak else p.nfc.activeSak,
-                            activeAtqa = if (event.emulateImmediately) cleanAtqa else p.nfc.activeAtqa
-                        )
-                    )
-                }
-
-                if (event.emulateImmediately) {
-                    Toast.makeText(application, R.string.nfc_toast_applying_sim, Toast.LENGTH_SHORT).show()
-                    val result = NfcController.setUid(application, formatted, cleanSak, cleanAtqa)
-                    if (result.isSuccess) {
-                        Toast.makeText(
-                            application,
-                            application.getString(R.string.nfc_toast_sim_success, formatted),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        updateData { p ->
-                            p.copy(nfc = p.nfc.copy(enableSimulation = false, activeUid = ""))
-                        }
-                        Toast.makeText(application, R.string.nfc_toast_need_root, Toast.LENGTH_LONG).show()
-                    }
-                }
+                manager.add(card, event.emulateImmediately)
             }
-
-            is NfcEvent.DeleteCard -> {
-                val isActive = preference.value.nfc.activeUid == event.card.uid
-                updateData { p ->
-                    p.copy(
-                        nfc = p.nfc.copy(
-                            enableSimulation = if (isActive) false else p.nfc.enableSimulation,
-                            activeUid = if (isActive) "" else p.nfc.activeUid,
-                            activeCardName = if (isActive) "" else p.nfc.activeCardName,
-                            activeSak = if (isActive) "04" else p.nfc.activeSak,
-                            activeAtqa = if (isActive) "00" else p.nfc.activeAtqa,
-                            cards = p.nfc.cards.filter { it.id != event.card.id }
-                        )
-                    )
-                }
-                if (isActive) {
-                    NfcController.reset(application)
-                }
+        }
+        if (result.isFailure) {
+            val message = if (result.exceptionOrNull() is NoSuchElementException) {
+                R.string.nfc_empty_cards
+            } else R.string.operation_failed
+            Toast.makeText(application, message, Toast.LENGTH_LONG).show()
+        } else {
+            val reset = event is NfcEvent.ResetSimulation ||
+                event is NfcEvent.ToggleSimulation && !event.value
+            val uid = when (event) {
+                is NfcEvent.EmulateCard -> event.card.uid
+                is NfcEvent.AddCard -> if (event.emulateImmediately) {
+                    NfcController.formatUid(NfcController.cleanUid(event.uid))
+                } else null
+                else -> null
             }
-
-            is NfcEvent.RenameCard -> {
-                updateData { p ->
-                    p.copy(
-                        nfc = p.nfc.copy(
-                            activeCardName = if (p.nfc.activeUid == event.card.uid) event.newName else p.nfc.activeCardName,
-                            cards = p.nfc.cards.map {
-                                if (it.id == event.card.id) it.copy(name = event.newName) else it
-                            }
-                        )
-                    )
-                }
+            if (reset) {
+                Toast.makeText(application, R.string.nfc_toast_reset_success, Toast.LENGTH_SHORT).show()
+            } else if (uid != null) {
+                Toast.makeText(application, application.getString(R.string.nfc_toast_sim_success, uid), Toast.LENGTH_SHORT).show()
             }
         }
     }

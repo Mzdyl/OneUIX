@@ -29,11 +29,12 @@ import io.github.soclear.oneuix.ui.category.DetailPaneGallery
 import io.github.soclear.oneuix.ui.category.DetailPaneHealthMonitor
 import io.github.soclear.oneuix.ui.category.DetailPaneLauncher
 import io.github.soclear.oneuix.ui.category.DetailPaneMessaging
+import io.github.soclear.oneuix.ui.category.DetailPaneNfc
 import io.github.soclear.oneuix.ui.category.DetailPaneNotes
 import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
 import io.github.soclear.oneuix.ui.category.DetailPaneQuickShare
-import io.github.soclear.oneuix.ui.category.DetailPaneSamsungHealth
 import io.github.soclear.oneuix.ui.category.DetailPaneSPen
+import io.github.soclear.oneuix.ui.category.DetailPaneSamsungHealth
 import io.github.soclear.oneuix.ui.category.DetailPaneSettings
 import io.github.soclear.oneuix.ui.category.DetailPaneSketchBook
 import io.github.soclear.oneuix.ui.category.DetailPaneSystemUI
@@ -41,7 +42,6 @@ import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
 import io.github.soclear.oneuix.ui.category.DetailPaneVideo
 import io.github.soclear.oneuix.ui.category.DetailPaneWatchManager
 import io.github.soclear.oneuix.ui.category.DetailPaneWeather
-import io.github.soclear.oneuix.ui.category.DetailPaneNfc
 import io.github.soclear.oneuix.ui.category.ListPaneCategory
 import io.github.soclear.oneuix.ui.category.onAndroidEvent
 import io.github.soclear.oneuix.ui.category.onBixbyEvent
@@ -55,22 +55,22 @@ import io.github.soclear.oneuix.ui.category.onGalleryEvent
 import io.github.soclear.oneuix.ui.category.onHealthMonitorEvent
 import io.github.soclear.oneuix.ui.category.onLauncherEvent
 import io.github.soclear.oneuix.ui.category.onMessagingEvent
-import io.github.soclear.oneuix.ui.category.onNotesEvent
 import io.github.soclear.oneuix.ui.category.onNfcEvent
+import io.github.soclear.oneuix.ui.category.onNotesEvent
 import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
 import io.github.soclear.oneuix.ui.category.onQuickShareEvent
-import io.github.soclear.oneuix.ui.category.onSamsungHealthEvent
-import io.github.soclear.oneuix.ui.category.onSketchBookEvent
 import io.github.soclear.oneuix.ui.category.onSPenEvent
+import io.github.soclear.oneuix.ui.category.onSamsungHealthEvent
 import io.github.soclear.oneuix.ui.category.onSettingsEvent
+import io.github.soclear.oneuix.ui.category.onSketchBookEvent
 import io.github.soclear.oneuix.ui.category.onSystemUIEvent
 import io.github.soclear.oneuix.ui.category.onThemeCenterEvent
 import io.github.soclear.oneuix.ui.category.onVideoEvent
 import io.github.soclear.oneuix.ui.category.onWatchManagerEvent
 import io.github.soclear.oneuix.ui.category.onWeatherEvent
-import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -80,6 +80,8 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val categoryAppInfoList by viewModel.categoryAppInfoList.collectAsStateWithLifecycle()
     val preference by viewModel.preference.collectAsStateWithLifecycle()
+    val nfcBusy by viewModel.nfcStateManager.busy.collectAsStateWithLifecycle()
+    val navigationBarBusy by viewModel.navigationBarBusy.collectAsStateWithLifecycle()
 
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -138,6 +140,7 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                     when (it) {
                         Category.Android -> DetailPaneAndroid(
                             uiState = preference.android,
+                            navigationBarBusy = navigationBarBusy,
                             onEvent = viewModel::onAndroidEvent
                         )
 
@@ -258,6 +261,7 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
 
                         Category.Nfc -> DetailPaneNfc(
                             uiState = preference.nfc,
+                            busy = nfcBusy,
                             onEvent = viewModel::onNfcEvent
                         )
                     }

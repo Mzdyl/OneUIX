@@ -32,6 +32,7 @@ fun SwitchItem(
     icon: ImageVector? = null,
     clickable: Boolean = false,
     onClick: () -> Unit = {},
+    enabled: Boolean = true,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
@@ -39,11 +40,13 @@ fun SwitchItem(
 
     val listItemModifier = if (clickable) {
         modifier.clickable(
+            enabled = enabled,
             onClick = onClick,
             role = Role.Button
         )
     } else {
         modifier.toggleable(
+            enabled = enabled,
             value = checked,
             onValueChange = onCheckedChange,
             role = Role.Switch,
@@ -73,6 +76,7 @@ fun SwitchItem(
                 }
 
                 Switch(
+                    enabled = enabled,
                     checked = checked,
                     onCheckedChange = onCheckedChange,
                     interactionSource = if (clickable) null else interactionSource
