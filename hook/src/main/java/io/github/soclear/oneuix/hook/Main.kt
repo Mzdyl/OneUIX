@@ -3,6 +3,7 @@ package io.github.soclear.oneuix.hook
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.common.SPenTranslationSource
 import io.github.soclear.oneuix.hook.systemui.AOD
 import io.github.soclear.oneuix.hook.systemui.ESIM
 import io.github.soclear.oneuix.hook.systemui.HideBatteryIcon
@@ -553,8 +554,8 @@ class Main : XposedModule() {
             }
 
             Package.TRANSLATION -> {
-                if (preference.other.useSPenGoogleTranslate) {
-                    SPen.switchTranslateSource(useGoogle = true)
+                if (preference.other.sPenTranslationSource != SPenTranslationSource.DEFAULT) {
+                    SPen.switchTranslateSource(preference.other.sPenTranslationSource)
                 }
             }
 

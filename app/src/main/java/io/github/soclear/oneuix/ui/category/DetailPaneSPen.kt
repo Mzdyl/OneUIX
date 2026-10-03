@@ -7,8 +7,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.common.Preference
+import io.github.soclear.oneuix.common.SPenTranslationSource
 import io.github.soclear.oneuix.ui.SettingViewModel
-import io.github.soclear.oneuix.ui.component.SwitchItem
+import io.github.soclear.oneuix.ui.component.SelectItem
 
 @Composable
 fun DetailPaneSPen(
@@ -17,27 +18,32 @@ fun DetailPaneSPen(
     modifier: Modifier = Modifier
 ) {
     PackagePane(modifier) {
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.spen),
-            title = stringResource(id = R.string.useSPenGoogleTranslate_title),
-            summary = stringResource(id = R.string.useSPenGoogleTranslate_summary),
-            checked = uiState.useSPenGoogleTranslate,
-            onCheckedChange = { onEvent(SPenEvent.UseSPenGoogleTranslate(it)) }
+        SelectItem(
+            icon = ImageVector.vectorResource(R.drawable.spen),
+            title = stringResource(R.string.sPenTranslationSource_title),
+            summary = stringResource(R.string.sPenTranslationSource_summary),
+            entries = listOf(
+                stringResource(R.string.choice_default),
+                stringResource(R.string.translation_google),
+                stringResource(R.string.translation_baidu)
+            ),
+            selectedIndex = uiState.sPenTranslationSource.ordinal,
+            onSelectedIndexChange = { onEvent(SPenEvent.TranslationSource(SPenTranslationSource.entries[it])) }
         )
     }
 }
 
 sealed interface SPenEvent {
     @JvmInline
-    value class UseSPenGoogleTranslate(val value: Boolean) : SPenEvent
+    value class TranslationSource(val value: SPenTranslationSource) : SPenEvent
 }
 
 fun SettingViewModel.onSPenEvent(event: SPenEvent) {
     updateData { preference ->
         when (event) {
-            is SPenEvent.UseSPenGoogleTranslate -> preference.copy(
+            is SPenEvent.TranslationSource -> preference.copy(
                 other = preference.other.copy(
-                    useSPenGoogleTranslate = event.value
+                    sPenTranslationSource = event.value
                 )
             )
         }

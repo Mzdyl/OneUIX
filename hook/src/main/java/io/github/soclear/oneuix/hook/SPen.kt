@@ -3,30 +3,34 @@ package io.github.soclear.oneuix.hook
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
+import io.github.soclear.oneuix.common.SPenTranslationSource
 import io.github.soclear.oneuix.hook.util.xlog
 
 object SPen {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun switchTranslateSource(useGoogle: Boolean) {
-        if (param.packageName != Package.TRANSLATION) return
+    fun switchTranslateSource(source: SPenTranslationSource) {
+        if (param.packageName != Package.TRANSLATION || source == SPenTranslationSource.DEFAULT) return
+        val useGoogle = source == SPenTranslationSource.GOOGLE
 
         val classLoader = param.classLoader
 
-        try {
-            val validationClass = classLoader.loadClass(
-                "com.samsung.sdk.clickstreamanalytics.internal.policy.Validation"
-            )
+        if (useGoogle) {
+            try {
+                val validationClass = classLoader.loadClass(
+                    "com.samsung.sdk.clickstreamanalytics.internal.policy.Validation"
+                )
 
-            xposedModule.hook(
-                validationClass.getDeclaredMethod("isChinaModel")
-            ).intercept { false }
+                xposedModule.hook(
+                    validationClass.getDeclaredMethod("isChinaModel")
+                ).intercept { false }
 
-            xposedModule.hook(
-                validationClass.getDeclaredMethod("getCountryCode", String::class.java)
-            ).intercept { "CN" }
-        } catch (_: ClassNotFoundException) {
-        } catch (t: Throwable) {
-            xlog(t)
+                xposedModule.hook(
+                    validationClass.getDeclaredMethod("getCountryCode", String::class.java)
+                ).intercept { "CN" }
+            } catch (_: ClassNotFoundException) {
+            } catch (t: Throwable) {
+                xlog(t)
+            }
         }
 
         try {

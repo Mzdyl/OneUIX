@@ -207,8 +207,6 @@
     <string name="hideNavigationBarGestureHint_summary">隐藏底部手势提示条，获得更纯净的全面屏体验（需要 root 权限）</string>
     <string name="enableSketch_title">启用涂鸦生图</string>
     <string name="enableSketch_summary">在国行设备上启用涂鸦生图功能</string>
-    <string name="useSPenGoogleTranslate_title">S Pen 使用谷歌翻译</string>
-    <string name="useSPenGoogleTranslate_summary">将 S Pen 翻译源从百度切换为谷歌</string>
     <string name="bypassSameWifiRestriction_title">解除同一 WLAN 限制</string>
     <string name="bypassSameWifiRestriction_summary">允许跨 Wi-Fi 或跨网络接打电话，去除国行同一局域网限制</string>
     <string name="unlockCmcMobileNetwork_title">解锁移动网络接打电话</string>
@@ -298,4 +296,9 @@
     <string name="cancel">取消</string>
     <string name="delete">删除</string>
     <string name="save">保存</string>
+    <string name="choice_default">默认（跟随系统）</string>
+    <string name="translation_google">Google 翻译</string>
+    <string name="translation_baidu">百度翻译</string>
+    <string name="sPenTranslationSource_title">S Pen 翻译源</string>
+    <string name="sPenTranslationSource_summary">国行和海外版均可选择翻译源，重启 S Pen 翻译后生效。</string>
 </resources>

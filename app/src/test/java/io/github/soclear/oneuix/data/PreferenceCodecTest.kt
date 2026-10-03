@@ -1,6 +1,8 @@
 package io.github.soclear.oneuix.data
 
 import io.github.soclear.oneuix.common.Preference
+import io.github.soclear.oneuix.common.PreferenceJson
+import io.github.soclear.oneuix.common.SPenTranslationSource
 import io.github.soclear.oneuix.common.decodePreference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -78,7 +80,7 @@ class PreferenceCodecTest {
         assertFalse(preference.other.noAIWatermark)
         assertTrue(preference.other.enableSketch)
         assertTrue(preference.other.bypassHealthMonitorCountryCheck)
-        assertTrue(preference.other.useSPenGoogleTranslate)
+        assertEquals(SPenTranslationSource.GOOGLE, preference.other.sPenTranslationSource)
         assertTrue(preference.other.bypassWatchPairingRegionCheck)
         assertEquals(2, preference.other.watchPairingConnectionMode)
         assertTrue(preference.other.supplementChinaWearOsGms)
@@ -139,8 +141,60 @@ class PreferenceCodecTest {
         assertEquals(preference, decodePreference(backup))
         assertTrue(preference.bixby.labsMgr)
         assertTrue(preference.call.enableVirtualLanP2p)
-        assertTrue(preference.other.useSPenGoogleTranslate)
+        assertEquals(SPenTranslationSource.GOOGLE, preference.other.sPenTranslationSource)
         assertEquals("01:02:03:04", preference.nfc.activeUid)
     }
 
+
+    @Test
+    fun migratesEnabledSPenSwitch() {
+        val preference = decodePreference("""{"other":{"useSPenGoogleTranslate":true}}""")
+        assertEquals(SPenTranslationSource.GOOGLE, preference.other.sPenTranslationSource)
+    }
+
+    @Test
+    fun absentAndDisabledSPenSwitchesKeepSystemDefault() {
+        for (json in listOf(
+            "{}",
+            """{"other":{"useSPenGoogleTranslate":false}}""",
+            """{"sPen":{"useGoogleTranslate":false}}""",
+            """{"sPen":{"useGoogleTranslate":true},"other":{"useSPenGoogleTranslate":false}}"""
+        )) {
+            assertEquals(SPenTranslationSource.DEFAULT, decodePreference(json).other.sPenTranslationSource)
+        }
+    }
+
+    @Test
+    fun explicitSPenChoiceIncludingDefaultOverridesLegacySwitches() {
+        for (source in SPenTranslationSource.entries) {
+            val preference = decodePreference(
+                """{
+                    "sPen":{"useGoogleTranslate":true},
+                    "other":{"useSPenGoogleTranslate":true,"sPenTranslationSource":"${source.name}"}
+                }"""
+            )
+            assertEquals(source, preference.other.sPenTranslationSource)
+        }
+    }
+
+    @Test
+    fun translationChoicesSurviveSaveAndReloadWithoutLegacyKeys() {
+        val migrated = decodePreference("""{"other":{"useSPenGoogleTranslate":true}}""")
+        for (source in SPenTranslationSource.entries) {
+            val preference = migrated.copy(other = migrated.other.copy(sPenTranslationSource = source))
+            for (codec in listOf(PreferenceJson, io.github.soclear.oneuix.common.IgnoreUnknownKeysJson)) {
+                val json = codec.encodeToString(Preference.serializer(), preference)
+                assertFalse(json.contains("useSPenGoogleTranslate"))
+                assertEquals(preference, decodePreference(json))
+            }
+        }
+    }
+
+    @Test
+    fun unknownTranslationChoiceFallsBackToSystemDefault() {
+        val preference = decodePreference(
+            """{"other":{"sPenTranslationSource":"FUTURE","useSPenGoogleTranslate":true}}"""
+        )
+        assertEquals(SPenTranslationSource.DEFAULT, preference.other.sPenTranslationSource)
+    }
 }

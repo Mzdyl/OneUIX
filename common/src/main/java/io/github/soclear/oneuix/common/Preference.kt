@@ -188,7 +188,7 @@ data class Preference(
         val noAIWatermark: Boolean = true,
         val enableSketch: Boolean = false,
         val bypassHealthMonitorCountryCheck: Boolean = false,
-        val useSPenGoogleTranslate: Boolean = false,
+        val sPenTranslationSource: SPenTranslationSource = SPenTranslationSource.DEFAULT,
         val hideAppsSearchBar: Boolean = false,
         val removeShortcutBadge: Boolean = false,
         val bypassWatchPairingRegionCheck: Boolean = false,

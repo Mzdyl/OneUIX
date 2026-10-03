@@ -17,7 +17,7 @@ fun decodePreference(string: String): Preference {
     val root = PreferenceJson.parseToJsonElement(string).jsonObject
     return PreferenceJson.decodeFromJsonElement(
         Preference.serializer(),
-        migrateLegacyCallFields(migrateLegacyOtherFields(root))
+        migrateLegacyChoices(migrateLegacyCallFields(migrateLegacyOtherFields(root)))
     )
 }
 
@@ -84,4 +84,13 @@ private fun migrateLegacyOtherFields(root: JsonObject): JsonObject {
     val migrated = root.toMutableMap()
     migrated["other"] = JsonObject(otherMap)
     return JsonObject(migrated)
+}
+
+private fun migrateLegacyChoices(root: JsonObject): JsonObject {
+    val other = root["other"] as? JsonObject ?: return root
+    if ("sPenTranslationSource" in other) return root
+    val useGoogle = (other["useSPenGoogleTranslate"] as? JsonPrimitive)?.booleanOrNull ?: return root
+    val source = if (useGoogle) SPenTranslationSource.GOOGLE else SPenTranslationSource.DEFAULT
+    val migratedOther = JsonObject(other + ("sPenTranslationSource" to JsonPrimitive(source.name)))
+    return JsonObject(root + ("other" to migratedOther))
 }

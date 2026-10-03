@@ -207,8 +207,6 @@
     <string name="hideNavigationBarGestureHint_summary">Hide the bottom gesture hint bar for full-screen experience (requires root)</string>
     <string name="enableSketch_title">Enable Sketch to Image</string>
     <string name="enableSketch_summary">Enable Sketch to Image (doodle to image) feature on Chinese region devices</string>
-    <string name="useSPenGoogleTranslate_title">Use Google Translate for S Pen</string>
-    <string name="useSPenGoogleTranslate_summary">Switch S Pen translate source from Baidu to Google</string>
     <string name="bypassSameWifiRestriction_title">Bypass Same Wi-Fi restriction</string>
     <string name="bypassSameWifiRestriction_summary">Allow calls across different Wi-Fi or mobile networks</string>
     <string name="unlockCmcMobileNetwork_title">Unlock mobile network for CMC</string>
@@ -298,4 +296,9 @@
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="save">Save</string>
+    <string name="choice_default">Default (follow system)</string>
+    <string name="translation_google">Google Translate</string>
+    <string name="translation_baidu">Baidu Translate</string>
+    <string name="sPenTranslationSource_title">S Pen translation provider</string>
+    <string name="sPenTranslationSource_summary">Choose the translation provider for either China or international firmware. Restart S Pen translation to apply.</string>
 </resources>
