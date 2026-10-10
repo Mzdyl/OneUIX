@@ -22,6 +22,7 @@ class Main : XposedModule() {
     }
 
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) = with(param) {
+        if (!isFirstPackage) return@with
         val preference = PreferenceProvider.loadPreference() ?: return@with
 
         when (packageName) {
