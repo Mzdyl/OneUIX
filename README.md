@@ -101,6 +101,7 @@
 - 开发者选项显示强制最大刷新率选项
 - 解锁户外模式
 - 显示更多电池信息
+- 自定义充电上限（20–100%，设为 100% 关闭电池保护）
 - 应用程序信息页面显示包信息
 - Wi-Fi 列表页显示当前连接速度
 - 支持任意字体
@@ -247,6 +248,7 @@
 - Show 'Force peak refresh rate' in Developer options
 - Unlock Outdoor mode
 - Show more battery info
+- Set a custom charging limit (20–100%; 100% turns battery protection off)
 - Show package info on App Info page
 - Show current link speed in Wi-Fi list
 - Support any font

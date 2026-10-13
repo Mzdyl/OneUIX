@@ -183,4 +183,7 @@
     <string name="backup_config">Sauvegarder la config</string>
     <string name="restore_config">Restaurer la config</string>
     <string name="restore_failed">Échec de la restauration, le fichier est peut-être corrompu</string>
+    <string name="chargingLimit_title">Limite de charge</string>
+    <string name="chargingLimit_summary" formatted="false">Utiliser la protection de la batterie Samsung pour limiter la charge à 20–100 %. Définir à 100 % pour désactiver la protection</string>
+    <string name="chargingLimit_failed">Impossible de définir la limite de charge. Accordez l\'accès root et réessayez</string>
 </resources>

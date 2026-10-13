@@ -183,4 +183,7 @@
     <string name="backup_config">备份配置</string>
     <string name="restore_config">恢复配置</string>
     <string name="restore_failed">恢复失败，文件可能已损坏</string>
+    <string name="chargingLimit_title">充电上限</string>
+    <string name="chargingLimit_summary" formatted="false">使用三星电池保护设置 20–100% 的充电上限，设为 100% 时关闭保护</string>
+    <string name="chargingLimit_failed">设置充电上限失败，请授予 Root 权限后重试</string>
 </resources>

@@ -183,4 +183,7 @@
     <string name="backup_config">Back up config</string>
     <string name="restore_config">Restore config</string>
     <string name="restore_failed">Restore failed, the file may be corrupted</string>
+    <string name="chargingLimit_title">Charging limit</string>
+    <string name="chargingLimit_summary" formatted="false">Use Samsung battery protection to limit charging to 20–100%. Set to 100% to turn protection off</string>
+    <string name="chargingLimit_failed">Could not set charging limit. Grant root access and try again</string>
 </resources>

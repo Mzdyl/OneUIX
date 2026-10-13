@@ -183,4 +183,7 @@
     <string name="backup_config">설정 백업</string>
     <string name="restore_config">설정 복원</string>
     <string name="restore_failed">복원에 실패했습니다. 파일이 손상되었을 수 있습니다</string>
+    <string name="chargingLimit_title">충전 한도</string>
+    <string name="chargingLimit_summary" formatted="false">삼성 배터리 보호 기능을 사용하여 충전 한도를 20–100%로 설정합니다. 100%로 설정하면 보호 기능이 꺼집니다</string>
+    <string name="chargingLimit_failed">충전 한도 설정에 실패했습니다. 루팅(Root) 권한을 부여한 후 다시 시도해 주세요</string>
 </resources>

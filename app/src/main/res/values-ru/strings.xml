@@ -183,4 +183,7 @@
     <string name="backup_config">Резервное копирование</string>
     <string name="restore_config">Восстановить конфиг</string>
     <string name="restore_failed">Ошибка восстановления, файл может быть повреждён</string>
+    <string name="chargingLimit_title">Лимит зарядки</string>
+    <string name="chargingLimit_summary" formatted="false">Использовать защиту аккумулятора Samsung для ограничения зарядки до 20–100%. При 100% защита отключается</string>
+    <string name="chargingLimit_failed">Не удалось установить лимит зарядки. Предоставьте Root-права и повторите попытку</string>
 </resources>
