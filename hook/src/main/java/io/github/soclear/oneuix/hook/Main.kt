@@ -27,6 +27,16 @@ class Main : XposedModule() {
         val preference = PreferenceProvider.loadPreference() ?: return@with
 
         when (packageName) {
+            Package.BIXBY_AGENT, Package.BIXBY_WAKEUP -> {
+                if (packageName == Package.BIXBY_AGENT && preference.other.unlockBixbyOfflineProcessing) {
+                    Bixby.unlockOfflineProcessing()
+                }
+                Bixby.customWakeup(
+                    support = preference.other.supportBixbyCustomWakeup,
+                    bypassRestrictions = preference.other.bypassBixbyWakeWordRestrictions,
+                )
+            }
+
             Package.BROWSER -> {
                 if (preference.other.showMorePlaybackSpeeds) {
                     Browser.showMorePlaybackSpeeds()

@@ -121,6 +121,13 @@
 - 显示相机的所有菜单（快门音、自动 HDR、Log、边框叠加水印）
 - 禁用相机过热检查
 
+#### Bixby
+
+- 解锁离线处理
+- 自定义唤醒短语，修复不受支持机型的中文模型下载
+- 放宽唤醒短语文本限制（仍需录音和模型校验）
+- 在模块作用域中启用 Bixby 和语音唤醒，修改选项后重启两个应用
+
 #### 其他
 
 - 去除应用商店的广告
@@ -267,6 +274,13 @@
 
 - Show all camera menus (Shutter sound, Auto HDR, Log, Frame watermark)
 - Disable camera temperature check
+
+#### Bixby
+
+- Unlock offline processing
+- Custom wake-up phrases, including Chinese model download fallback on unsupported devices
+- Relax phrase text restrictions while retaining voice recording and model validation
+- Enable Bixby Agent and Voice wake-up in the module scope and restart both apps after changing options
 
 #### Other
 

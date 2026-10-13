@@ -23,6 +23,8 @@
         <package android:name="com.samsung.android.app.sketchbook" />
         <package android:name="com.samsung.android.app.telephonyui" />
         <package android:name="com.samsung.android.app.watchmanager" />
+        <package android:name="com.samsung.android.bixby.agent" />
+        <package android:name="com.samsung.android.bixby.wakeup" />
         <package android:name="com.samsung.android.calendar" />
         <package android:name="com.samsung.android.da.daagent" />
         <package android:name="com.samsung.android.dialer" />

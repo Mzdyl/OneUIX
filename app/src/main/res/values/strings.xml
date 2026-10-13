@@ -186,4 +186,11 @@
     <string name="chargingLimit_title">Charging limit</string>
     <string name="chargingLimit_summary" formatted="false">Use Samsung battery protection to limit charging to 20–100%. Set to 100% to turn protection off</string>
     <string name="chargingLimit_failed">Could not set charging limit. Grant root access and try again</string>
+
+    <string name="unlockBixbyOfflineProcessing_title">Unlock offline processing</string>
+    <string name="unlockBixbyOfflineProcessing_summary">Allow Bixby on-device processing on unsupported devices.</string>
+    <string name="supportBixbyCustomWakeup_title">Custom wake-up phrases</string>
+    <string name="supportBixbyCustomWakeup_summary">Enable custom phrases and retry Chinese model downloads on unsupported devices. Enable Bixby Agent and Voice wake-up in the module scope, then restart both apps.</string>
+    <string name="bypassBixbyWakeWordRestrictions_title">Relax wake-up phrase restrictions</string>
+    <string name="bypassBixbyWakeWordRestrictions_summary">Allow additional phrase text. Voice recording and model validation still apply.</string>
 </resources>

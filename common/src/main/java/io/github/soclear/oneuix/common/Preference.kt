@@ -147,6 +147,9 @@ data class Preference(
 
     @Serializable
     data class Other(
+        val unlockBixbyOfflineProcessing: Boolean = false,
+        val supportBixbyCustomWakeup: Boolean = false,
+        val bypassBixbyWakeWordRestrictions: Boolean = false,
         val blockGalaxyStoreAds: Boolean = true,
         val makeAllUserAppsAvailable: Boolean = true,
         val setWeatherProviderCN: Boolean = false,

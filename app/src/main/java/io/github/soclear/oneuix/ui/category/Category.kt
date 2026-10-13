@@ -8,6 +8,7 @@ enum class Category(val packageName: String) {
     Settings(Package.SETTINGS),
     Call(Package.DIALER),
     Camera(Package.CAMERA),
+    Bixby(Package.BIXBY_AGENT),
     Browser(Package.BROWSER),
     Calendar(Package.CALENDAR),
     DualApp(Package.DUAL_APP),

@@ -186,4 +186,11 @@
     <string name="chargingLimit_title">충전 한도</string>
     <string name="chargingLimit_summary" formatted="false">삼성 배터리 보호 기능을 사용하여 충전 한도를 20–100%로 설정합니다. 100%로 설정하면 보호 기능이 꺼집니다</string>
     <string name="chargingLimit_failed">충전 한도 설정에 실패했습니다. 루팅(Root) 권한을 부여한 후 다시 시도해 주세요</string>
+
+    <string name="unlockBixbyOfflineProcessing_title">오프라인 처리 활성화</string>
+    <string name="unlockBixbyOfflineProcessing_summary">지원하지 않는 기기에서 Bixby의 기기 내 처리를 허용합니다.</string>
+    <string name="supportBixbyCustomWakeup_title">사용자 지정 호출 문구</string>
+    <string name="supportBixbyCustomWakeup_summary">사용자 지정 문구와 중국어 모델 다운로드 재시도를 활성화합니다. 모듈 적용 범위에서 Bixby와 음성 호출을 활성화한 뒤 두 앱을 다시 시작하세요.</string>
+    <string name="bypassBixbyWakeWordRestrictions_title">호출 문구 제한 완화</string>
+    <string name="bypassBixbyWakeWordRestrictions_summary">더 다양한 문구를 허용합니다. 음성 녹음과 모델 검증은 계속 필요합니다.</string>
 </resources>

@@ -186,4 +186,11 @@
     <string name="chargingLimit_title">充电上限</string>
     <string name="chargingLimit_summary" formatted="false">使用三星电池保护设置 20–100% 的充电上限，设为 100% 时关闭保护</string>
     <string name="chargingLimit_failed">设置充电上限失败，请授予 Root 权限后重试</string>
+
+    <string name="unlockBixbyOfflineProcessing_title">解锁离线处理</string>
+    <string name="unlockBixbyOfflineProcessing_summary">允许不受支持的设备使用 Bixby 本地处理。</string>
+    <string name="supportBixbyCustomWakeup_title">自定义唤醒短语</string>
+    <string name="supportBixbyCustomWakeup_summary">开启自定义短语，并修复不受支持机型的中文模型下载。请在模块作用域中启用 Bixby 和语音唤醒，然后重启这两个应用。</string>
+    <string name="bypassBixbyWakeWordRestrictions_title">放宽唤醒短语限制</string>
+    <string name="bypassBixbyWakeWordRestrictions_summary">允许更多短语文本，仍需完成录音和模型校验。</string>
 </resources>

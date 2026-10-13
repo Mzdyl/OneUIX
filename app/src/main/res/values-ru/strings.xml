@@ -186,4 +186,11 @@
     <string name="chargingLimit_title">Лимит зарядки</string>
     <string name="chargingLimit_summary" formatted="false">Использовать защиту аккумулятора Samsung для ограничения зарядки до 20–100%. При 100% защита отключается</string>
     <string name="chargingLimit_failed">Не удалось установить лимит зарядки. Предоставьте Root-права и повторите попытку</string>
+
+    <string name="unlockBixbyOfflineProcessing_title">Разблокировать автономную обработку</string>
+    <string name="unlockBixbyOfflineProcessing_summary">Разрешить локальную обработку Bixby на неподдерживаемых устройствах.</string>
+    <string name="supportBixbyCustomWakeup_title">Своя фраза пробуждения</string>
+    <string name="supportBixbyCustomWakeup_summary">Включить свои фразы и повторную загрузку китайских моделей. Добавьте Bixby и голосовое пробуждение в область действия модуля и перезапустите оба приложения.</string>
+    <string name="bypassBixbyWakeWordRestrictions_title">Ослабить ограничения фраз</string>
+    <string name="bypassBixbyWakeWordRestrictions_summary">Разрешить дополнительные тексты фраз. Запись голоса и проверка моделей по-прежнему необходимы.</string>
 </resources>
