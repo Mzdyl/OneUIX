@@ -29,6 +29,7 @@ data class Preference(
         val hideNavigationBarGestureHint: Boolean = false,
         val disableScreenWakeOnPowerUnplugged: Boolean = false,
         val disableWritingToolkitGlobally: Boolean = false,
+        val disableFlagSecure: Boolean = false,
     )
 
     @Serializable
@@ -51,8 +52,15 @@ data class Preference(
             val hideBatteryLevelTextPercentageSign: Boolean = false,
             val hideBatteryLevelTextChargingIcon: Boolean = false,
             val supportRealTimeNetworkSpeed: Boolean = true,
-            val showSeparateUpDownNetworkSpeeds: Boolean = false,
-            val networkSpeedThresholdKb: Int = 0,
+            val networkSpeedLayout: Int = 0,
+            val showNetworkSpeedArrows: Boolean = true,
+            val networkSpeedMarker: Int = 0,
+            val networkSpeedUnit: Int = 0,
+            val networkSpeedTextSizeSp: Float = 0f,
+            val networkSpeedMarkerSizeSp: Float = 0f,
+            val networkSpeedMarkerGap: Float = 1f,
+            val networkSpeedLineSpacingDp: Float = 0f,
+            val networkSpeedThreshold: Int = 0,
             val setStatusBarClockFormat: Boolean = false,
             val statusBarClockFormat: String = "HH:mm",
             val setStatusBarClockTextScale: Boolean = false,
@@ -156,6 +164,9 @@ data class Preference(
 
     @Serializable
     data class Other(
+        val unlockBixbyOfflineProcessing: Boolean = false,
+        val supportBixbyCustomWakeup: Boolean = false,
+        val bypassBixbyWakeWordRestrictions: Boolean = false,
         val blockGalaxyStoreAds: Boolean = true,
         val changeRegion: Boolean = false,
         val regionCode: String = "US",

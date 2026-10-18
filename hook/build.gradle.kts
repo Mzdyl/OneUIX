@@ -32,6 +32,4 @@ dependencies {
 
     compileOnly(libs.libxposed.api)
     compileOnly(project(":stub"))
-
-    testImplementation(libs.junit)
 }

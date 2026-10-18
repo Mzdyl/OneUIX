@@ -79,6 +79,7 @@ object PowerMenu {
             PowerMenuAction.RESTART_SYSTEMUI -> RestartSystemUIActionViewModel(globalActions)
             PowerMenuAction.RESTART_RECOVERY -> RestartRecoveryActionViewModel(globalActions, modulePackageName)
             PowerMenuAction.RESTART_DOWNLOAD -> RestartDownloadActionViewModel(globalActions, modulePackageName)
+            PowerMenuAction.SOFT_REBOOT -> SoftRebootActionViewModel(globalActions, modulePackageName)
             else -> systemAction(actionName)(globalActions)
         }
         action.getActionInfo().viewType = centerViewTypes.getOrElse(index) {

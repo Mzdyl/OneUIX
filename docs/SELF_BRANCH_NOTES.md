@@ -4,9 +4,9 @@
 
 ## 上游同步基线
 
-- 2026-07-20 审计基线：`upstream/main@bd3c9ebb`
-- 审计时 `upstream/main` 是 `Self` 的直接祖先，不存在待合入的上游提交
-- 后续状态以 `git fetch upstream` 和 `git log HEAD..upstream/main` 的实时结果为准
+- 2026-10-18 同步基线：`upstream/main@73a551f8`
+- 包含上游新特性：FLAG_SECURE 绕过、软重启 & 户外模式磁贴、网速微调面板、自定义充电上限、相册共享相簿查找修复等
+- 完整保留 Self 分支特性：Bixby 深度定制、手表配对绕过、S Pen 谷歌翻译、双卡 CMC 路由、NFC 模拟及多语言精简策略
 
 ## 架构差异
 

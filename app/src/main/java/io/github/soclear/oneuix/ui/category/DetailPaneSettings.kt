@@ -47,6 +47,7 @@ fun DetailPaneSettings(
             checked = uiState.showMoreBatteryInfo,
             onCheckedChange = { onEvent(SettingsEvent.ShowMoreBatteryInfo(it)) }
         )
+        ChargingLimitItem()
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.apk_document),
             title = stringResource(id = R.string.showPackageInfo_title),

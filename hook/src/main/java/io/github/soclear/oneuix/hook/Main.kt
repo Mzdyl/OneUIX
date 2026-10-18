@@ -2,6 +2,7 @@ package io.github.soclear.oneuix.hook
 
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
+import io.github.soclear.oneuix.common.NetworkSpeedOption
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.common.SPenTranslationSource
 import io.github.soclear.oneuix.hook.systemui.AOD
@@ -24,6 +25,7 @@ class Main : XposedModule() {
     }
 
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) = with(param) {
+        if (!isFirstPackage) return@with
         val preference = PreferenceProvider.loadPreference() ?: return@with
 
         when (packageName) {
@@ -361,10 +363,8 @@ class Main : XposedModule() {
                     Network.supportRealTimeNetworkSpeed()
                 }
 
-                if (preference.systemUI.statusBar.showSeparateUpDownNetworkSpeeds) {
-                    Network.showSeparateUpDownNetworkSpeeds(
-                        thresholdKb = preference.systemUI.statusBar.networkSpeedThresholdKb
-                    )
+                if (preference.systemUI.statusBar.networkSpeedLayout != NetworkSpeedOption.Layout.SYSTEM.ordinal) {
+                    Network.showCustomNetworkSpeed(preference.systemUI.statusBar)
                 }
 
                 if (preference.systemUI.statusBar.setStatusBarClockFormat) {
@@ -503,9 +503,16 @@ class Main : XposedModule() {
                         preference.systemUI.other.powerMenuActions,
                     )
                 }
+
+                if (preference.android.disableFlagSecure) {
+                    DisableFlagSecure.hookSystemUI(classLoader)
+                }
             }
 
             Package.SYSTEMUI if (processName == "${Package.SYSTEMUI}:screenshot") -> {
+                if (preference.android.disableFlagSecure) {
+                    DisableFlagSecure.hookSystemUI(classLoader)
+                }
                 if (preference.systemUI.other.disableScreenshotCaptureSound) {
                     Other.disableScreenshotCaptureSound()
                 }
@@ -625,6 +632,10 @@ class Main : XposedModule() {
 
         if (preference.call.mdecDeviceType != 0) {
             Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
+        }
+
+        if (preference.android.disableFlagSecure) {
+            DisableFlagSecure.hookSystemServer(classLoader)
         }
     }
 }

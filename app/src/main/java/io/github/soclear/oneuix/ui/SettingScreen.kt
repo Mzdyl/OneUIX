@@ -11,7 +11,10 @@ import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneSca
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +33,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneHealthMonitor
 import io.github.soclear.oneuix.ui.category.DetailPaneLauncher
 import io.github.soclear.oneuix.ui.category.DetailPaneMessaging
 import io.github.soclear.oneuix.ui.category.DetailPaneNfc
+import io.github.soclear.oneuix.ui.category.ExtraPaneNetworkSpeed
 import io.github.soclear.oneuix.ui.category.DetailPaneNotes
 import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
 import io.github.soclear.oneuix.ui.category.DetailPaneQuickShare
@@ -75,13 +79,14 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
-    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<Category>()
+    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val categoryAppInfoList by viewModel.categoryAppInfoList.collectAsStateWithLifecycle()
     val preference by viewModel.preference.collectAsStateWithLifecycle()
     val nfcBusy by viewModel.nfcStateManager.busy.collectAsStateWithLifecycle()
     val navigationBarBusy by viewModel.navigationBarBusy.collectAsStateWithLifecycle()
+    var selectedCategory by rememberSaveable { mutableStateOf<Category?>(null) }
 
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -117,10 +122,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                 ListPaneCategory(
                     categoryAppInfoList = categoryAppInfoList,
                     onItemClick = { category ->
+                        selectedCategory = category
                         scope.launch {
                             scaffoldNavigator.navigateTo(
                                 ListDetailPaneScaffoldRole.Detail,
-                                category
+                                SettingDestination.Detail(category)
                             )
                         }
                     },
@@ -136,7 +142,7 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
         },
         detailPane = {
             AnimatedPane {
-                scaffoldNavigator.currentDestination?.contentKey?.let {
+                selectedCategory?.let {
                     when (it) {
                         Category.Android -> DetailPaneAndroid(
                             uiState = preference.android,
@@ -146,7 +152,15 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
 
                         Category.SystemUI -> DetailPaneSystemUI(
                             uiState = preference.systemUI,
-                            onEvent = viewModel::onSystemUIEvent
+                            onEvent = viewModel::onSystemUIEvent,
+                            onNavigateToNetworkSpeed = {
+                                scope.launch {
+                                    scaffoldNavigator.navigateTo(
+                                        ListDetailPaneScaffoldRole.Extra,
+                                        SettingDestination.NetworkSpeed
+                                    )
+                                }
+                            }
                         )
 
                         Category.Settings -> DetailPaneSettings(
@@ -266,6 +280,19 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         )
                     }
                 }
+            }
+        },
+        extraPane = {
+            AnimatedPane {
+                ExtraPaneNetworkSpeed(
+                    uiState = preference.systemUI,
+                    onEvent = viewModel::onSystemUIEvent,
+                    onBack = {
+                        scope.launch {
+                            scaffoldNavigator.navigateBack()
+                        }
+                    }
+                )
             }
         },
         modifier = modifier.fillMaxSize(),

@@ -4,6 +4,8 @@ com.android.systemui
 com.samsung.android.app.notes
 com.samsung.android.app.sketchbook
 com.samsung.android.app.telephonyui
+com.samsung.android.bixby.agent
+com.samsung.android.bixby.wakeup
 com.samsung.android.calendar
 com.samsung.android.da.daagent
 com.samsung.android.dialer
