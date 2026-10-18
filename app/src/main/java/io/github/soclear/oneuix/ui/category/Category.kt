@@ -26,7 +26,6 @@ enum class Category(val packageName: String) {
     WatchManager(Package.WATCH_MANAGER),
     Weather(Package.WEATHER),
     SamsungHealth(Package.SAMSUNG_HEALTH),
-    Bixby(Package.BIXBY_AGENT),
     QuickShare(Package.SHARE_LIVE),
     Nfc(Package.NFC);
 }

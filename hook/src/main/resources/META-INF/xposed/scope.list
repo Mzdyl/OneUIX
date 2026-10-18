@@ -30,8 +30,6 @@ com.android.server.telecom
 com.android.phone
 com.sec.imsservice
 com.samsung.android.app.sharelive
-com.samsung.android.bixby.agent
-com.samsung.android.bixby.wakeup
 com.sec.android.app.shealth
 com.samsung.android.agent.storage
 com.android.nfc
