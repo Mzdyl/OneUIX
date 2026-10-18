@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 
@@ -111,6 +112,44 @@ object Call {
         null
     }
 
+    private fun resolveContext(hint: Any?): Context? {
+        if (hint != null) {
+            val ctx = runCatching {
+                hint.javaClass.getDeclaredField("mContext")
+                    .apply { isAccessible = true }
+                    .get(hint) as? Context
+            }.getOrNull()
+            if (ctx != null) return ctx
+        }
+        return runCatching {
+            val activityThread = Class.forName("android.app.ActivityThread")
+            (activityThread.getMethod("currentApplication").invoke(null) as? Context)
+                ?: (activityThread.getMethod("getSystemContext").invoke(null) as? Context)
+        }.getOrNull()
+    }
+
+    // 主设备 (PD) 的活跃 CMC line 由 cmc_selected_sims_on_pd 决定：
+    //   0 = 仅卡1   1 = 仅卡2   2 = 双卡
+    // 双卡时两个槽位都要暴露，呼叫时由 CMC_EXTERNAL_CALL_SLOT 指定实际使用哪张卡。
+    private fun cmcHandles(context: Context?): List<PhoneAccountHandle> {
+        val component = ComponentName("com.android.phone", "com.android.services.telephony.TelephonyConnectionService")
+        val userHandle = android.os.Process.myUserHandle()
+        val selectedSims = runCatching {
+            context?.let {
+                Settings.Global.getInt(it.contentResolver, "cmc_selected_sims_on_pd", 0)
+            } ?: 0
+        }.getOrDefault(0)
+        val slots = when (selectedSims) {
+            0 -> listOf(0)
+            1 -> listOf(1)
+            else -> listOf(0, 1)
+        }
+        return slots.map { PhoneAccountHandle(component, "CMC_$it", userHandle) }
+    }
+
+    private fun cmcSlotOf(handle: PhoneAccountHandle): Int =
+        handle.id.substringAfter("CMC_", "0").toIntOrNull() ?: 0
+
     context(xposedModule: XposedModule)
     private fun setCallAndTextDeviceTypeImpl(packageName: String, classLoader: ClassLoader, mdecDeviceType: Int) {
         if (packageName != Package.DIALER &&
@@ -132,15 +171,9 @@ object Call {
                             val result = chain.proceed()
                             val list = (result as? List<*>)?.filterIsInstance<PhoneAccountHandle>() ?: return@intercept result
                             if (list.isEmpty()) return@intercept list
-                            if (list.none { it.id?.contains("CMC") == true }) {
-                                val cmcHandle = PhoneAccountHandle(
-                                    ComponentName("com.android.phone", "com.android.services.telephony.TelephonyConnectionService"),
-                                    "CMC_0"
-                                )
-                                ArrayList(list).apply { add(cmcHandle) }
-                            } else {
-                                list
-                            }
+                            val missing = cmcHandles(resolveContext(chain.thisObject))
+                                .filter { handle -> list.none { it.id == handle.id } }
+                            if (missing.isNotEmpty()) ArrayList(list).apply { addAll(missing) } else list
                         }
                     }
             } catch (t: Throwable) {
@@ -157,12 +190,18 @@ object Call {
                             if (handle?.id?.contains("CMC") == true) {
                                 try {
                                     val icon = android.graphics.drawable.Icon.createWithResource("com.samsung.android.dialer", android.R.drawable.sym_def_app_icon)
-                                    val builder = PhoneAccount.builder(handle, "通过主设备拨打")
+                                    val extras = Bundle().apply {
+                                        putBoolean("com.samsung.telecom.extra.NO_CHECK_IF_VIDEO_CAPABLE", true)
+                                        putBoolean("com.samsung.telecom.extra.CAN_COEXIST_ACCOUNT", true)
+                                        putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", cmcSlotOf(handle))
+                                    }
+                                    val builder = PhoneAccount.builder(handle, "远程设备 SIM${cmcSlotOf(handle) + 1}")
                                         .setCapabilities(
                                             PhoneAccount.CAPABILITY_CALL_PROVIDER or
                                             PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION
                                         )
                                         .setIcon(icon)
+                                        .setExtras(extras)
                                     builder.build()
                                 } catch (t: Throwable) {
                                     logError("setCallAndTextDeviceType: mock PhoneAccount failed", t)
@@ -525,6 +564,9 @@ object Call {
 
             // 3. 在系统核心服务 (system_server / Telecom) 中放行并识别 CMC 呼叫账户
             if (packageName == Package.ANDROID || packageName == Package.TELECOM) {
+                val cmcAccounts: (Any?) -> List<PhoneAccountHandle> = { hint ->
+                    cmcHandles(resolveContext(hint))
+                }
                 val cmcHandle = PhoneAccountHandle(
                     ComponentName("com.android.phone", "com.android.services.telephony.TelephonyConnectionService"),
                     "CMC_0",
@@ -536,8 +578,11 @@ object Call {
                     val bundle = Bundle().apply {
                         putBoolean("com.samsung.telecom.extra.NO_CHECK_IF_VIDEO_CAPABLE", true)
                         putBoolean("com.samsung.telecom.extra.CAN_COEXIST_ACCOUNT", true)
+                        // SamsungSdPstnAccountRegistry.getCmcSimSlot() 只认这个 key，
+                        // 它决定 CMC 呼叫最终由主设备哪一张 SIM 拨出。
+                        putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", cmcSlotOf(handle))
                     }
-                    return PhoneAccount.builder(handle, "通过主设备拨打")
+                    return PhoneAccount.builder(handle, "远程设备 SIM${cmcSlotOf(handle) + 1}")
                         .setAddress(Uri.fromParts("tel", "", null))
                         .setSubscriptionAddress(Uri.fromParts("tel", "", null))
                         .setCapabilities(
@@ -562,11 +607,9 @@ object Call {
                                 xposedModule.hook(m).intercept { chain ->
                                     val result = chain.proceed()
                                     val list = (result as? List<*>)?.filterIsInstance<PhoneAccountHandle>() ?: return@intercept result
-                                    if (list.none { it.id?.contains("CMC") == true }) {
-                                        ArrayList(list).apply { add(cmcHandle) }
-                                    } else {
-                                        list
-                                    }
+                                    val missing = cmcAccounts(chain.thisObject)
+                                        .filter { handle -> list.none { it.id == handle.id } }
+                                    if (missing.isNotEmpty()) ArrayList(list).apply { addAll(missing) } else list
                                 }
                             }
 
@@ -618,11 +661,9 @@ object Call {
                                 xposedModule.hook(m).intercept { chain ->
                                     val result = chain.proceed()
                                     val list = (result as? List<*>)?.filterIsInstance<PhoneAccountHandle>() ?: return@intercept result
-                                    if (list.none { it.id?.contains("CMC") == true }) {
-                                        ArrayList(list).apply { add(cmcHandle) }
-                                    } else {
-                                        list
-                                    }
+                                    val missing = cmcAccounts(chain.thisObject)
+                                        .filter { handle -> list.none { it.id == handle.id } }
+                                    if (missing.isNotEmpty()) ArrayList(list).apply { addAll(missing) } else list
                                 }
                             }
 
@@ -635,11 +676,9 @@ object Call {
                                 xposedModule.hook(m).intercept { chain ->
                                     val result = chain.proceed()
                                     val list = (result as? List<*>)?.filterIsInstance<PhoneAccountHandle>() ?: return@intercept result
-                                    if (list.none { it.id?.contains("CMC") == true }) {
-                                        ArrayList(list).apply { add(cmcHandle) }
-                                    } else {
-                                        list
-                                    }
+                                    val missing = cmcAccounts(chain.thisObject)
+                                        .filter { handle -> list.none { it.id == handle.id } }
+                                    if (missing.isNotEmpty()) ArrayList(list).apply { addAll(missing) } else list
                                 }
                             }
 
@@ -652,11 +691,9 @@ object Call {
                                 xposedModule.hook(m).intercept { chain ->
                                     val result = chain.proceed()
                                     val list = (result as? List<*>)?.filterIsInstance<PhoneAccountHandle>() ?: return@intercept result
-                                    if (list.none { it.id?.contains("CMC") == true }) {
-                                        ArrayList(list).apply { add(cmcHandle) }
-                                    } else {
-                                        list
-                                    }
+                                    val missing = cmcAccounts(chain.thisObject)
+                                        .filter { handle -> list.none { it.id == handle.id } }
+                                    if (missing.isNotEmpty()) ArrayList(list).apply { addAll(missing) } else list
                                 }
                             }
 
@@ -862,13 +899,16 @@ object Call {
                                         try { it.reflect.callAs<PhoneAccountHandle>("getAccountHandle") } catch (_: Throwable) { null }
                                     }
                                     if (handle?.id?.contains("CMC") == true || reqHandle?.id?.contains("CMC") == true) {
+                                        val slot = cmcSlotOf(handle ?: reqHandle!!)
                                         val extras = request?.let {
                                             try { it.reflect.callAs<Bundle>("getExtras") } catch (_: Throwable) { null }
                                         }
                                         if (extras != null) {
                                             extras.putInt("com.samsung.telephony.extra.CMC_TYPE", 2)
+                                            extras.putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", slot)
                                             val oem = extras.getBundle("android.telephony.ims.extra.OEM_EXTRAS") ?: Bundle()
                                             oem.putInt("com.samsung.telephony.extra.CMC_TYPE", 2)
+                                            oem.putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", slot)
                                             extras.putBundle("android.telephony.ims.extra.OEM_EXTRAS", oem)
                                         }
                                     }
@@ -889,8 +929,14 @@ object Call {
                                                 bundle?.containsKey("com.samsung.telephony.extra.CMC_TYPE") == true
                                     if (isCmc && bundle != null) {
                                         bundle.putInt("com.samsung.telephony.extra.CMC_TYPE", 2)
+                                        connHandle?.let {
+                                            bundle.putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", cmcSlotOf(it))
+                                        }
                                         val oem = bundle.getBundle("android.telephony.ims.extra.OEM_EXTRAS") ?: Bundle()
                                         oem.putInt("com.samsung.telephony.extra.CMC_TYPE", 2)
+                                        connHandle?.let {
+                                            oem.putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", cmcSlotOf(it))
+                                        }
                                         bundle.putBundle("android.telephony.ims.extra.OEM_EXTRAS", oem)
                                     }
                                     chain.proceed()
