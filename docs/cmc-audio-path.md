@@ -90,3 +90,38 @@ OneUIX: saeCreateChannel same LAN, keep 192.168.86.10/192.168.86.9
 - 同 Wi-Fi 场景：**不要再改写媒体地址**，直接用 `192.168.86.x` 直连，音质与时延都正常。
 - 跨网（只靠 ZeroTier）场景：尚未打通，ZeroTier 接口不是 `ConnectivityManager` 网络，音频引擎的 socket 收不到该接口的回程包。
 - 判断「有没有声音」只看 `ApMediaStats` 的 `RTP RX Recvcount`，不要凭界面状态判断。
+
+## 异地场景（一台蜂窝、一台 Wi-Fi，经 ZeroTier）
+
+实测环境：S24U 关闭 Wi-Fi 走蜂窝（`rmnet_data0 = 10.48.148.94`），S21+ 保持 Wi-Fi（`192.168.86.9`），两端 ZeroTier 互通（`ping 10.0.0.160` 3/3，RTT ≈ 335ms）。
+
+### 现象
+
+```
+SD: saeCreateChannel before: localIp=10.48.148.94, remoteIp=192.168.86.9
+    saeCreateChannel after:  localIp=10.0.0.130,   remoteIp=10.0.0.160   ← 跨网段，改写生效
+SD: bindToNetwork 100 -> null                                            ← 解除绑定生效
+SD SAE: RTP TX 77 / RTP RX 0
+
+抓包: SD → PD  10.0.0.130 → 10.0.0.160:51024  有包
+      PD → SD  0 个包
+PD: sreCreateStream 调用次数 = 0
+PD: P2P Command received from urn:duid:5974757e...（SD 的 INVITE 已到达）
+```
+
+### 结论
+
+**ZeroTier 只能解决「看起来在同一 WLAN」这一层**：
+
+- 发现与信令确实被绕过了：`Augmented P2P discovery host list` 里注入了 `10.0.0.130`，主设备能收到 P2P 命令并正常拨号；
+- 但主设备把蜂窝音频桥接成 RTP 流这一步，走的是 `CmcP2pController`，而该固件里 `mIsEnableP2pFeature = false`、`startP2pBind()` 是空实现，通道根本不会建立；
+- 因此 PD 侧没有产生任何音频包，SD 收不到回程，`RTP Timeout(1401)` 挂断。
+
+所以异地场景不是「地址错了」，而是「主设备没有流可发」。9-25 的会话里 PD 有 `sreCreateStream` 调用，说明当时该通道由另一条路径拉起；本固件上没有走到那条路径。
+
+### 后续方向
+
+1. 反编译 S21+ 的 `imsservice.apk`（与 S24U 不是同一版本），定位 CMC 媒体流真正的创建入口，确认能否 hook 出 `sreCreateStream` 同等效果；
+2. 或放弃三星 P2P 通道，在副设备侧自行实现音频中继（把 VoLTE 音频经 ZeroTier 转发），工程量更大但不依赖固件实现。
+
+在解决之前：**异地（不同网络）通话不可用，同网段（同 Wi-Fi）通话正常。**

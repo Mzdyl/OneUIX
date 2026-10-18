@@ -531,9 +531,19 @@ object ImsService {
                             null
                         }
                         if (vlanNetwork != null) {
+                            // 系统认识虚拟网卡时直接绑过去
                             xlog("OneUIX: bindToNetwork $origNet -> virtual LAN network $vlanNetwork")
                             val newArgs = chain.args.toTypedArray()
                             newArgs[0] = vlanNetwork
+                            return@intercept chain.proceed(newArgs)
+                        }
+                        if (isSd || isWifiNetwork(ctx, origNet)) {
+                            // 系统不认识虚拟网卡（ZeroTier 是 root 直管接口）：
+                            // 解除绑定，socket 才能收到从 zt* 接口进来的 RTP。
+                            // 同网段场景下地址不会被改写，默认网络仍是 Wi-Fi，同样能收。
+                            xlog("OneUIX: bindToNetwork $origNet -> null (virtual LAN not in ConnectivityManager)")
+                            val newArgs = chain.args.toTypedArray()
+                            newArgs[0] = null
                             return@intercept chain.proceed(newArgs)
                         }
                         chain.proceed()
