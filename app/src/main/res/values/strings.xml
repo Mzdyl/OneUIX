@@ -236,6 +236,8 @@
     <string name="virtualLanPeerIp_title">Remote peer IP</string>
     <string name="virtualLanPeerIp_summary">ZeroTier IP of the other device (auto-detected if empty)</string>
     <string name="virtualLanPeerIp_hint">e.g. 10.0.0.130</string>
+    <string name="enableCmcOutgoingCall_title">Route outgoing calls via primary device</string>
+    <string name="enableCmcOutgoingCall_summary">Experimental: let this secondary device place calls with the primary device SIM. Requires CMC audio path to work; on some firmware the call connects but stays silent.</string>
     <string name="mdecDeviceType_title">Device role</string>
     <string name="mdecDeviceType_summary">Choose role for Call &amp; text on other devices</string>
     <string name="mdecDeviceType_default">Default (System)</string>

@@ -25,7 +25,7 @@ class Main : XposedModule() {
     }
 
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) = with(param) {
-        if (!isFirstPackage) return@with
+        if (!isFirstPackage && packageName != Package.TELECOM) return@with
         val preference = PreferenceProvider.loadPreference() ?: return@with
 
         when (packageName) {
@@ -208,7 +208,7 @@ class Main : XposedModule() {
             }
 
             Package.TELECOM -> {
-                if (preference.call.mdecDeviceType != 0) {
+                if (preference.call.enableCmcOutgoingCall && preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
                 }
             }
@@ -226,7 +226,9 @@ class Main : XposedModule() {
                 ) {
                     Messaging.preventCmcRestart()
                     Messaging.showCmcMessageIndicator()
-                    Messaging.hookCmcSubscribeStatus()
+                }
+                if (preference.call.mdecDeviceType == 2) {
+                    Messaging.hookSecondaryDeviceSms()
                 }
             }
 
@@ -318,6 +320,12 @@ class Main : XposedModule() {
                 if (preference.other.changeRegion) {
                     GalaxyStore.changeRegion(preference.other.regionCode)
                 }
+            }
+
+            Package.SPP -> {
+                SamsungPushService.handleHooks(
+                    useChinaCmcServer = preference.call.useChinaCmcServer
+                )
             }
 
             Package.SYSTEMUI if (processName == Package.SYSTEMUI) -> {
@@ -637,7 +645,7 @@ class Main : XposedModule() {
             Android.disableScreenWakeOnPowerUnplugged()
         }
 
-        if (preference.call.mdecDeviceType != 0) {
+        if (preference.call.enableCmcOutgoingCall && preference.call.mdecDeviceType != 0) {
             Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
         }
 

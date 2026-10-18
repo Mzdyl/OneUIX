@@ -159,26 +159,68 @@ object Messaging {
     }
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    fun hookCmcSubscribeStatus() {
+    fun hookSecondaryDeviceSms() {
         if (param.packageName != Package.MESSAGING) return
         val classLoader = param.classLoader
 
-        val cmcOpenUtilsClass = runCatching {
-            classLoader.loadClass("com.samsung.android.messaging.common.cmc.CmcOpenUtils")
+        val cmcFeatureClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.common.configuration.cmc.CmcFeature")
         }.getOrNull()
-        if (cmcOpenUtilsClass != null) {
-            cmcOpenUtilsClass.declaredMethods.filter { it.name == "getSubscribeStatus" }.forEach { method ->
-                xposedModule.hook(method).intercept { 1 }
-            }
-            cmcOpenUtilsClass.declaredMethods.filter { it.name == "setSubscribeStatus" }.forEach { method ->
-                xposedModule.hook(method).intercept { chain ->
-                    val status = chain.args.firstOrNull() as? Int ?: 0
-                    if (status == 0) {
-                        chain.args[0] = 1
+
+        if (cmcFeatureClass != null) {
+            val sdDeviceType = runCatching {
+                cmcFeatureClass.declaredMethods
+                    .firstOrNull { it.name == "getCmcDeviceType" }
+                    ?.returnType
+                    ?.enumConstants
+                    ?.firstOrNull { it.toString() == "DEVICE_TYPE_SD" }
+            }.getOrNull()
+
+            if (sdDeviceType != null) {
+                cmcFeatureClass.declaredMethods
+                    .filter { it.name == "getCmcDeviceType" }
+                    .forEach {
+                        xposedModule.hook(it).intercept { sdDeviceType }
                     }
-                    chain.proceed()
-                }
+
+                val cmcSettingManagerClass = runCatching {
+                    classLoader.loadClass("C4.b")
+                }.getOrNull()
+                cmcSettingManagerClass?.declaredMethods
+                    ?.filter { it.name == "c" && it.returnType == sdDeviceType.javaClass }
+                    ?.forEach {
+                        xposedModule.hook(it).intercept { sdDeviceType }
+                    }
             }
+
+            cmcFeatureClass.declaredMethods
+                .filter { it.name == "isCmcOpenSecondaryDevice" }
+                .forEach {
+                    xposedModule.hook(it).intercept { true }
+                }
+
+            cmcFeatureClass.declaredMethods
+                .filter { it.name == "isCmcOpenPrimaryDevice" }
+                .forEach {
+                    xposedModule.hook(it).intercept { false }
+                }
+
+            cmcFeatureClass.declaredMethods
+                .filter { it.name == "isCmcSdStandAloneSupport" }
+                .forEach {
+                    xposedModule.hook(it).intercept { false }
+                }
+        }
+
+        val featuresUtilImplClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.common.util.FeaturesUtilImpl")
+        }.getOrNull()
+        if (featuresUtilImplClass != null) {
+            featuresUtilImplClass.declaredMethods
+                .filter { it.name == "isCmcSdStandAloneSupport" }
+                .forEach {
+                    xposedModule.hook(it).intercept { false }
+                }
         }
     }
 }

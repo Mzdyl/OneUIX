@@ -64,6 +64,59 @@ object MdecService {
             }.onFailure { xlog(it) }
 
             runCatching {
+                val clazz = classLoader.loadClass("com.samsung.android.mdeccommon.utils.CountryUtils")
+                clazz.declaredMethods.filter { it.name == "getDeviceCountryIsoCode" }.forEach {
+                    xposedModule.hook(it).intercept { "CN" }
+                }
+                clazz.declaredMethods.filter { it.name == "getCountryCode" }.forEach {
+                    xposedModule.hook(it).intercept { "CN" }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val clazz = classLoader.loadClass("com.samsung.android.sdk.smp.common.util.DeviceInfoUtil")
+                clazz.declaredMethods.filter { it.name == "isCN" }.forEach {
+                    xposedModule.hook(it).intercept { true }
+                }
+                clazz.declaredMethods.filter { it.name == "getCountryIsoCode" }.forEach {
+                    xposedModule.hook(it).intercept { "CN" }
+                }
+                clazz.declaredMethods.filter { it.name == "isSupportCountryCode" }.forEach {
+                    xposedModule.hook(it).intercept { true }
+                }
+                clazz.declaredMethods.filter { it.name == "hasSppForceActivationFeature" }.forEach {
+                    xposedModule.hook(it).intercept { true }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val clazz = classLoader.loadClass("com.samsung.android.sdk.smp.push.PushHelper")
+                clazz.declaredMethods.filter { it.name == "handleSppDeactivateEvent" }.forEach {
+                    xposedModule.hook(it).intercept { null }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val clazz = classLoader.loadClass("com.samsung.android.sdk.smp.common.preference.PrefManager")
+                clazz.declaredMethods.filter { it.name == "isSppDeactivated" }.forEach {
+                    xposedModule.hook(it).intercept { false }
+                }
+                clazz.declaredMethods.filter { it.name == "isSmpDeactivated" }.forEach {
+                    xposedModule.hook(it).intercept { false }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val clazz = classLoader.loadClass("com.samsung.android.sdk.smp.push.PushHelperFeature")
+                clazz.declaredMethods.filter { it.name == "getRegisterPushType" }.forEach {
+                    xposedModule.hook(it).intercept { "spp" }
+                }
+                clazz.declaredMethods.filter { it.name == "isHKMO" }.forEach {
+                    xposedModule.hook(it).intercept { false }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
                 val factoryClass = classLoader.loadClass("com.samsung.android.mdecservice.push.TypePushFactory")
                 val smpPushClass = classLoader.loadClass("com.samsung.android.mdecservice.push.type.SMPPush")
                 val method = factoryClass.getDeclaredMethod("createPush", Context::class.java)
@@ -192,15 +245,49 @@ object MdecService {
 
             runCatching {
                 val clazz = classLoader.loadClass("com.samsung.android.mdecservice.entitlement.provider.dao.EntitlementProviderDao")
-                val method = clazz.getDeclaredMethod("getSaInfo", Context::class.java)
                 val saInfoClass = classLoader.loadClass("com.samsung.android.mdeccommon.obj.SamsungAccountInfo")
                 val setApiServerUrlMethod = saInfoClass.getDeclaredMethod("setApiServerUrl", String::class.java)
+                val method = clazz.getDeclaredMethod("getSaInfo", Context::class.java)
                 xposedModule.hook(method).intercept { chain ->
                     val result = chain.proceed()
                     if (result != null) {
                         setApiServerUrlMethod.invoke(result, "cn-auth2.samsungosp.com.cn")
                     }
                     result
+                }
+
+                clazz.declaredMethods.filter { it.name == "setSaInfoWithCmcDeviceId" }.forEach { m ->
+                    xposedModule.hook(m).intercept { chain ->
+                        val saInfo = chain.args.getOrNull(1)
+                        if (saInfo != null) {
+                            setApiServerUrlMethod.invoke(saInfo, "cn-auth2.samsungosp.com.cn")
+                        }
+                        chain.proceed()
+                    }
+                }
+            }.onFailure { xlog(it) }
+
+            runCatching {
+                val receiverClass = classLoader.loadClass("com.samsung.android.mdecservice.authentication.SaBroadcastReceiver")
+                receiverClass.declaredMethods.filter { it.name == "onReceive" }.forEach { m ->
+                    xposedModule.hook(m).intercept { chain ->
+                        val intent = chain.args.getOrNull(1) as? Intent
+                        if (intent != null) {
+                            val apiServerUrl = intent.getStringExtra("api_server_url")
+                            if (apiServerUrl != null && !apiServerUrl.contains(".cn")) {
+                                intent.putExtra("api_server_url", "cn-auth2.samsungosp.com.cn")
+                            }
+                            val serverUrl = intent.getStringExtra("server_url")
+                            if (serverUrl != null && !serverUrl.contains(".cn")) {
+                                intent.putExtra("server_url", "cn-auth2.samsungosp.com.cn")
+                            }
+                            val authUrl = intent.getStringExtra("auth_server_url")
+                            if (authUrl != null && !authUrl.contains(".cn")) {
+                                intent.putExtra("auth_server_url", "cn-auth2.samsungosp.com.cn")
+                            }
+                        }
+                        chain.proceed()
+                    }
                 }
             }.onFailure { xlog(it) }
 
@@ -232,7 +319,9 @@ object MdecService {
                     val sppInstalled = ctx?.let {
                         runCatching { it.packageManager.getPackageInfo("com.sec.spp.push", 0) }.isSuccess
                     } ?: false
-                    if (!sppInstalled && result.isNullOrEmpty()) {
+                    if (result == "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680") {
+                        null
+                    } else if (!sppInstalled && result.isNullOrEmpty()) {
                         "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680"
                     } else {
                         result
@@ -262,7 +351,9 @@ object MdecService {
                     val sppInstalled = ctx?.let {
                         runCatching { it.packageManager.getPackageInfo("com.sec.spp.push", 0) }.isSuccess
                     } ?: false
-                    if (!sppInstalled && result.isNullOrEmpty()) {
+                    if (result == "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680") {
+                        null
+                    } else if (!sppInstalled && result.isNullOrEmpty()) {
                         "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680"
                     } else {
                         result
@@ -382,100 +473,130 @@ object MdecService {
         }.onFailure { xlog(it) }
 
         runCatching {
-            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.database.manager.NmsDatabaseManagerBase")
-            val method = clazz.getDeclaredMethod("deinitMessageSync")
+            val listenerClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.config.SamsungAccountManager\$1")
+            val method = listenerClass.getDeclaredMethod(
+                "onRecvSamsungAccountInfo",
+                String::class.java,
+                String::class.java,
+                String::class.java,
+                String::class.java
+            )
             xposedModule.hook(method).intercept { chain ->
-                val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
-                val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: true
-                if (isCmcActivated) {
-                    xlog("OneUIX: Prevented deinitMessageSync while CMC is activated")
-                    null
-                } else {
-                    chain.proceed()
-                }
-            }
-        }.onFailure { xlog(it) }
+                val result = chain.proceed()
+                val listenerObj = chain.thisObject
+                runCatching {
+                    val samField = listenerObj.javaClass.getDeclaredField("this$0").apply { isAccessible = true }
+                    val sam = samField.get(listenerObj) ?: return@runCatching
+                    val samClass = sam.javaClass
+                    val saAccessTokenField = samClass.getDeclaredField("mSaAccessToken").apply { isAccessible = true }
+                    val saIdField = samClass.getDeclaredField("mSaId").apply { isAccessible = true }
+                    val saAuthUrlField = samClass.getDeclaredField("mSaAuthUrl").apply { isAccessible = true }
+                    val entitlementManField = samClass.getDeclaredField("mEntitlementProfileMan").apply { isAccessible = true }
+                    val nmsClientManField = samClass.getDeclaredField("mNmsClientMan").apply { isAccessible = true }
 
-        runCatching {
-            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.manager.NmsClientManager")
-            val method = clazz.getDeclaredMethod("isMessageSyncEnabled")
-            xposedModule.hook(method).intercept { chain ->
-                val original = chain.proceed() as? Boolean
-                if (original == true) {
-                    true
-                } else {
-                    val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
-                    val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: false
-                    if (isCmcActivated) {
-                        val thisObj = chain.thisObject
-                        try {
-                            val field = thisObj.javaClass.getDeclaredField("isMessageSyncEnabled").apply { isAccessible = true }
-                            field.setBoolean(thisObj, true)
-                        } catch (_: Throwable) {}
-                        true
-                    } else {
-                        false
+                    val accountId = chain.args.getOrNull(0) as? String ?: ""
+                    val accessToken = chain.args.getOrNull(1) as? String ?: ""
+                    var authUrl = chain.args.getOrNull(3) as? String ?: ""
+
+                    if (accessToken.isNotEmpty()) {
+                        saAccessTokenField.set(sam, accessToken)
                     }
-                }
-            }
-        }.onFailure { xlog(it) }
-
-        runCatching {
-            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.config.EntitlementProfileManager")
-            val method = clazz.getDeclaredMethod("isReadyToSync")
-            xposedModule.hook(method).intercept { chain ->
-                val original = chain.proceed() as? Boolean
-                if (original == true) {
-                    true
-                } else {
-                    val thisObj = chain.thisObject
-                    try {
-                        val mapField = thisObj.javaClass.getDeclaredField("mEntitlementProfileMap").apply { isAccessible = true }
-                        val map = mapField.get(thisObj) as? Map<*, *>
-                        val isSatisfiedMethod = thisObj.javaClass.getDeclaredMethod("isDataRestrictionSatisfied")
-                        val isSatisfied = isSatisfiedMethod.invoke(thisObj) as? Boolean ?: true
-                        if (map != null && map.isNotEmpty() && isSatisfied) {
-                            true
-                        } else {
-                            false
+                    if (accountId.isNotEmpty()) {
+                        saIdField.set(sam, accountId)
+                    }
+                    if (useChinaCmcServer && (authUrl.isEmpty() || !authUrl.contains(".cn"))) {
+                        authUrl = "cn-auth2.samsungosp.com.cn"
+                    } else if (authUrl.isEmpty()) {
+                        val ctx = runCatching {
+                            samClass.getDeclaredField("mContext").apply { isAccessible = true }.get(sam) as? Context
+                        }.getOrNull()
+                        if (ctx != null) {
+                            runCatching {
+                                val daoClass = classLoader.loadClass("com.samsung.android.mdecservice.entitlement.provider.dao.EntitlementProviderDao")
+                                val getSaInfoMethod = daoClass.getDeclaredMethod("getSaInfo", Context::class.java)
+                                val saInfo = getSaInfoMethod.invoke(null, ctx)
+                                if (saInfo != null) {
+                                    val api = saInfo.javaClass.getDeclaredMethod("getApiServerUrl").invoke(saInfo) as? String
+                                    if (!api.isNullOrEmpty()) authUrl = api
+                                }
+                            }
                         }
-                    } catch (_: Throwable) {
-                        original ?: false
+                        if (authUrl.isEmpty() && useChinaCmcServer) {
+                            authUrl = "cn-auth2.samsungosp.com.cn"
+                        }
                     }
-                }
+                    if (authUrl.isNotEmpty()) {
+                        saAuthUrlField.set(sam, authUrl)
+                    }
+
+                    val entitlementMan = entitlementManField.get(sam)
+                    if (entitlementMan != null) {
+                        val isReadyMethod = entitlementMan.javaClass.getDeclaredMethod("isReadyToSync")
+                        val isReady = isReadyMethod.invoke(entitlementMan) as? Boolean ?: false
+                        if (!isReady && accessToken.isNotEmpty()) {
+                            xlog("OneUIX: SamsungAccountManager onRecvSamsungAccountInfo - waking up EntitlementProfileManager")
+                            val nmsClientMan = nmsClientManField.get(sam)
+                            if (nmsClientMan != null) {
+                                val onSaChangedMethod = nmsClientMan.javaClass.getDeclaredMethod(
+                                    "onSamsungAccountInfoChanged",
+                                    String::class.java,
+                                    String::class.java
+                                )
+                                onSaChangedMethod.invoke(nmsClientMan, accessToken, authUrl)
+                            }
+                            entitlementMan.javaClass.getDeclaredMethod("updateEntitlementState").invoke(entitlementMan)
+                        }
+                    }
+                }.onFailure { xlog(it) }
+                result
             }
         }.onFailure { xlog(it) }
 
         runCatching {
-            val stubClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.NmsServiceStub")
-            stubClass.declaredMethods.filter { it.name == "isNmsSubscribed" }.forEach { method ->
-                xposedModule.hook(method).intercept { chain ->
-                    val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
-                    val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: true
-                    if (isCmcActivated) {
-                        xlog("OneUIX: NmsServiceStub.isNmsSubscribed intercepted -> true")
-                        true
-                    } else {
-                        chain.proceed()
+            val samClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.config.SamsungAccountManager")
+            val isSaInfoReadyMethod = samClass.getDeclaredMethod("isSaInfoReady")
+            xposedModule.hook(isSaInfoReadyMethod).intercept { chain ->
+                val original = chain.proceed() as? Boolean ?: false
+                if (original) {
+                    true
+                } else {
+                    val sam = chain.thisObject
+                    val saAccessTokenField = sam.javaClass.getDeclaredField("mSaAccessToken").apply { isAccessible = true }
+                    val saIdField = sam.javaClass.getDeclaredField("mSaId").apply { isAccessible = true }
+                    val saAuthUrlField = sam.javaClass.getDeclaredField("mSaAuthUrl").apply { isAccessible = true }
+                    val token = saAccessTokenField.get(sam) as? String
+                    val id = saIdField.get(sam) as? String
+                    var authUrl = saAuthUrlField.get(sam) as? String
+                    if (useChinaCmcServer && (authUrl.isNullOrEmpty() || !authUrl.contains(".cn"))) {
+                        authUrl = "cn-auth2.samsungosp.com.cn"
+                        saAuthUrlField.set(sam, authUrl)
+                    } else if (authUrl.isNullOrEmpty()) {
+                        val ctx = runCatching {
+                            sam.javaClass.getDeclaredField("mContext").apply { isAccessible = true }.get(sam) as? Context
+                        }.getOrNull()
+                        if (ctx != null) {
+                            runCatching {
+                                val daoClass = classLoader.loadClass("com.samsung.android.mdecservice.entitlement.provider.dao.EntitlementProviderDao")
+                                val getSaInfoMethod = daoClass.getDeclaredMethod("getSaInfo", Context::class.java)
+                                val saInfo = getSaInfoMethod.invoke(null, ctx)
+                                if (saInfo != null) {
+                                    val api = saInfo.javaClass.getDeclaredMethod("getApiServerUrl").invoke(saInfo) as? String
+                                    if (!api.isNullOrEmpty()) authUrl = api
+                                }
+                            }
+                        }
+                        if (authUrl.isNullOrEmpty() && useChinaCmcServer) {
+                            authUrl = "cn-auth2.samsungosp.com.cn"
+                        }
+                        if (!authUrl.isNullOrEmpty()) {
+                            saAuthUrlField.set(sam, authUrl)
+                        }
                     }
+                    !token.isNullOrEmpty() && !id.isNullOrEmpty() && !authUrl.isNullOrEmpty()
                 }
             }
         }.onFailure { xlog(it) }
 
-        runCatching {
-            val agentClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.agent.AgentManagerFactory")
-            agentClass.declaredMethods.filter { it.name == "isSubscribed" }.forEach { method ->
-                xposedModule.hook(method).intercept { chain ->
-                    val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
-                    val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: true
-                    if (isCmcActivated) {
-                        true
-                    } else {
-                        chain.proceed()
-                    }
-                }
-            }
-        }.onFailure { xlog(it) }
 
         runCatching {
             val method = Application::class.java.getDeclaredMethod("onCreate")

@@ -2,6 +2,7 @@ package io.github.soclear.oneuix.hook
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -26,8 +27,10 @@ import org.luckypray.dexkit.wrap.DexMethod
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 
 object Call {
+    private val telecomHooked = AtomicBoolean(false)
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun supportVoiceCallRecording(preferRecordingButton: Boolean) {
         if (param.packageName != Package.TELEPHONYUI &&
@@ -150,6 +153,62 @@ object Call {
     private fun cmcSlotOf(handle: PhoneAccountHandle): Int =
         handle.id.substringAfter("CMC_", "0").toIntOrNull() ?: 0
 
+    private fun mockAccount(handle: PhoneAccountHandle): PhoneAccount {
+        val icon = android.graphics.drawable.Icon.createWithResource("com.samsung.android.dialer", android.R.drawable.sym_def_app_icon)
+        val bundle = Bundle().apply {
+            putBoolean("com.samsung.telecom.extra.NO_CHECK_IF_VIDEO_CAPABLE", true)
+            putBoolean("com.samsung.telecom.extra.CAN_COEXIST_ACCOUNT", true)
+            putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", cmcSlotOf(handle))
+        }
+        return PhoneAccount.builder(handle, "远程设备 SIM${cmcSlotOf(handle) + 1}")
+            .setAddress(Uri.fromParts("tel", "", null))
+            .setSubscriptionAddress(Uri.fromParts("tel", "", null))
+            .setCapabilities(
+                PhoneAccount.CAPABILITY_CALL_PROVIDER or
+                32 // CAPABILITY_MULTI_USER
+            )
+            .setHighlightColor(-16743937)
+            .setShortDescription("CMC")
+            .setSupportedUriSchemes(listOf("tel", "voicemail"))
+            .setExtras(bundle)
+            .setIcon(icon)
+            .build()
+    }
+
+    private fun getCmcHandleFromCall(call: Any?): PhoneAccountHandle? {
+        if (call == null) return null
+        val target = runCatching { call.reflect.callAs<PhoneAccountHandle>("getTargetPhoneAccount") }.getOrNull()
+            ?: runCatching {
+                val f = call.javaClass.getDeclaredField("mTargetPhoneAccountHandle").apply { isAccessible = true }
+                f.get(call) as? PhoneAccountHandle
+            }.getOrNull()
+        if (target?.id?.contains("CMC") == true) return target
+
+        val remote = runCatching { call.reflect.callAs<PhoneAccountHandle>("getRemotePhoneAccountHandle") }.getOrNull()
+            ?: runCatching {
+                val f = call.javaClass.getDeclaredField("mRemotePhoneAccountHandle").apply { isAccessible = true }
+                f.get(call) as? PhoneAccountHandle
+            }.getOrNull()
+        if (remote?.id?.contains("CMC") == true) return remote
+
+        val extras = runCatching { call.reflect.callAs<Bundle>("getIntentExtras") }.getOrNull()
+            ?: runCatching {
+                val f = call.javaClass.getDeclaredField("mIntentExtras").apply { isAccessible = true }
+                f.get(call) as? Bundle
+            }.getOrNull()
+        val extraHandle = extras?.getParcelable<PhoneAccountHandle>("android.telecom.extra.PHONE_ACCOUNT_HANDLE")
+        if (extraHandle?.id?.contains("CMC") == true) return extraHandle
+
+        val intent = runCatching {
+            val f = call.javaClass.getDeclaredField("mOriginalCallIntent").apply { isAccessible = true }
+            f.get(call) as? Intent
+        }.getOrNull()
+        val intentAccount = intent?.getParcelableExtra<PhoneAccountHandle>("android.telecom.extra.PHONE_ACCOUNT_HANDLE")
+        if (intentAccount?.id?.contains("CMC") == true) return intentAccount
+
+        return null
+    }
+
     context(xposedModule: XposedModule)
     private fun setCallAndTextDeviceTypeImpl(packageName: String, classLoader: ClassLoader, mdecDeviceType: Int) {
         if (packageName != Package.DIALER &&
@@ -189,20 +248,7 @@ object Call {
                             val handle = chain.args.firstOrNull() as? PhoneAccountHandle
                             if (handle?.id?.contains("CMC") == true) {
                                 try {
-                                    val icon = android.graphics.drawable.Icon.createWithResource("com.samsung.android.dialer", android.R.drawable.sym_def_app_icon)
-                                    val extras = Bundle().apply {
-                                        putBoolean("com.samsung.telecom.extra.NO_CHECK_IF_VIDEO_CAPABLE", true)
-                                        putBoolean("com.samsung.telecom.extra.CAN_COEXIST_ACCOUNT", true)
-                                        putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", cmcSlotOf(handle))
-                                    }
-                                    val builder = PhoneAccount.builder(handle, "远程设备 SIM${cmcSlotOf(handle) + 1}")
-                                        .setCapabilities(
-                                            PhoneAccount.CAPABILITY_CALL_PROVIDER or
-                                            PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION
-                                        )
-                                        .setIcon(icon)
-                                        .setExtras(extras)
-                                    builder.build()
+                                    mockAccount(handle)
                                 } catch (t: Throwable) {
                                     logError("setCallAndTextDeviceType: mock PhoneAccount failed", t)
                                     chain.proceed()
@@ -564,43 +610,19 @@ object Call {
 
             // 3. 在系统核心服务 (system_server / Telecom) 中放行并识别 CMC 呼叫账户
             if (packageName == Package.ANDROID || packageName == Package.TELECOM) {
-                val cmcAccounts: (Any?) -> List<PhoneAccountHandle> = { hint ->
-                    cmcHandles(resolveContext(hint))
-                }
-                val cmcHandle = PhoneAccountHandle(
-                    ComponentName("com.android.phone", "com.android.services.telephony.TelephonyConnectionService"),
-                    "CMC_0",
-                    android.os.Process.myUserHandle()
-                )
-
-                fun mockAccount(handle: PhoneAccountHandle): PhoneAccount {
-                    val icon = android.graphics.drawable.Icon.createWithResource("com.samsung.android.dialer", android.R.drawable.sym_def_app_icon)
-                    val bundle = Bundle().apply {
-                        putBoolean("com.samsung.telecom.extra.NO_CHECK_IF_VIDEO_CAPABLE", true)
-                        putBoolean("com.samsung.telecom.extra.CAN_COEXIST_ACCOUNT", true)
-                        // SamsungSdPstnAccountRegistry.getCmcSimSlot() 只认这个 key，
-                        // 它决定 CMC 呼叫最终由主设备哪一张 SIM 拨出。
-                        putInt("com.samsung.telephony.extra.CMC_EXTERNAL_CALL_SLOT", cmcSlotOf(handle))
+                val registrarClass = classLoader.findClassOrNull("com.android.server.telecom.PhoneAccountRegistrar")
+                if (registrarClass != null && telecomHooked.compareAndSet(false, true)) {
+                    val cmcAccounts: (Any?) -> List<PhoneAccountHandle> = { hint ->
+                        cmcHandles(resolveContext(hint))
                     }
-                    return PhoneAccount.builder(handle, "远程设备 SIM${cmcSlotOf(handle) + 1}")
-                        .setAddress(Uri.fromParts("tel", "", null))
-                        .setSubscriptionAddress(Uri.fromParts("tel", "", null))
-                        .setCapabilities(
-                            PhoneAccount.CAPABILITY_CALL_PROVIDER or
-                            32 // CAPABILITY_MULTI_USER
-                        )
-                        .setHighlightColor(-16743937)
-                        .setShortDescription("CMC")
-                        .setSupportedUriSchemes(listOf("tel", "voicemail"))
-                        .setExtras(bundle)
-                        .setIcon(icon)
-                        .build()
-                }
+                    val cmcHandle = PhoneAccountHandle(
+                        ComponentName("com.android.phone", "com.android.services.telephony.TelephonyConnectionService"),
+                        "CMC_0",
+                        android.os.Process.myUserHandle()
+                    )
 
-                // 3.1 拦截 PhoneAccountRegistrar: 报告 CMC 账户具有外拨通话能力 (getCallCapablePhoneAccounts)
-                try {
-                    val registrarClass = classLoader.findClassOrNull("com.android.server.telecom.PhoneAccountRegistrar")
-                    if (registrarClass != null) {
+                    // 3.1 拦截 PhoneAccountRegistrar: 报告 CMC 账户具有外拨通话能力 (getCallCapablePhoneAccounts)
+                    try {
                         registrarClass.declaredMethods
                             .filter { it.name == "getCallCapablePhoneAccounts" }
                             .forEach { m ->
@@ -608,7 +630,7 @@ object Call {
                                     val result = chain.proceed()
                                     val list = (result as? List<*>)?.filterIsInstance<PhoneAccountHandle>() ?: return@intercept result
                                     val missing = cmcAccounts(chain.thisObject)
-                                        .filter { handle -> list.none { it.id == handle.id } }
+                                    .filter { handle -> list.none { it.id == handle.id } }
                                     if (missing.isNotEmpty()) ArrayList(list).apply { addAll(missing) } else list
                                 }
                             }
@@ -625,8 +647,7 @@ object Call {
                                     }
                                 }
                             }
-                    }
-                } catch (t: Throwable) {
+                    } catch (t: Throwable) {
                     logError("setCallAndTextDeviceType: PhoneAccountRegistrar hooks failed", t)
                 }
 
@@ -639,12 +660,7 @@ object Call {
                             .forEach { m ->
                                 xposedModule.hook(m).intercept { chain ->
                                     val callObj = chain.args.firstOrNull { it != null && it.javaClass.name.endsWith(".Call") }
-                                    val callInitHandle = callObj?.let {
-                                        try {
-                                            it.reflect.callAs<PhoneAccountHandle>("getInitiatingAccountHandle")
-                                                ?: it.reflect.callAs<PhoneAccountHandle>("getTargetPhoneAccount")
-                                        } catch (_: Throwable) { null }
-                                    }
+                                    val callInitHandle = getCmcHandleFromCall(callObj)
                                     val handleArg = chain.args.filterIsInstance<PhoneAccountHandle>().firstOrNull()
                                     val cmc = listOfNotNull(handleArg, callInitHandle).firstOrNull { it.id?.contains("CMC") == true }
                                     if (cmc != null) {
@@ -697,17 +713,31 @@ object Call {
                                 }
                             }
 
+                        val samsungAccountInfoClass = classLoader.findClassOrNull(
+                            "com.samsung.server.telecom.basiccall.call.info.SamsungPhoneAccountInfo"
+                        )
+                        samsungAccountInfoClass?.declaredMethods
+                            ?.filter { it.name == "setTargetPhoneAccount" && it.parameterTypes.size == 2 }
+                            ?.forEach { m ->
+                                xposedModule.hook(m).intercept { chain ->
+                                    val oldHandle = chain.args[0] as? PhoneAccountHandle
+                                    val newHandle = chain.args[1] as? PhoneAccountHandle
+                                    if (oldHandle?.id?.contains("CMC") == true && newHandle?.id?.contains("CMC") != true) {
+                                        val newArgs = chain.args.toTypedArray()
+                                        newArgs[1] = oldHandle
+                                        chain.proceed(newArgs)
+                                    } else {
+                                        chain.proceed()
+                                    }
+                                }
+                            }
+
                         callsManagerClass.declaredMethods
                             .filter { it.name == "onCallRedirectionComplete" }
                             .forEach { m ->
                                 xposedModule.hook(m).intercept { chain ->
                                     val callObj = chain.args.firstOrNull { it != null && it.javaClass.name.endsWith(".Call") }
-                                    val callInitHandle = callObj?.let {
-                                        try {
-                                            it.reflect.callAs<PhoneAccountHandle>("getInitiatingAccountHandle")
-                                                ?: it.reflect.callAs<PhoneAccountHandle>("getTargetPhoneAccount")
-                                        } catch (_: Throwable) { null }
-                                    }
+                                    val callInitHandle = getCmcHandleFromCall(callObj)
                                     if (callInitHandle?.id?.contains("CMC") == true && chain.args.size > 2) {
                                         if ((chain.args[2] as? PhoneAccountHandle)?.id?.contains("CMC") != true) {
                                             val newArgs = chain.args.toTypedArray()
@@ -732,17 +762,11 @@ object Call {
                             .forEach { m ->
                                 xposedModule.hook(m).intercept { chain ->
                                     val newHandle = chain.args.firstOrNull() as? PhoneAccountHandle
-                                    val target = try {
-                                        chain.thisObject.reflect.callAs<PhoneAccountHandle>("getTargetPhoneAccount")
-                                    } catch (_: Throwable) { null }
-                                    val init = try {
-                                        chain.thisObject.reflect.callAs<PhoneAccountHandle>("getInitiatingAccountHandle")
-                                    } catch (_: Throwable) { null }
-
-                                    val isCmc = (target?.id?.contains("CMC") == true) || (init?.id?.contains("CMC") == true)
-                                    if (isCmc && newHandle?.id?.contains("CMC") != true) {
+                                    val cmcHandleInCall = getCmcHandleFromCall(chain.thisObject)
+                                    if (cmcHandleInCall != null && newHandle?.id?.contains("CMC") != true) {
+                                        xlog("OneUIX: Call.setTargetPhoneAccount blocking replacement of $cmcHandleInCall by $newHandle")
                                         val newArgs = chain.args.toTypedArray()
-                                        newArgs[0] = target ?: init ?: cmcHandle
+                                        newArgs[0] = cmcHandleInCall
                                         chain.proceed(newArgs)
                                     } else {
                                         chain.proceed()
@@ -754,10 +778,9 @@ object Call {
                             .filter { it.name == "getIntentExtras" }
                             .forEach { m ->
                                 xposedModule.hook(m).intercept { chain ->
-                                    val target = try { chain.thisObject.reflect.callAs<PhoneAccountHandle>("getTargetPhoneAccount") } catch (_: Throwable) { null }
-                                    val init = try { chain.thisObject.reflect.callAs<PhoneAccountHandle>("getInitiatingAccountHandle") } catch (_: Throwable) { null }
+                                    val cmcHandleInCall = getCmcHandleFromCall(chain.thisObject)
                                     val result = chain.proceed()
-                                    if (target?.id?.contains("CMC") == true || init?.id?.contains("CMC") == true) {
+                                    if (cmcHandleInCall != null) {
                                         val extras = (result as? Bundle) ?: Bundle()
                                         extras.putInt("com.samsung.telephony.extra.CMC_TYPE", 2)
                                         val oemExtras = extras.getBundle("android.telephony.ims.extra.OEM_EXTRAS") ?: Bundle()
@@ -793,6 +816,7 @@ object Call {
                         }
                 } catch (t: Throwable) {
                     logError("setCallAndTextDeviceType: SamsungMultiDeviceCallInfo.getCmcType failed", t)
+                }
                 }
             }
 
@@ -879,7 +903,7 @@ object Call {
                             .filter { it.name == "adjustAccountHandle" }
                             .forEach { m ->
                                 xposedModule.hook(m).intercept { chain ->
-                                    val handle = chain.args.getOrNull(1) as? PhoneAccountHandle
+                                    val handle = chain.args.filterIsInstance<PhoneAccountHandle>().firstOrNull()
                                     if (handle?.id?.contains("CMC") == true) {
                                         handle
                                     } else {

@@ -5,6 +5,7 @@ import io.github.libxposed.service.XposedServiceHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 object XposedServiceManager {
     private val xposedServiceFlow = MutableStateFlow<XposedService?>(null)
@@ -29,7 +30,10 @@ object XposedServiceManager {
         })
     }
 
-    suspend fun awaitXposedService(): XposedService {
-        return xposedServiceFlow.filterNotNull().first()
-    }
+    // 覆盖安装后 LSPosed 可能还没把 Binder 交给本模块（APK 路径变化）。
+    // 这里必须带上限，否则 DataStore 的 readFrom 会一直挂起，设置界面只能显示默认值。
+    suspend fun awaitXposedService(timeoutMillis: Long = 1500L): XposedService? =
+        withTimeoutOrNull(timeoutMillis) {
+            xposedServiceFlow.filterNotNull().first()
+        }
 }

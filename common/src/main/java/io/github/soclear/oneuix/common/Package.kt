@@ -38,4 +38,5 @@ object Package {
     const val IMS_SERVICE = "com.sec.imsservice"
     const val STORAGE_AGENT = "com.samsung.android.agent.storage"
     const val NFC = "com.android.nfc"
+    const val SPP = "com.sec.spp.push"
 }

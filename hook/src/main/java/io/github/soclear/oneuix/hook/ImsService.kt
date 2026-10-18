@@ -29,6 +29,7 @@ object ImsService {
     ) {
         if (param.packageName != Package.IMS_SERVICE) return
         val classLoader = param.classLoader
+        imsClassLoader = classLoader
 
         val isChina = useChinaCmcServer || try {
             val sysProp = Class.forName("android.os.SystemProperties")
@@ -482,10 +483,19 @@ object ImsService {
             // 副设备端 (S24U/SD)：拦截 ResipMediaHandler.saeCreateChannel 与 saeUpdateChannel
             runCatching {
                 val mediaHandlerClass = classLoader.loadClass("com.sec.internal.ims.core.handler.secims.ResipMediaHandler")
-                mediaHandlerClass.declaredMethods.filter { it.name == "saeCreateChannel" || it.name == "saeUpdateChannel" }.forEach { method ->
+                val mediaCandidates = mediaHandlerClass.declaredMethods.filter {
+                    it.name == "saeCreateChannel" || it.name == "saeUpdateChannel"
+                }
+                xlog("OneUIX: media hook probe -> ResipMediaHandler methods=" +
+                    mediaHandlerClass.declaredMethods.count() + ", matched=" + mediaCandidates.size)
+                mediaCandidates.forEach { method ->
                     xposedModule.hook(method).intercept { chain ->
                         val origLocalIp = chain.args[2] as? String
                         val origRemoteIp = chain.args[4] as? String
+                        if (sameIpv4Subnet(origLocalIp, origRemoteIp)) {
+                            xlog("OneUIX: ${method.name} same LAN, keep $origLocalIp/$origRemoteIp")
+                            return@intercept chain.proceed()
+                        }
                         val peerIp = getPeerVirtualLanIp(virtualLanPeerIp, origRemoteIp)
                             ?: return@intercept chain.proceed()
                         val localVlanIp = getVirtualLanIp()
@@ -503,28 +513,50 @@ object ImsService {
                     }
                 }
 
-                // 避免 SVE 进程被锁定在蜂窝网络 rmnet_data0 上导致无法向虚拟局域网 10.0.0.x 路由音频包
+                // 媒体 socket 绑定到虚拟局域网（ZeroTier）网络，保证 RTP 收发走同一个网卡。
+                // 置 null 会退回默认网络（Wi-Fi），导致 zt* 接口回来的包进不了 socket：TX 有、RX 恒为 0。
                 mediaHandlerClass.declaredMethods.filter { it.name == "bindToNetwork" }.forEach { method ->
                     xposedModule.hook(method).intercept { chain ->
-                        val origNet = chain.args[0]
-                        try {
-                            val imsRegistryClass = classLoader.loadClass("com.sec.internal.ims.registry.ImsRegistry")
-                            val accountMgr = imsRegistryClass.getDeclaredMethod("getCmcAccountManager").invoke(null)
-                            val isSd = accountMgr?.reflect?.call("isSecondaryDevice") as? Boolean ?: false
-                            if (isSd) {
-                                xlog("OneUIX: SD skip bindToNetwork for SVE: $origNet -> null")
-                                val newArgs = chain.args.toTypedArray()
-                                newArgs[0] = null
-                                return@intercept chain.proceed(newArgs)
-                            }
-                        } catch (_: Throwable) {
-                            xlog("OneUIX: bindToNetwork bypass: $origNet -> null")
+                        val origNet = chain.args.getOrNull(0) as? android.net.Network
+                        val ctx = currentContext(chain.thisObject)
+                        val isSd = runCatching {
+                            classLoader.loadClass("com.sec.internal.ims.registry.ImsRegistry")
+                                .getDeclaredMethod("getCmcAccountManager").invoke(null)
+                                ?.reflect?.call("isSecondaryDevice") as? Boolean ?: false
+                        }.getOrDefault(false)
+                        // 只替换 Wi-Fi（CMC）流；蜂窝 VoLTE 的绑定保持原样
+                        val vlanNetwork = if (isSd || isWifiNetwork(ctx, origNet)) {
+                            virtualLanNetwork(ctx)
+                        } else {
+                            null
+                        }
+                        if (vlanNetwork != null) {
+                            xlog("OneUIX: bindToNetwork $origNet -> virtual LAN network $vlanNetwork")
                             val newArgs = chain.args.toTypedArray()
-                            newArgs[0] = null
+                            newArgs[0] = vlanNetwork
                             return@intercept chain.proceed(newArgs)
                         }
                         chain.proceed()
                     }
+                }
+
+                // 探针：进程起来几秒后再打，便于不拨号就确认 ZeroTier Network 能否取到
+                runCatching {
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        runCatching {
+                            val ctx = currentContext()
+                            val dump = runCatching {
+                                val cm = ctx?.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+                                cm?.allNetworks?.joinToString { n ->
+                                    "${n}:iface=" + runCatching { cm.getLinkProperties(n)?.interfaceName }.getOrNull()
+                                } ?: "no-cm"
+                            }.getOrElse { "err:$it" }
+                            xlog(
+                                "OneUIX: virtual LAN probe -> network=${virtualLanNetwork(ctx)}, " +
+                                    "localIp=${getVirtualLanIp()}, hasContext=${ctx != null}, nets=$dump"
+                            )
+                        }
+                    }, 8000L)
                 }
             }.onFailure { xlog(it) }
 
@@ -544,6 +576,10 @@ object ImsService {
                         xlog("OneUIX: sreCreateStream before: streamType=$streamType, localIp=$origLocalIp, remoteIp=$origRemoteIp, peerIp=$peerIp, localVlanIp=$localVlanIp")
                         // 严禁篡改运营商 VoLTE 流（IPv6 240e:...），仅对 CMC 流（IPv4 地址）替换虚拟局域网 IP
                         val isCmcStream = (origLocalIp != null && !origLocalIp.contains(":") && origRemoteIp != null && !origRemoteIp.contains(":"))
+                        if (isCmcStream && sameIpv4Subnet(origLocalIp, origRemoteIp)) {
+                            xlog("OneUIX: sreCreateStream same LAN, keep $origLocalIp/$origRemoteIp")
+                            return@intercept chain.proceed()
+                        }
                         val result = if (isCmcStream) {
                             val newArgs = chain.args.toTypedArray()
                             if (!peerIp.isNullOrEmpty()) {
@@ -674,6 +710,69 @@ object ImsService {
         } catch (t: Throwable) {
             xlog("OneUIX: wakeUpKeepAliveStack failed: $t")
         }
+    }
+
+    // IMS 进程在 onPackageReady 阶段还没有 Application，
+    // 所以优先从 hook 命中时的宿主对象取 mContext，其次 ImsRegistry，最后才 currentApplication。
+    @Volatile private var imsClassLoader: ClassLoader? = null
+
+    // 两台设备在同一局域网时，原始媒体地址本来就能直连；
+    // 此时若改写成 ZeroTier 地址，包会走虚拟网卡而 socket 仍绑在 Wi-Fi 上，收不到回程。
+    private fun sameIpv4Subnet(a: String?, b: String?): Boolean {
+        if (a == null || b == null) return false
+        if (a.contains(":") || b.contains(":")) return false
+        val pa = a.split('.')
+        val pb = b.split('.')
+        if (pa.size != 4 || pb.size != 4) return false
+        return pa[0] == pb[0] && pa[1] == pb[1] && pa[2] == pb[2]
+    }
+
+    private fun currentContext(hint: Any? = null): Context? {
+        if (hint != null) {
+            runCatching {
+                val field = hint.javaClass.getDeclaredField("mContext").apply { isAccessible = true }
+                (field.get(hint) as? Context)?.let { return it }
+            }
+        }
+        runCatching {
+            val clazz = imsClassLoader?.loadClass("com.sec.internal.ims.registry.ImsRegistry")
+                ?: return@runCatching
+            (clazz.getMethod("getContext").invoke(null) as? Context)?.let { return it }
+        }
+        return runCatching {
+            val activityThread = Class.forName("android.app.ActivityThread")
+            (activityThread.getMethod("currentApplication").invoke(null) as? Context)
+                ?: (activityThread.getMethod("getSystemContext").invoke(null) as? Context)
+        }.getOrNull()
+    }
+
+    // 媒体 socket 必须绑定到 ZeroTier 所在的 Network。
+    // 只置 null 时会退回默认网络（Wi-Fi），于是从 zt* 接口回来的 RTP 进不了 socket，
+    // 表现为 TX 正常、RX 恒为 0，最后 RTP Timeout(1401) 挂断。
+    private fun virtualLanNetwork(context: Context?): android.net.Network? = try {
+        if (context == null) {
+            null
+        } else {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            cm.allNetworks.firstOrNull { network ->
+                val iface = cm.getLinkProperties(network)?.interfaceName
+                iface != null && (iface.startsWith("zt") || iface.startsWith("tun") || iface.startsWith("wg"))
+            }
+        }
+    } catch (_: Throwable) {
+        null
+    }
+
+    private fun isWifiNetwork(context: Context?, network: android.net.Network?): Boolean = try {
+        if (context == null || network == null) {
+            false
+        } else {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            cm.getNetworkCapabilities(network)
+                ?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true
+        }
+    } catch (_: Throwable) {
+        false
     }
 
     private fun hasVirtualLanInterface(): Boolean = try {

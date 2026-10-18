@@ -34,6 +34,7 @@ object PreferenceSerializer : Serializer<Preference> {
     @OptIn(ExperimentalSerializationApi::class)
     override suspend fun readFrom(input: InputStream): Preference = try {
         val service = XposedServiceManager.awaitXposedService()
+            ?: return readLegacyFile() ?: defaultValue
         val parcelFileDescriptor = try {
             service.openRemoteFile(Preference.FILE_NAME)
         } catch (_: java.io.FileNotFoundException) {

@@ -152,6 +152,9 @@ data class Preference(
         val virtualLanPeerIp: String = "",
         val mdecDeviceType: Int = 0,
         val supportCallAndTextOnOtherDevices: Boolean = false,
+        // 实验项：让副设备外拨真的走 CMC（用主设备的卡）。
+        // 该固件的 CMC 音频管线目前不通，开启后拨出去会无声，所以默认关闭。
+        val enableCmcOutgoingCall: Boolean = false,
     )
 
     @Serializable
