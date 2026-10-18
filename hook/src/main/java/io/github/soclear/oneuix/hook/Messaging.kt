@@ -111,26 +111,6 @@ object Messaging {
             }
         }
 
-        val bottomViewClass = runCatching {
-            classLoader.loadClass("com.samsung.android.messaging.ui.view.bubble.item.BubbleInfoBottomView")
-        }.getOrNull()
-        val vClass = bottomViewClass?.superclass
-        if (vClass != null) {
-            vClass.declaredMethods.filter { it.name == "d" }.forEach { method ->
-                xposedModule.hook(method).intercept { chain ->
-                    val result = chain.proceed()
-                    val isCmc = chain.args.getOrNull(1) as? Boolean ?: false
-                    if (isCmc) {
-                        try {
-                            val simSlotImg = chain.thisObject.reflect["s"] as? View
-                            simSlotImg?.visibility = View.GONE
-                        } catch (_: Throwable) {}
-                    }
-                    result
-                }
-            }
-        }
-
         val bubbleListItemClass = runCatching {
             classLoader.loadClass("com.samsung.android.messaging.ui.view.bubble.item.BubbleListItem")
         }.getOrNull()
