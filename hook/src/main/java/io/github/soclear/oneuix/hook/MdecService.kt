@@ -2,6 +2,7 @@ package io.github.soclear.oneuix.hook
 
 import android.app.Application
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -227,7 +228,11 @@ object MdecService {
                 val method = clazz.getDeclaredMethod("getPushToken", Context::class.java)
                 xposedModule.hook(method).intercept { chain ->
                     val result = chain.proceed() as? String
-                    if (result.isNullOrEmpty()) {
+                    val ctx = chain.args.firstOrNull() as? Context
+                    val sppInstalled = ctx?.let {
+                        runCatching { it.packageManager.getPackageInfo("com.sec.spp.push", 0) }.isSuccess
+                    } ?: false
+                    if (!sppInstalled && result.isNullOrEmpty()) {
                         "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680"
                     } else {
                         result
@@ -253,7 +258,11 @@ object MdecService {
                 val method = clazz.getDeclaredMethod("getPushToken", Context::class.java)
                 xposedModule.hook(method).intercept { chain ->
                     val result = chain.proceed() as? String
-                    if (result.isNullOrEmpty()) {
+                    val ctx = chain.args.firstOrNull() as? Context
+                    val sppInstalled = ctx?.let {
+                        runCatching { it.packageManager.getPackageInfo("com.sec.spp.push", 0) }.isSuccess
+                    } ?: false
+                    if (!sppInstalled && result.isNullOrEmpty()) {
                         "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680"
                     } else {
                         result
@@ -373,6 +382,102 @@ object MdecService {
         }.onFailure { xlog(it) }
 
         runCatching {
+            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.database.manager.NmsDatabaseManagerBase")
+            val method = clazz.getDeclaredMethod("deinitMessageSync")
+            xposedModule.hook(method).intercept { chain ->
+                val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
+                val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: true
+                if (isCmcActivated) {
+                    xlog("OneUIX: Prevented deinitMessageSync while CMC is activated")
+                    null
+                } else {
+                    chain.proceed()
+                }
+            }
+        }.onFailure { xlog(it) }
+
+        runCatching {
+            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.manager.NmsClientManager")
+            val method = clazz.getDeclaredMethod("isMessageSyncEnabled")
+            xposedModule.hook(method).intercept { chain ->
+                val original = chain.proceed() as? Boolean
+                if (original == true) {
+                    true
+                } else {
+                    val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
+                    val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: false
+                    if (isCmcActivated) {
+                        val thisObj = chain.thisObject
+                        try {
+                            val field = thisObj.javaClass.getDeclaredField("isMessageSyncEnabled").apply { isAccessible = true }
+                            field.setBoolean(thisObj, true)
+                        } catch (_: Throwable) {}
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
+        }.onFailure { xlog(it) }
+
+        runCatching {
+            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.config.EntitlementProfileManager")
+            val method = clazz.getDeclaredMethod("isReadyToSync")
+            xposedModule.hook(method).intercept { chain ->
+                val original = chain.proceed() as? Boolean
+                if (original == true) {
+                    true
+                } else {
+                    val thisObj = chain.thisObject
+                    try {
+                        val mapField = thisObj.javaClass.getDeclaredField("mEntitlementProfileMap").apply { isAccessible = true }
+                        val map = mapField.get(thisObj) as? Map<*, *>
+                        val isSatisfiedMethod = thisObj.javaClass.getDeclaredMethod("isDataRestrictionSatisfied")
+                        val isSatisfied = isSatisfiedMethod.invoke(thisObj) as? Boolean ?: true
+                        if (map != null && map.isNotEmpty() && isSatisfied) {
+                            true
+                        } else {
+                            false
+                        }
+                    } catch (_: Throwable) {
+                        original ?: false
+                    }
+                }
+            }
+        }.onFailure { xlog(it) }
+
+        runCatching {
+            val stubClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.NmsServiceStub")
+            stubClass.declaredMethods.filter { it.name == "isNmsSubscribed" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
+                    val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: true
+                    if (isCmcActivated) {
+                        xlog("OneUIX: NmsServiceStub.isNmsSubscribed intercepted -> true")
+                        true
+                    } else {
+                        chain.proceed()
+                    }
+                }
+            }
+        }.onFailure { xlog(it) }
+
+        runCatching {
+            val agentClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.client.agent.AgentManagerFactory")
+            agentClass.declaredMethods.filter { it.name == "isSubscribed" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val cmcSettingAdapterClass = classLoader.loadClass("com.samsung.android.mdecservice.nms.config.CmcSettingAdapter")
+                    val isCmcActivated = cmcSettingAdapterClass.getDeclaredMethod("isCmcActivated").invoke(null) as? Boolean ?: true
+                    if (isCmcActivated) {
+                        true
+                    } else {
+                        chain.proceed()
+                    }
+                }
+            }
+        }.onFailure { xlog(it) }
+
+        runCatching {
             val method = Application::class.java.getDeclaredMethod("onCreate")
             xposedModule.hook(method).intercept { chain ->
                 val result = chain.proceed()
@@ -409,14 +514,27 @@ object MdecService {
                             )
                         }.onFailure { xlog(it) }
                     }
+                    // Ensure Samsung Push Service (SPP) is started and active
+                    runCatching {
+                        val sppIntent = Intent().apply {
+                            component = ComponentName("com.sec.spp.push", "com.sec.spp.push.PushClientService")
+                        }
+                        context.startService(sppIntent)
+                    }.onFailure { xlog(it) }
+
                     if (fixCmcPushToken) {
                         runCatching {
-                            val daoClass = classLoader.loadClass("com.samsung.android.mdecservice.entitlement.provider.dao.EntitlementProviderDao")
-                            val getPushToken = daoClass.getDeclaredMethod("getPushToken", Context::class.java)
-                            val currentToken = getPushToken.invoke(null, context) as? String
-                            if (currentToken.isNullOrEmpty()) {
-                                val setPushInfo = daoClass.getDeclaredMethod("setPushInfo", Context::class.java, String::class.java, String::class.java)
-                                setPushInfo.invoke(null, context, "smp-spp", "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680")
+                            val sppInstalled = runCatching {
+                                context.packageManager.getPackageInfo("com.sec.spp.push", 0)
+                            }.isSuccess
+                            if (!sppInstalled) {
+                                val daoClass = classLoader.loadClass("com.samsung.android.mdecservice.entitlement.provider.dao.EntitlementProviderDao")
+                                val getPushToken = daoClass.getDeclaredMethod("getPushToken", Context::class.java)
+                                val currentToken = getPushToken.invoke(null, context) as? String
+                                if (currentToken.isNullOrEmpty()) {
+                                    val setPushInfo = daoClass.getDeclaredMethod("setPushInfo", Context::class.java, String::class.java, String::class.java)
+                                    setPushInfo.invoke(null, context, "smp-spp", "0601654ea47c88733b28e4dd16337de73ca565708951ceaddcccf31864bbff88d3a6ead706818c09dfaa5201e359ccc58680")
+                                }
                             }
                         }.onFailure { xlog(it) }
                     }

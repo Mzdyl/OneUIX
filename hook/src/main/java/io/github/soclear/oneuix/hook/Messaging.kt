@@ -157,4 +157,28 @@ object Messaging {
             }
         }
     }
+
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun hookCmcSubscribeStatus() {
+        if (param.packageName != Package.MESSAGING) return
+        val classLoader = param.classLoader
+
+        val cmcOpenUtilsClass = runCatching {
+            classLoader.loadClass("com.samsung.android.messaging.common.cmc.CmcOpenUtils")
+        }.getOrNull()
+        if (cmcOpenUtilsClass != null) {
+            cmcOpenUtilsClass.declaredMethods.filter { it.name == "getSubscribeStatus" }.forEach { method ->
+                xposedModule.hook(method).intercept { 1 }
+            }
+            cmcOpenUtilsClass.declaredMethods.filter { it.name == "setSubscribeStatus" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val status = chain.args.firstOrNull() as? Int ?: 0
+                    if (status == 0) {
+                        chain.args[0] = 1
+                    }
+                    chain.proceed()
+                }
+            }
+        }
+    }
 }

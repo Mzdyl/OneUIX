@@ -217,9 +217,16 @@ class Main : XposedModule() {
                 if (preference.other.supportBlockMessage) {
                     Messaging.isSupportBlock()
                 }
-                if (preference.call.mdecDeviceType != 0) {
+                if (preference.call.bypassSameWifiRestriction ||
+                    preference.call.unlockCmcMobileNetwork ||
+                    preference.call.bypassChinaSimRestriction ||
+                    preference.call.useChinaCmcServer ||
+                    preference.call.mdecDeviceType != 0 ||
+                    preference.call.supportCallAndTextOnOtherDevices
+                ) {
                     Messaging.preventCmcRestart()
                     Messaging.showCmcMessageIndicator()
+                    Messaging.hookCmcSubscribeStatus()
                 }
             }
 
