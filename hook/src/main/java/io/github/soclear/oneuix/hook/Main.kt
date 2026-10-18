@@ -208,7 +208,7 @@ class Main : XposedModule() {
             }
 
             Package.TELECOM -> {
-                if (preference.call.enableCmcOutgoingCall && preference.call.mdecDeviceType != 0) {
+                if (preference.call.mdecDeviceType != 0) {
                     Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
                 }
             }
@@ -645,7 +645,7 @@ class Main : XposedModule() {
             Android.disableScreenWakeOnPowerUnplugged()
         }
 
-        if (preference.call.enableCmcOutgoingCall && preference.call.mdecDeviceType != 0) {
+        if (preference.call.mdecDeviceType != 0) {
             Call.setCallAndTextDeviceType(preference.call.mdecDeviceType)
         }
 

@@ -125,13 +125,6 @@ fun DetailPaneCall(
                 )
             }
         }
-        SwitchItem(
-            icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
-            title = stringResource(id = R.string.enableCmcOutgoingCall_title),
-            summary = stringResource(id = R.string.enableCmcOutgoingCall_summary),
-            checked = uiState.enableCmcOutgoingCall,
-            onCheckedChange = { onEvent(CallEvent.EnableCmcOutgoingCall(it)) }
-        )
         SelectItem(
             icon = ImageVector.vectorResource(id = R.drawable.phone_forwarded),
             title = stringResource(id = R.string.mdecDeviceType_title),
@@ -179,8 +172,6 @@ sealed interface CallEvent {
     @JvmInline
     value class EnableVirtualLanP2p(val value: Boolean) : CallEvent
 
-    @JvmInline
-    value class EnableCmcOutgoingCall(val value: Boolean) : CallEvent
 
     @JvmInline
     value class SetVirtualLanPeerIp(val value: String) : CallEvent
@@ -232,9 +223,6 @@ fun SettingViewModel.onCallEvent(event: CallEvent) {
                 it.copy(call = it.call.copy(enableVirtualLanP2p = event.value))
             }
 
-            is CallEvent.EnableCmcOutgoingCall -> {
-                it.copy(call = it.call.copy(enableCmcOutgoingCall = event.value))
-            }
 
             is CallEvent.SetVirtualLanPeerIp -> {
                 it.copy(call = it.call.copy(virtualLanPeerIp = event.value))
