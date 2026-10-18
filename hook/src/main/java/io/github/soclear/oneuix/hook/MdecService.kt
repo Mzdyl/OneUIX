@@ -309,6 +309,42 @@ object MdecService {
             }.onFailure { xlog(it) }
         }
 
+        // 推送游标自愈：重启或重连后 NMS 会把 push index 的 date 直接写成当前时间，
+        // 而 LostPushDetector.makeSearchOperation() 在 date 为空时直接 return，
+        // 于是游标之前积压的短信/通话记录永久拉不到（表现为「收不到，重启后才冒出来」）。
+        // 这里在游标为空时补一个较早的时间，触发一次完整补拉，只做一次避免反复请求。
+        runCatching {
+            val clazz = classLoader.loadClass("com.samsung.android.mdecservice.nms.push.LostPushDetectorBase")
+            val recovered = java.util.concurrent.atomic.AtomicBoolean(false)
+            // 空游标时 isPushHistoryExist() 返回 false，recordPushHistory 就不会触发 makeSearchOperation，
+            // 所以两处必须一起改：先伪造"存在历史"，再补一个较早的时间作为搜索起点。
+            clazz.declaredMethods.filter { it.name == "isPushHistoryExist" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val result = chain.proceed() as? Boolean ?: false
+                    if (!result && recovered.compareAndSet(false, true)) {
+                        xlog("OneUIX: empty push history, force catch-up search")
+                        true
+                    } else {
+                        result
+                    }
+                }
+            }
+            clazz.declaredMethods.filter { it.name == "getLastReceivedPushTime" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val result = chain.proceed() as? String
+                    if (result.isNullOrEmpty()) {
+                        val fallback = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+                            timeZone = java.util.TimeZone.getTimeZone("UTC")
+                        }.format(java.util.Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000L))
+                        xlog("OneUIX: LostPushDetector empty cursor, trigger catch-up search from $fallback")
+                        fallback
+                    } else {
+                        result
+                    }
+                }
+            }
+        }.onFailure { xlog(it) }
+
         if (fixCmcPushToken) {
             runCatching {
                 val clazz = classLoader.loadClass("com.samsung.android.mdecservice.entitlement.provider.dao.EntitlementProviderDao")
