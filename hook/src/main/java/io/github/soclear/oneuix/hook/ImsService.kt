@@ -572,7 +572,45 @@ object ImsService {
                     }
                 }.onFailure { xlog(it) }
 
-                // 探针：进程起来几秒后再打，便于不拨号就确认 ZeroTier Network 能否取到
+                // CMC 注册守护：待机久了 SamsungCMC_SD/PD 会悄悄掉到 IDLE，非得重启 imsservice 才能恢复。
+        // 每 120 秒查一次 SlotBasedConfig 里的 CMC 注册，连续两次缺失就主动请求重注册。
+        runCatching {
+            val slotBasedConfigClass = classLoader.loadClass("com.sec.internal.ims.core.SlotBasedConfig")
+            val getInstance = slotBasedConfigClass.getDeclaredMethod("getInstance", Int::class.javaPrimitiveType)
+            val registryClass = classLoader.loadClass("com.sec.internal.ims.registry.ImsRegistry")
+            val handler = android.os.Handler(android.os.Looper.getMainLooper())
+            var missCount = 0
+            val task = object : Runnable {
+                override fun run() {
+                    runCatching {
+                        val slot = getInstance.invoke(null, 0)
+                        val registrations = slot?.reflect?.call("getImsRegistrations") as? Map<*, *>
+                        val cmcRegistered = registrations?.values?.any { registration ->
+                            val profile = registration?.reflect?.call("getImsProfile")
+                            val profileName = profile?.reflect?.call("getName") as? String ?: ""
+                            profileName.contains("CMC")
+                        } ?: false
+                        if (cmcRegistered) {
+                            if (missCount != 0) xlog("OneUIX: CMC registration back")
+                            missCount = 0
+                        } else {
+                            missCount++
+                            xlog("OneUIX: CMC registration missing (miss=$missCount)")
+                            if (missCount >= 2) {
+                                missCount = 0
+                                registryClass.getDeclaredMethod("getRegistrationManager").invoke(null)
+                                    ?.reflect?.call("requestTryRegister", 0)
+                                xlog("OneUIX: requested CMC re-registration")
+                            }
+                        }
+                    }.onFailure { xlog(it) }
+                    handler.postDelayed(this, 120_000L)
+                }
+            }
+            handler.postDelayed(task, 120_000L)
+        }.onFailure { xlog(it) }
+
+        // 探针：进程起来几秒后再打，便于不拨号就确认 ZeroTier Network 能否取到
                 runCatching {
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                         runCatching {
