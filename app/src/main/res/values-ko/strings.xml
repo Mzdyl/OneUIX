@@ -87,7 +87,10 @@
     <string name="autoExpandNotifications_title">알림 자동으로 확장</string>
     <string name="hideOngoingActivityMedia_title">미디어 앱의 진행 중인 활동 숨기기</string>
     <string name="hideOngoingActivityMedia_summary">백그라운드에서 음악 재생 시 상태바의 실시간 알림 칩 및 알림창의 미디어 알림 카드를 숨깁니다</string>
-    <string name="hideOngoingActivityMedia_packages_hint">패키지 이름 (쉼표로 구분)</string>
+    <string name="app_picker_title">앱 선택</string>
+    <string name="app_picker_search_hint">앱 이름 또는 패키지 이름 검색</string>
+    <string name="app_picker_selected_count">선택한 앱: %1$d</string>
+    <string name="app_picker_empty">일치하는 앱이 없습니다</string>
     <string name="customPowerMenu_title">전원 메뉴 버튼 커스텀</string>
     <string name="powerMenuActionVisible_summary">표시됨, 위치 %1$d</string>
     <string name="powerMenuActionHidden_summary">숨겨짐</string>

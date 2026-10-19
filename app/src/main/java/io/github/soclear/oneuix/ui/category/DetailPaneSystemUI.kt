@@ -36,11 +36,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import io.github.soclear.oneuix.R
-import io.github.soclear.oneuix.common.NetworkSpeedOption
 import io.github.soclear.oneuix.common.ONE_UI_VERSION
 import io.github.soclear.oneuix.common.PowerMenuAction
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.ui.SettingViewModel
+import io.github.soclear.oneuix.ui.component.AppPickerDialog
 import io.github.soclear.oneuix.ui.component.SelectItem
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import java.time.LocalDateTime
@@ -751,51 +751,47 @@ fun DetailPaneSystemUI(
 
         DividerText(R.string.notification)
         Column {
-            var expanded by rememberSaveable { mutableStateOf(false) }
+            var showAppPicker by rememberSaveable { mutableStateOf(false) }
+            val selectedPackages = remember(uiState.notification.hideOngoingActivityMediaPackages) {
+                uiState.notification.hideOngoingActivityMediaPackages
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .toSet()
+            }
             SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.music_note),
                 title = stringResource(id = R.string.hideOngoingActivityMedia_title),
-                summary = if (uiState.notification.hideOngoingActivityMedia && uiState.notification.hideOngoingActivityMediaPackages.isNotEmpty()) {
-                    uiState.notification.hideOngoingActivityMediaPackages
+                summary = if (uiState.notification.hideOngoingActivityMedia && selectedPackages.isNotEmpty()) {
+                    stringResource(R.string.app_picker_selected_count, selectedPackages.size)
                 } else {
                     stringResource(id = R.string.hideOngoingActivityMedia_summary)
                 },
                 clickable = true,
-                onClick = { expanded = !expanded },
+                onClick = { showAppPicker = true },
                 checked = uiState.notification.hideOngoingActivityMedia,
                 onCheckedChange = {
-                    if (it && uiState.notification.hideOngoingActivityMediaPackages.isEmpty()) {
-                        expanded = true
+                    if (it && selectedPackages.isEmpty()) {
+                        showAppPicker = true
                     } else if (!it) {
-                        expanded = false
+                        showAppPicker = false
                     }
                     onEvent(SystemUIEvent.Notification.HideOngoingActivityMedia(it))
                 }
             )
-            AnimatedVisibility(expanded && uiState.notification.hideOngoingActivityMedia) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    var tempPackages by remember {
-                        mutableStateOf(uiState.notification.hideOngoingActivityMediaPackages)
+            if (showAppPicker) {
+                AppPickerDialog(
+                    selectedPackages = selectedPackages,
+                    onDismissRequest = { showAppPicker = false },
+                    onConfirm = { packages ->
+                        onEvent(
+                            SystemUIEvent.Notification.HideOngoingActivityMediaPackages(
+                                packages.sorted().joinToString(",")
+                            )
+                        )
+                        showAppPicker = false
                     }
-                    OutlinedTextField(
-                        value = tempPackages,
-                        onValueChange = { tempPackages = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text(text = stringResource(id = R.string.hideOngoingActivityMedia_packages_hint)) },
-                        singleLine = true,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            onEvent(SystemUIEvent.Notification.HideOngoingActivityMediaPackages(tempPackages))
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.confirm))
-                    }
-                }
+                )
             }
         }
         SwitchItem(

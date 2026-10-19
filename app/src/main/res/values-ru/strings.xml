@@ -87,7 +87,10 @@
     <string name="autoExpandNotifications_title">Автоматически разворачивать уведомления</string>
     <string name="hideOngoingActivityMedia_title">Скрыть активность медиаприложений</string>
     <string name="hideOngoingActivityMedia_summary">Скрывать капсулу активности в строке состояния и медиауведомление при воспроизведении музыки в фоне</string>
-    <string name="hideOngoingActivityMedia_packages_hint">Имена пакетов через запятую</string>
+    <string name="app_picker_title">Выбор приложений</string>
+    <string name="app_picker_search_hint">Поиск по названию или имени пакета</string>
+    <string name="app_picker_selected_count">Выбрано приложений: %1$d</string>
+    <string name="app_picker_empty">Нет подходящих приложений</string>
     <string name="customPowerMenu_title">Настроить действия меню питания</string>
     <string name="powerMenuActionVisible_summary">Показано, позиция %1$d</string>
     <string name="powerMenuActionHidden_summary">Скрыто</string>

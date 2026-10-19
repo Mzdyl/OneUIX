@@ -87,7 +87,10 @@
     <string name="autoExpandNotifications_title">Auto expand notifications</string>
     <string name="hideOngoingActivityMedia_title">Hide ongoing activity for media apps</string>
     <string name="hideOngoingActivityMedia_summary">Hide the ongoing activity chip in status bar and media notification card in notification shade when playing music in the background</string>
-    <string name="hideOngoingActivityMedia_packages_hint">Package names, separated by commas</string>
+    <string name="app_picker_title">Select apps</string>
+    <string name="app_picker_search_hint">Search app name or package name</string>
+    <string name="app_picker_selected_count">Selected apps: %1$d</string>
+    <string name="app_picker_empty">No matching apps</string>
     <string name="customPowerMenu_title">Customize power menu actions</string>
     <string name="powerMenuActionVisible_summary">Visible, position %1$d</string>
     <string name="powerMenuActionHidden_summary">Hidden</string>

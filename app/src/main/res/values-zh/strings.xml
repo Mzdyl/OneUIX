@@ -87,7 +87,10 @@
     <string name="autoExpandNotifications_title">自动展开通知</string>
     <string name="hideOngoingActivityMedia_title">隐藏音乐应用的实时活动</string>
     <string name="hideOngoingActivityMedia_summary">后台播放音乐时，隐藏状态栏实时活动胶囊和通知栏媒体通知卡片</string>
-    <string name="hideOngoingActivityMedia_packages_hint">包名，用英文逗号分隔</string>
+    <string name="app_picker_title">选择应用</string>
+    <string name="app_picker_search_hint">搜索应用名或包名</string>
+    <string name="app_picker_selected_count">已选择 %1$d 个应用</string>
+    <string name="app_picker_empty">没有匹配的应用</string>
     <string name="customPowerMenu_title">自定义关机菜单按钮</string>
     <string name="powerMenuActionVisible_summary">已显示，位置 %1$d</string>
     <string name="powerMenuActionHidden_summary">已隐藏</string>
