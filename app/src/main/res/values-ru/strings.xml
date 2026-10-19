@@ -182,6 +182,8 @@
     <string name="disableWritingToolkitGlobally_title">Отключить инструменты для письма глобально</string>
     <string name="disableWritingToolkitGlobally_summary">Удаляет инструменты для письма Samsung из меню выделения текста во всех приложениях через системный фреймворк</string>
     <string name="disableFlagSecure_title">Отключить FLAG_SECURE</string>
+    <string name="hideScreenshotDetection_title">Скрывать снимки экрана от приложений</string>
+    <string name="hideScreenshotDetection_summary">Добавьте выбранные приложения в область действия модуля и перезапустите их. Блокируются уведомления о захвате экрана и распознанных снимках. Снимки видимы при выборе фото; уведомления об обычных фото сохраняются</string>
     <string name="disableFlagSecure_summary">Разрешить снимки и запись экрана в защищенных окнах</string>
     <string name="backup_config">Резервное копирование</string>
     <string name="restore_config">Восстановить конфиг</string>

@@ -33,7 +33,7 @@ class SettingViewModel(application: Application) : ViewModel() {
             .loadIcon(packageManager)
             .toBitmap()
             .asImageBitmap()
-        val categoryAppInfoList = Category.entries.map { category ->
+        val categoryAppInfoList = Category.entries.filter { it != Category.Other }.map { category ->
             val applicationInfo = try {
                 packageManager.getApplicationInfo(category.packageName, 0)
             } catch (_: PackageManager.NameNotFoundException) {

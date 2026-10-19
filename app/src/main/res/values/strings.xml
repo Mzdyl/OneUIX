@@ -182,6 +182,8 @@
     <string name="disableWritingToolkitGlobally_title">Disable Writing Toolkit globally</string>
     <string name="disableWritingToolkitGlobally_summary">Removes Samsung Writing Toolkit from text selection menus in all apps through the System Framework</string>
     <string name="disableFlagSecure_title">Disable FLAG_SECURE</string>
+    <string name="hideScreenshotDetection_title">Hide screenshots from apps</string>
+    <string name="hideScreenshotDetection_summary">Add the selected apps to the module scope and restart them. Block screenshot callbacks and recognized screenshot change notifications. Screenshots remain visible in photo pickers; other photo notifications are preserved</string>
     <string name="disableFlagSecure_summary">Allow screenshots and screen recording in secure windows</string>
     <string name="backup_config">Back up config</string>
     <string name="restore_config">Restore config</string>

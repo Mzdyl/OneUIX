@@ -34,6 +34,7 @@ import io.github.soclear.oneuix.ui.category.DetailPaneLauncher
 import io.github.soclear.oneuix.ui.category.DetailPaneMessaging
 import io.github.soclear.oneuix.ui.category.ExtraPaneNetworkSpeed
 import io.github.soclear.oneuix.ui.category.DetailPaneNotes
+import io.github.soclear.oneuix.ui.category.DetailPaneOther
 import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
 import io.github.soclear.oneuix.ui.category.DetailPaneSPen
 import io.github.soclear.oneuix.ui.category.DetailPaneSettings
@@ -57,6 +58,7 @@ import io.github.soclear.oneuix.ui.category.onHealthMonitorEvent
 import io.github.soclear.oneuix.ui.category.onLauncherEvent
 import io.github.soclear.oneuix.ui.category.onMessagingEvent
 import io.github.soclear.oneuix.ui.category.onNotesEvent
+import io.github.soclear.oneuix.ui.category.onOtherEvent
 import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
 import io.github.soclear.oneuix.ui.category.onSPenEvent
 import io.github.soclear.oneuix.ui.category.onSettingsEvent
@@ -252,6 +254,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.Weather -> DetailPaneWeather(
                             uiState = preference.other,
                             onEvent = viewModel::onWeatherEvent
+                        )
+
+                        Category.Other -> DetailPaneOther(
+                            uiState = preference.other,
+                            onEvent = viewModel::onOtherEvent
                         )
                     }
                 }

@@ -8,12 +8,12 @@ import io.github.soclear.oneuix.hook.systemui.AOD
 import io.github.soclear.oneuix.hook.systemui.ESIM
 import io.github.soclear.oneuix.hook.systemui.HideBatteryIcon
 import io.github.soclear.oneuix.hook.systemui.Notification
-import io.github.soclear.oneuix.hook.systemui.Other
 import io.github.soclear.oneuix.hook.systemui.QS
 import io.github.soclear.oneuix.hook.systemui.StatusBar
 import io.github.soclear.oneuix.hook.systemui.powermenu.PowerMenu
 import io.github.soclear.oneuix.hook.util.PreferenceProvider
 import io.github.soclear.oneuix.hook.util.addAssetPath
+import io.github.soclear.oneuix.hook.systemui.Other as SystemUIOther
 
 class Main : XposedModule() {
     private var processName = ""
@@ -25,6 +25,12 @@ class Main : XposedModule() {
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) = with(param) {
         if (!isFirstPackage) return@with
         val preference = PreferenceProvider.loadPreference() ?: return@with
+
+        if (preference.other.hideScreenshotDetection &&
+            packageName in preference.other.hideScreenshotDetectionPackages
+        ) {
+            Other.hideScreenshotDetection()
+        }
 
         when (packageName) {
             Package.BIXBY_AGENT, Package.BIXBY_WAKEUP -> {
@@ -425,7 +431,7 @@ class Main : XposedModule() {
                     DisableFlagSecure.hookSystemUI(classLoader)
                 }
                 if (preference.systemUI.other.disableScreenshotCaptureSound) {
-                    Other.disableScreenshotCaptureSound()
+                    SystemUIOther.disableScreenshotCaptureSound()
                 }
             }
 
