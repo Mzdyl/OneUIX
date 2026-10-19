@@ -262,3 +262,16 @@ public int mState;
 钥匙名也只有 `time / event / method / reason / sid / state`。所以主设备收到的 `event:101 ... method:INVITE` 里没有号码，无法据此自行发起呼叫。
 
 要在这条通道上做信令，得自己扩展字段（两端 hook 配合），并且主设备侧还要能主动调用 CMC 呼叫 API，媒体侧还要处理 native 生成的 SDP —— 这三块都要做，才算把跨网呼叫打通。
+
+## 同路由器不同频段（2.4G vs 5G）实测可用
+
+2026-10-19 18:36，S24U 连 `ChinaUnicom-EyT4`（2.4G，`192.168.86.7`），S21+ 连 `ChinaUnicom-EyT4-5G`（5G，`192.168.86.9`）：
+
+- 两台 CMC 均以 WLAN（rat 18）注册
+- 服务器正常转发 INVITE：主设备侧出现 `SIPMSG[0,3] [-->] 200 OK [CSeq: 1 INVITE]`
+- 通话有声音，副设备 `RTP RX Recvcount[253]`
+
+所以「同子网、不同 SSID/频段」不构成障碍。判定关键在于两端的**注册承载**：
+
+- 若副设备仍以蜂窝（rat 20）注册，服务器不转发（实测 18:33:52 那通 `duration=0`，主设备零 INVITE）
+- 连上 Wi-Fi 后必须让 CMC 重新以 WLAN 注册，才会转发（见 [cmc-status.md](cmc-status.md) 的「注册稳定性」一节）

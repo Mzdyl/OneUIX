@@ -2,15 +2,17 @@
 
 ## 一页速览
 
-| 能力 | 同 Wi-Fi | 跨网络（蜂窝 + Wi-Fi，ZeroTier 互通） | 依赖 |
+| 能力 | 同 Wi-Fi（含同路由器 2.4G/5G 不同频段） | 异地（不同公网，ZeroTier 互通） | 依赖 |
 |---|---|---|---|
-| 使用远程 SIM 拨打电话 | ✅ 有声音 | ❌ 服务器不转发跨网 INVITE | 呼叫建立依赖三星 CMC 服务器转发，国区服务器只在同网场景下转发 |
+| 使用远程 SIM 拨打电话 | ✅ 有声音 | ❌ 服务器不转发跨网 INVITE | 呼叫建立依赖三星 CMC 服务器转发；服务器只在两端都处于同一内网/出口时转发 |
 | 接听打到远程 SIM 的电话 | ✅ | ❌（同上） | 同上 |
 | 短信收发（双向同步） | ✅ | ✅ | 三星 NMS 云端 + SPP 推送，与局域网无关 |
 | 用远程 SIM 发短信 | ✅ | ✅ | 同上；中继请求经云端对象的 push 触发主设备发送 |
 | 通话记录同步 | ✅ | ✅ | NMS 云端 |
 
-**当前唯一未解决项：跨网络接打电话。** 卡点在信令层 —— 副设备的 INVITE 到服务器后不再被转发（详见 [cmc-audio-path.md](cmc-audio-path.md)）。
+**当前唯一未解决项：异地接打电话。** 卡点在信令层 —— 副设备的 INVITE 到服务器后不再被转发（详见 [cmc-audio-path.md](cmc-audio-path.md)）。
+
+「同路由器不同频段」（2.4G 与 5G）实测可用：两台仍在 `192.168.86.0/24` 同一子网，CMC 的 P2P 发现能正常广播，我们 hook 的 PANI 又让两台上报同一个 BSSID，因此服务器按同网处理。真正过不去的是两台在不同公网出口。
 
 ## 短信为什么不受局域网限制
 
@@ -66,3 +68,18 @@
 - [cmc-sms-relay-send-blocked.md](cmc-sms-relay-send-blocked.md) — 远程发短信卡「发送中」、推送中断、SD 切换入口消失
 - [cmc-sms-cursor-recovery.md](cmc-sms-cursor-recovery.md) — 推送游标丢失导致漏消息
 - [cmc-sms-sync-2026-10-18.md](cmc-sms-sync-2026-10-18.md) — 早期短信同步排查记录
+
+## 注册稳定性（2026-10-19 补）
+
+两处会让「电话打不通」的隐性故障，都已在模块里兜住：
+
+1. **待机掉线**：`SamsungCMC_SD/PD` 会悄悄退回 IDLE，过去只能重启 `imsservice`。现在 `ImsService` 每 120 秒检查 `SlotBasedConfig` 里的 CMC 注册，连续两次缺失就调 `RegistrationManager.requestTryRegister(0)`。
+2. **后连 Wi-Fi 不切注册**：三星 `NetworkEventController` 只在 CMC 任务仍处于 `CONNECTING` 时处理「Wi-Fi 已连上」，已经用蜂窝注册完成的任务不会迁移到 WLAN（rat 18），服务器于是认为两端不同网。现在监听 `CONNECTIVITY_CHANGE`，确认 Wi-Fi 已连接就主动请求一次重注册（5 分钟节流）。
+
+日志关键字：`OneUIX: CMC registration missing`、`OneUIX: wifi connected, requested CMC re-registration`。
+
+## 广播语音链路（2026-10-19 补）
+
+`com.sec.sve` 的真正媒体端口是 **1234/1235**（frida 实测 `[bind] fd=105 192.168.86.10:1234`）。早先盯的 `51024/52024` 属于 `imsservice` 的另一条通道，不是 CMC 音频。
+
+同网通话的双向统计以 `#ApMediaStats RTP` 为准：`TX 709 / RX 2324` 属于健康值；若 `RX` 为 0 而 `TX` 正常，说明对端没有回包，而不是音量问题。
