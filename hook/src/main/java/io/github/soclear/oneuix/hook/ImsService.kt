@@ -683,22 +683,9 @@ object ImsService {
             }
         }.onFailure { xlog(it) }
 
-        // 优化 CMC P2P 呼叫 SIP 超时时间：将 10,000ms 钳制到 4,000ms，加速链路自愈与故障恢复
-        runCatching {
-            val clazz = classLoader.loadClass("com.sec.internal.helper.PreciseAlarmManager")
-            val method = clazz.getDeclaredMethod("sendMessageDelayed", Message::class.java, Long::class.javaPrimitiveType)
-            xposedModule.hook(method).intercept { chain ->
-                val msg = chain.args[0] as? Message
-                val delay = chain.args[1] as? Long ?: 0L
-                if (msg?.what == 38 && delay > 4000L) {
-                    val newArgs = chain.args.toTypedArray()
-                    newArgs[1] = 4000L
-                    xlog("OneUIX: Clamped CMC P2P SIP delay timer from $delay ms to 4000 ms")
-                    return@intercept chain.proceed(newArgs)
-                }
-                chain.proceed()
-            }
-        }.onFailure { xlog(it) }
+        // CMC P2P 呼叫的 SIP 等待窗口保持系统原生 10s：
+        // 压到 4s 会在 SIP INVITE 尚未到达前就判定失败，
+        // 触发 resetConnection + 强制 deregister SamsungCMC_PD，呼叫直接失败。
     }
 
     context(xposedModule: XposedModule)
