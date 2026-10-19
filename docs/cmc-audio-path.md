@@ -245,3 +245,20 @@ RTP TX sendcount[709] / RTP RX Recvcount[2324]
 [bind]   fd=108  192.168.86.10:1235
 [sendto] fd=105 -> 192.168.86.9:1234
 ```
+
+### P2P 通道不携带被叫号码
+
+反编译 `com.sec.internal.ims.core.cmc.CmcP2pCommand`，字段就这几个：
+
+```java
+public String mCmcSendTime;
+public int mEventType;     // 101 = CALL_STATE_NOTI, 102 = RESET_CONNECTION
+public String mMethod;
+public int mReason;
+public String mSessionId;
+public int mState;
+```
+
+钥匙名也只有 `time / event / method / reason / sid / state`。所以主设备收到的 `event:101 ... method:INVITE` 里没有号码，无法据此自行发起呼叫。
+
+要在这条通道上做信令，得自己扩展字段（两端 hook 配合），并且主设备侧还要能主动调用 CMC 呼叫 API，媒体侧还要处理 native 生成的 SDP —— 这三块都要做，才算把跨网呼叫打通。
