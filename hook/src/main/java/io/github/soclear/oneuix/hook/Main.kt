@@ -227,9 +227,6 @@ class Main : XposedModule() {
                     Messaging.preventCmcRestart()
                     Messaging.showCmcMessageIndicator()
                 }
-                if (preference.call.mdecDeviceType == 2) {
-                    Messaging.hookSecondaryDeviceSms()
-                }
             }
 
             Package.NOTES -> {
