@@ -572,7 +572,42 @@ object ImsService {
                     }
                 }.onFailure { xlog(it) }
 
-                // CMC 注册守护：待机久了 SamsungCMC_SD/PD 会悄悄掉到 IDLE，非得重启 imsservice 才能恢复。
+            // 副设备连上 Wi-Fi 后，CMC 不会自己从蜂窝(rat 20)切到 WLAN(rat 18)：
+            // NetworkEventController 里那条「Wi-Fi 连上就停掉 CMC PDN」的分支要求任务处于 CONNECTING，
+            // 已经用蜂窝注册完成的 CMC 任务不会命中，于是服务器仍认为两台不同网。
+            // 这里监听网络变化，确认 Wi-Fi 已连接就主动请求一次重注册（5 分钟节流）。
+            runCatching {
+                if (mdecDeviceType == 2) {
+                    val ctx = currentContext()
+                    if (ctx != null) {
+                        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                        val registryClass = classLoader.loadClass("com.sec.internal.ims.registry.ImsRegistry")
+                        var lastRequestAt = 0L
+                        val receiver = object : android.content.BroadcastReceiver() {
+                            override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+                                if (System.currentTimeMillis() - lastRequestAt < 300_000L) return
+                                handler.postDelayed({
+                                    runCatching {
+                                        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+                                        val active = cm?.activeNetwork
+                                        val caps = active?.let { cm.getNetworkCapabilities(it) }
+                                        if (caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true) {
+                                            lastRequestAt = System.currentTimeMillis()
+                                            registryClass.getDeclaredMethod("getRegistrationManager").invoke(null)
+                                                ?.reflect?.call("requestTryRegister", 0)
+                                            xlog("OneUIX: wifi connected, requested CMC re-registration")
+                                        }
+                                    }.onFailure { xlog(it) }
+                                }, 8_000L)
+                            }
+                        }
+                        ctx.registerReceiver(receiver, android.content.IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"))
+                        xlog("OneUIX: CMC wifi-reconnect observer installed")
+                    }
+                }
+            }.onFailure { xlog(it) }
+
+        // CMC 注册守护：待机久了 SamsungCMC_SD/PD 会悄悄掉到 IDLE，非得重启 imsservice 才能恢复。
         // 每 120 秒查一次 SlotBasedConfig 里的 CMC 注册，连续两次缺失就主动请求重注册。
         runCatching {
             val slotBasedConfigClass = classLoader.loadClass("com.sec.internal.ims.core.SlotBasedConfig")
