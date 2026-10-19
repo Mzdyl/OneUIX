@@ -196,3 +196,52 @@ PD: P2P Command received from urn:duid:5974757e...（SD 的 INVITE 已到达）
 这样 `ConnectivityManager` 能看到它，现有的 `virtualLanNetwork()` 分支就能把 socket 绑过去，收发走同一条路径。
 
 备选：native 层 hook SAE 的 socket，或在副设备自建音频中继（工程量大，不依赖固件）。
+
+## 跨网络通话：真正的卡点在信令，不在媒体（2026-10-19 晚）
+
+跨网实测（S24U 走蜂窝 + ZeroTier，S21+ 走 Wi-Fi），副设备发起呼叫：
+
+```
+17:58:18.627  SD [-->] INVITE sip:...@samsungims.com
+17:58:18.707  SD [<--] SIP/2.0 100 Trying          ← 服务器收下了
+（10 秒无后续）
+17:58:28.915  SD [-->] CANCEL                       ← 副设备超时取消
+17:58:29.006  SD [<--] SIP/2.0 487 Request Terminated
+17:58:31.538  SD [-->] REGISTER sip:samsungims.com  ← 顺手重注册
+```
+
+同一时间段主设备上的**全部** SIP 流量只有注册维持：
+
+```
+[-->] PUBLISH    [-->] REGISTER   [<--] 200 OK
+[-->] SUBSCRIBE  [<--] 200 OK     [<--] NOTIFY   [-->] 200 OK
+```
+
+**一条 INVITE 都没有。** 三星 CMC 服务器收下了副设备的 INVITE 并回了 100 Trying，却没有转发给主设备。
+
+与此同时 P2P 通道是通的：主设备收到了 `event:101 ... method:INVITE`（来源 `10.0.0.130`），但该通知不携带被叫号码，`mP2pSipHistories size: 0`，主设备没有任何可用于拨号的输入。
+
+结论：国区 CMC 服务器不中继跨网呼叫，而呼叫建立完全依赖它转发 INVITE。所以无论媒体侧怎么改地址、怎么调音频引擎，都到不了媒体阶段。
+
+### 要打通需要做的事（按依赖顺序）
+
+1. **自带信令**：副设备把被叫号码经 P2P 自定义消息送给主设备，主设备据此自行发起 CMC 呼叫，不再等服务器转发；
+2. **媒体地址**：主设备发起呼叫后，SDP 由 native 生成，写的是接口地址；跨网时写的是副设备当前的蜂窝地址，仍需改写（现有 hook 只能改 Java 层传参，改不到 SDP）。
+
+这两步都不小，属于自建一条平行于三星服务器通道的链路。
+
+### 同网事实（供对照）
+
+同网时媒体完全正常：
+
+```
+RTP TX sendcount[709] / RTP RX Recvcount[2324]
+```
+
+`frida` 观察到的 SVE socket 实际端口是 `1234/1235`（不是早先推测的 `51024/52024`，那两个属于 imsservice 的另一条通道）：
+
+```
+[bind]   fd=105  192.168.86.10:1234
+[bind]   fd=108  192.168.86.10:1235
+[sendto] fd=105 -> 192.168.86.9:1234
+```
