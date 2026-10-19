@@ -125,3 +125,74 @@ PD: P2P Command received from urn:duid:5974757e...（SD 的 INVITE 已到达）
 2. 或放弃三星 P2P 通道，在副设备侧自行实现音频中继（把 VoLTE 音频经 ZeroTier 转发），工程量更大但不依赖固件实现。
 
 在解决之前：**异地（不同网络）通话不可用，同网段（同 Wi-Fi）通话正常。**
+
+## 跨网络通话：2026-10-19 的推进与卡点
+
+### 已修好的两处
+
+1. **音频引擎初始化从 20 秒缩到 3 秒**
+
+   副设备跨网时默认网络是蜂窝，`PdnController.getDefaultNetworkBearer()` 返回 `0`（CELLULAR），
+   native 的 `CallSession::SelectAudioInterface()` 看到 `pdn is internet` 就不肯立刻 `saeInitialize`：
+
+   ```
+   15:12  SelectAudioInterface(): Current pdn is internet, cmcType 2
+   15:13:05  saeInitialize        ← 20 秒后，通话 10 秒早就结束了
+   ```
+
+   `ImsService.kt` 里按 `mdecDeviceType == 2 && hasVirtualLanInterface()` 把它改成返回 `1`（WIFI）后：
+
+   ```
+   15:22:41  呼叫
+   15:22:44  saeInitialize        ← 3 秒
+   15:22:44  saeCreateChannel after: localIp=10.0.0.130, remoteIp=10.0.0.160
+   ```
+
+2. **主设备开始回包**
+
+   主设备的默认网络也是蜂窝，媒体 socket 绑在 `rmnet_data0`（116/118）上，发往 `10.0.0.x` 的包出不去：
+
+   ```
+   PD: bindToNetwork() 118 → ResipMediaHandler: bindToNetwork : 118
+   ```
+
+   把解绑条件从 `isSd || isWifiNetwork` 扩成「只要 `zt*` 接口存在就解绑」后：
+
+   ```
+   PD: bindToNetwork 118 -> null (virtual LAN not in ConnectivityManager)
+   ```
+
+   抓包确认主设备开始发包：`10.0.0.160.48316 > 10.0.0.130.51024`。
+
+### 卡点：包到了接口，没到 socket
+
+两端同时抓包，副设备 `ztklh7akuw` 上确实收到主设备的 RTP：
+
+```
+15:35:28.544  IP 10.0.0.160.47508 > 10.0.0.130.51024: UDP, length 368   （每 200ms 一个）
+```
+
+但副设备那个 socket（`imsservice` 的 `*:51024`，inode 2992382）计数纹丝不动：
+
+```
+/proc/net/udp6: ...:C750  st 07  tx_queue:rx_queue 00000000:00000000  ...  drops 0
+```
+
+`rx_queue` 和 `drops` 都是 0 —— 内核层面既没排队也没记丢弃，包没有交给这个 socket。
+
+已排除：
+
+- 端口：`saeCreateChannel` 传进来的端口是占位值 `1234`，真实端口由 native 管理，不是端口不匹配
+- iptables：`mangle`/`nat` 都没有 TPROXY / REDIRECT，mihomo 走的是 `ip rule` 的 uidrange，不拦入站 UDP
+- 路由表：把 `10.0.0.0/24 dev ztklh7akuw` 加进全部路由表（rmnet_data0/1、*_local、swlan0、1014/1049/2022）后依旧 `RX 0`，已回退
+
+### 下一步方向
+
+`ztklh7akuw` 是 root 版 ZeroTier 直接建的 tun 接口，不在 `ConnectivityManager` 里
+（`virtualLanNetwork()` 探测到的网络只有 `wlan0`/`rmnet_*`），媒体 socket 没法绑定到一个"包含 zt 接口"的网络。
+很可能正是这一点让 SAE 的接收路径不认这些包。
+
+所以首选方案：**让 ZeroTier 以 VPNService 形式运行**（官方 ZeroTier App / Tailscale 这类会注册成 Android 网络），
+这样 `ConnectivityManager` 能看到它，现有的 `virtualLanNetwork()` 分支就能把 socket 绑过去，收发走同一条路径。
+
+备选：native 层 hook SAE 的 socket，或在副设备自建音频中继（工程量大，不依赖固件）。

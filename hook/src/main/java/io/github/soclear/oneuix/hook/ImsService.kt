@@ -25,7 +25,8 @@ object ImsService {
         virtualLanPeerIp: String = "",
         useChinaCmcServer: Boolean = false,
         bypassSameWifiRestriction: Boolean = false,
-        unlockMobileNetwork: Boolean = false
+        unlockMobileNetwork: Boolean = false,
+        mdecDeviceType: Int = 0
     ) {
         if (param.packageName != Package.IMS_SERVICE) return
         val classLoader = param.classLoader
@@ -500,7 +501,9 @@ object ImsService {
                             ?: return@intercept chain.proceed()
                         val localVlanIp = getVirtualLanIp()
                             ?: return@intercept chain.proceed()
-                        xlog("OneUIX: ${method.name} before: localIp=$origLocalIp, remoteIp=$origRemoteIp, peerIp=$peerIp, localVlanIp=$localVlanIp")
+                        val localPort = chain.args.getOrNull(3)
+                        val remotePort = chain.args.getOrNull(5)
+                        xlog("OneUIX: ${method.name} before: localIp=$origLocalIp:$localPort, remoteIp=$origRemoteIp:$remotePort, peerIp=$peerIp, localVlanIp=$localVlanIp, argc=${chain.args.size}")
                         val newArgs = chain.args.toTypedArray()
                         if (!peerIp.isNullOrEmpty()) {
                             newArgs[4] = peerIp
@@ -524,8 +527,11 @@ object ImsService {
                                 .getDeclaredMethod("getCmcAccountManager").invoke(null)
                                 ?.reflect?.call("isSecondaryDevice") as? Boolean ?: false
                         }.getOrDefault(false)
-                        // 只替换 Wi-Fi（CMC）流；蜂窝 VoLTE 的绑定保持原样
-                        val vlanNetwork = if (isSd || isWifiNetwork(ctx, origNet)) {
+
+                        // 跨网时主设备这边默认网络是蜂窝，媒体 socket 绑在蜂窝上就发不到 zt* 接口，
+                        // 副设备 RX 恒为 0；只要虚拟局域网接口在，就一并走解绑逻辑。
+                        val needVlanRouting = isSd || isWifiNetwork(ctx, origNet) || hasVirtualLanInterface()
+                        val vlanNetwork = if (needVlanRouting) {
                             virtualLanNetwork(ctx)
                         } else {
                             null
@@ -537,7 +543,7 @@ object ImsService {
                             newArgs[0] = vlanNetwork
                             return@intercept chain.proceed(newArgs)
                         }
-                        if (isSd || isWifiNetwork(ctx, origNet)) {
+                        if (needVlanRouting) {
                             // 系统不认识虚拟网卡（ZeroTier 是 root 直管接口）：
                             // 解除绑定，socket 才能收到从 zt* 接口进来的 RTP。
                             // 同网段场景下地址不会被改写，默认网络仍是 Wi-Fi，同样能收。
@@ -549,6 +555,22 @@ object ImsService {
                         chain.proceed()
                     }
                 }
+
+                // 跨网时副设备只有蜂窝可用，PdnController.getDefaultNetworkBearer() 会报 CELLULAR，
+                // native 的 SelectAudioInterface() 只有 pdn 为 wifi 时才立刻 saeInitialize；
+                // 否则要等约 20 秒（通话十秒就挂断了），表现为接通但全程无声。
+                // 只要虚拟局域网接口在，就把默认承载报成 WIFI，让音频引擎马上初始化。
+                runCatching {
+                    val pdnControllerClass = classLoader.loadClass("com.sec.internal.ims.core.PdnController")
+                    val method = pdnControllerClass.getDeclaredMethod("getDefaultNetworkBearer")
+                    xposedModule.hook(method).intercept { chain ->
+                        if (mdecDeviceType == 2 && hasVirtualLanInterface()) {
+                            xlog("OneUIX: getDefaultNetworkBearer -> WIFI (CMC SD over virtual LAN)")
+                            return@intercept 1
+                        }
+                        chain.proceed()
+                    }
+                }.onFailure { xlog(it) }
 
                 // 探针：进程起来几秒后再打，便于不拨号就确认 ZeroTier Network 能否取到
                 runCatching {

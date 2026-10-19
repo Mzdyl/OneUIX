@@ -202,7 +202,8 @@ class Main : XposedModule() {
                         virtualLanPeerIp = preference.call.virtualLanPeerIp,
                         useChinaCmcServer = preference.call.useChinaCmcServer,
                         bypassSameWifiRestriction = preference.call.bypassSameWifiRestriction,
-                        unlockMobileNetwork = preference.call.unlockCmcMobileNetwork
+                        unlockMobileNetwork = preference.call.unlockCmcMobileNetwork,
+                        mdecDeviceType = preference.call.mdecDeviceType
                     )
                 }
             }
