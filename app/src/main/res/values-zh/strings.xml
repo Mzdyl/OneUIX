@@ -198,4 +198,18 @@
     <string name="supportBixbyCustomWakeup_summary">开启自定义短语，并修复不受支持机型的中文模型下载。请在模块作用域中启用 Bixby 和语音唤醒，然后重启这两个应用。</string>
     <string name="bypassBixbyWakeWordRestrictions_title">放宽唤醒短语限制</string>
     <string name="bypassBixbyWakeWordRestrictions_summary">允许更多短语文本，仍需完成录音和模型校验。</string>
+    <string name="nfc_filter_title">NFC 卡片过滤</string>
+    <string name="nfc_service">NFC 服务</string>
+    <string name="nfc_filter_summary">将 NFC（com.android.nfc）加入模块作用域并重启手机一次，之后修改名单即时生效。点击已保存的卡片可修改备注。</string>
+    <string name="nfc_mode_off">关闭</string>
+    <string name="nfc_mode_blacklist">黑名单：忽略名单中的卡片</string>
+    <string name="nfc_mode_whitelist">白名单：仅识别名单中的卡片</string>
+    <string name="nfc_scan_hint">将卡片靠近手机读取 UID，也可手动输入，填写后保存。被过滤的卡片仍可在此读取。</string>
+    <string name="nfc_unavailable">此设备不支持 NFC，仍可手动输入 UID。</string>
+    <string name="nfc_disabled">请开启 NFC 后读卡，也可手动输入 UID。</string>
+    <string name="nfc_settings">NFC 设置</string>
+    <string name="nfc_uid_invalid">请输入完整的十六进制字节，如 92014119。</string>
+    <string name="nfc_note">备注（选填）</string>
+    <string name="nfc_save">保存 / 更新</string>
+    <string name="nfc_delete">删除</string>
 </resources>

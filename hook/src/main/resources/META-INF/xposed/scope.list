@@ -1,4 +1,5 @@
 system
+com.android.nfc
 com.android.settings
 com.android.systemui
 com.samsung.android.app.notes

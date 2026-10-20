@@ -198,4 +198,18 @@
     <string name="supportBixbyCustomWakeup_summary">사용자 지정 문구와 중국어 모델 다운로드 재시도를 활성화합니다. 모듈 적용 범위에서 Bixby와 음성 호출을 활성화한 뒤 두 앱을 다시 시작하세요.</string>
     <string name="bypassBixbyWakeWordRestrictions_title">호출 문구 제한 완화</string>
     <string name="bypassBixbyWakeWordRestrictions_summary">더 다양한 문구를 허용합니다. 음성 녹음과 모델 검증은 계속 필요합니다.</string>
+    <string name="nfc_filter_title">NFC 카드 필터</string>
+    <string name="nfc_service">NFC 서비스</string>
+    <string name="nfc_filter_summary">모듈 적용 범위에 NFC(com.android.nfc)를 추가하고 휴대전화를 한 번 재부팅하세요. 이후 목록 변경은 즉시 적용됩니다. 저장된 카드를 누르면 메모를 수정할 수 있습니다.</string>
+    <string name="nfc_mode_off">사용 안 함</string>
+    <string name="nfc_mode_blacklist">블랙리스트: 목록에 있는 카드 무시</string>
+    <string name="nfc_mode_whitelist">화이트리스트: 목록에 있는 카드만 인식</string>
+    <string name="nfc_scan_hint">카드를 휴대전화에 가까이 대어 UID를 읽거나 직접 입력한 후 저장하세요. 필터링된 카드도 여기에서 읽을 수 있습니다.</string>
+    <string name="nfc_unavailable">이 기기는 NFC를 지원하지 않습니다. UID를 직접 입력할 수 있습니다.</string>
+    <string name="nfc_disabled">카드를 읽으려면 NFC를 켜거나 UID를 직접 입력하세요.</string>
+    <string name="nfc_settings">NFC 설정</string>
+    <string name="nfc_uid_invalid">92014119와 같이 완전한 16진수 바이트를 입력하세요.</string>
+    <string name="nfc_note">메모(선택 사항)</string>
+    <string name="nfc_save">저장 / 업데이트</string>
+    <string name="nfc_delete">삭제</string>
 </resources>

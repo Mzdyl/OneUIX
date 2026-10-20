@@ -198,4 +198,18 @@
     <string name="supportBixbyCustomWakeup_summary">Activer les phrases personnalisées et réessayer le téléchargement des modèles chinois. Activer Bixby et le réveil vocal dans la portée du module, puis redémarrer les deux applications.</string>
     <string name="bypassBixbyWakeWordRestrictions_title">Assouplir les restrictions des phrases</string>
     <string name="bypassBixbyWakeWordRestrictions_summary">Autoriser davantage de textes. L’enregistrement vocal et la validation des modèles restent nécessaires.</string>
+    <string name="nfc_filter_title">Filtrage des cartes NFC</string>
+    <string name="nfc_service">Service NFC</string>
+    <string name="nfc_filter_summary">Ajoutez NFC (com.android.nfc) à la portée du module et redémarrez le téléphone une fois. Les modifications de la liste prennent ensuite effet immédiatement. Touchez une carte enregistrée pour modifier sa note.</string>
+    <string name="nfc_mode_off">Désactivé</string>
+    <string name="nfc_mode_blacklist">Liste noire : ignorer les cartes de la liste</string>
+    <string name="nfc_mode_whitelist">Liste blanche : reconnaître uniquement les cartes de la liste</string>
+    <string name="nfc_scan_hint">Approchez une carte du téléphone pour lire son UID, ou saisissez-le manuellement, puis enregistrez. Les cartes filtrées restent lisibles ici.</string>
+    <string name="nfc_unavailable">Cet appareil ne prend pas en charge le NFC. Vous pouvez saisir les UID manuellement.</string>
+    <string name="nfc_disabled">Activez le NFC pour lire une carte, ou saisissez son UID manuellement.</string>
+    <string name="nfc_settings">Paramètres NFC</string>
+    <string name="nfc_uid_invalid">Saisissez des octets hexadécimaux complets, par exemple 92014119.</string>
+    <string name="nfc_note">Note (facultative)</string>
+    <string name="nfc_save">Enregistrer / mettre à jour</string>
+    <string name="nfc_delete">Supprimer</string>
 </resources>

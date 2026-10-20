@@ -154,6 +154,8 @@ class Main : XposedModule() {
                 }
             }
 
+            Package.NFC -> NFC.filterNfcCards()
+
             Package.NOTES -> {
                 if (preference.other.supportAllNotesFeatures) {
                     Notes.supportAllFeatures()

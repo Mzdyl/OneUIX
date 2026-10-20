@@ -198,4 +198,18 @@
     <string name="supportBixbyCustomWakeup_summary">Enable custom phrases and retry Chinese model downloads on unsupported devices. Enable Bixby Agent and Voice wake-up in the module scope, then restart both apps.</string>
     <string name="bypassBixbyWakeWordRestrictions_title">Relax wake-up phrase restrictions</string>
     <string name="bypassBixbyWakeWordRestrictions_summary">Allow additional phrase text. Voice recording and model validation still apply.</string>
+    <string name="nfc_filter_title">NFC card filter</string>
+    <string name="nfc_service">NFC service</string>
+    <string name="nfc_filter_summary">Add NFC (com.android.nfc) to the module scope and restart the phone once. List changes apply immediately. Tap a saved card to edit its note.</string>
+    <string name="nfc_mode_off">Off</string>
+    <string name="nfc_mode_blacklist">Blacklist: ignore listed cards</string>
+    <string name="nfc_mode_whitelist">Whitelist: only recognize listed cards</string>
+    <string name="nfc_scan_hint">Hold a card near the phone to read its UID, or enter it manually, then save. Cards can be read here even when filtered.</string>
+    <string name="nfc_unavailable">This device does not support NFC. You can still enter UIDs manually.</string>
+    <string name="nfc_disabled">Turn on NFC to read a card, or enter its UID manually.</string>
+    <string name="nfc_settings">NFC settings</string>
+    <string name="nfc_uid_invalid">Enter complete hexadecimal bytes, such as 92014119.</string>
+    <string name="nfc_note">Note (optional)</string>
+    <string name="nfc_save">Save / update</string>
+    <string name="nfc_delete">Delete</string>
 </resources>

@@ -32,7 +32,9 @@ import io.github.soclear.oneuix.ui.category.DetailPaneGallery
 import io.github.soclear.oneuix.ui.category.DetailPaneHealthMonitor
 import io.github.soclear.oneuix.ui.category.DetailPaneLauncher
 import io.github.soclear.oneuix.ui.category.DetailPaneMessaging
+import io.github.soclear.oneuix.ui.category.DetailPaneNFC
 import io.github.soclear.oneuix.ui.category.ExtraPaneNetworkSpeed
+import io.github.soclear.oneuix.ui.category.ExtraPaneNfcCards
 import io.github.soclear.oneuix.ui.category.DetailPaneNotes
 import io.github.soclear.oneuix.ui.category.DetailPaneOther
 import io.github.soclear.oneuix.ui.category.DetailPanePhotoRetouching
@@ -59,6 +61,7 @@ import io.github.soclear.oneuix.ui.category.onGalleryEvent
 import io.github.soclear.oneuix.ui.category.onHealthMonitorEvent
 import io.github.soclear.oneuix.ui.category.onLauncherEvent
 import io.github.soclear.oneuix.ui.category.onMessagingEvent
+import io.github.soclear.oneuix.ui.category.onNFCEvent
 import io.github.soclear.oneuix.ui.category.onNotesEvent
 import io.github.soclear.oneuix.ui.category.onOtherEvent
 import io.github.soclear.oneuix.ui.category.onPhotoRetouchingEvent
@@ -225,6 +228,12 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                             onEvent = viewModel::onMessagingEvent
                         )
 
+                        Category.NFC -> DetailPaneNFC(
+                            onNavigateToNfcCards = {
+                                navigateToExtra(SettingDestination.Extra.NfcCards)
+                            }
+                        )
+
                         Category.Notes -> DetailPaneNotes(
                             uiState = preference.other,
                             onEvent = viewModel::onNotesEvent
@@ -279,6 +288,12 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
         extraPane = {
             AnimatedPane {
                 when (scaffoldNavigator.currentDestination?.contentKey) {
+                    SettingDestination.Extra.NfcCards -> ExtraPaneNfcCards(
+                        uiState = preference.other,
+                        onEvent = viewModel::onNFCEvent,
+                        onBack = onBack
+                    )
+
                     SettingDestination.Extra.NetworkSpeed -> ExtraPaneNetworkSpeed(
                         uiState = preference.systemUI,
                         onEvent = viewModel::onSystemUIEvent,

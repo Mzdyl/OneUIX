@@ -198,4 +198,18 @@
     <string name="supportBixbyCustomWakeup_summary">Включить свои фразы и повторную загрузку китайских моделей. Добавьте Bixby и голосовое пробуждение в область действия модуля и перезапустите оба приложения.</string>
     <string name="bypassBixbyWakeWordRestrictions_title">Ослабить ограничения фраз</string>
     <string name="bypassBixbyWakeWordRestrictions_summary">Разрешить дополнительные тексты фраз. Запись голоса и проверка моделей по-прежнему необходимы.</string>
+    <string name="nfc_filter_title">Фильтр NFC-карт</string>
+    <string name="nfc_service">Служба NFC</string>
+    <string name="nfc_filter_summary">Добавьте NFC (com.android.nfc) в область действия модуля и один раз перезагрузите телефон. После этого изменения списка применяются сразу. Нажмите на сохранённую карту, чтобы изменить заметку.</string>
+    <string name="nfc_mode_off">Выключено</string>
+    <string name="nfc_mode_blacklist">Чёрный список: игнорировать карты из списка</string>
+    <string name="nfc_mode_whitelist">Белый список: распознавать только карты из списка</string>
+    <string name="nfc_scan_hint">Поднесите карту к телефону, чтобы прочитать UID, или введите его вручную, затем сохраните. Здесь можно читать и отфильтрованные карты.</string>
+    <string name="nfc_unavailable">Устройство не поддерживает NFC. UID можно ввести вручную.</string>
+    <string name="nfc_disabled">Включите NFC для чтения карты или введите её UID вручную.</string>
+    <string name="nfc_settings">Настройки NFC</string>
+    <string name="nfc_uid_invalid">Введите полные шестнадцатеричные байты, например 92014119.</string>
+    <string name="nfc_note">Заметка (необязательно)</string>
+    <string name="nfc_save">Сохранить / обновить</string>
+    <string name="nfc_delete">Удалить</string>
 </resources>

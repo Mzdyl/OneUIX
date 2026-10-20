@@ -147,6 +147,8 @@ data class Preference(
 
     @Serializable
     data class Other(
+        val nfcFilterMode: Int = 0, // 0: 关闭，1: 黑名单，2: 白名单
+        val nfcCards: Map<String, String> = emptyMap(),
         val hideScreenshotDetection: Boolean = false,
         val hideScreenshotDetectionPackages: Set<String> = emptySet(),
         val unlockBixbyOfflineProcessing: Boolean = false,
