@@ -40,7 +40,6 @@ import io.github.soclear.oneuix.common.ONE_UI_VERSION
 import io.github.soclear.oneuix.common.PowerMenuAction
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.ui.SettingViewModel
-import io.github.soclear.oneuix.ui.component.AppPickerDialog
 import io.github.soclear.oneuix.ui.component.SelectItem
 import io.github.soclear.oneuix.ui.component.SwitchItem
 import java.time.LocalDateTime
@@ -54,6 +53,7 @@ private const val ESIM_ADAPTER_SIM_BOTH = 2
 fun DetailPaneSystemUI(
     uiState: Preference.SystemUI,
     onEvent: (SystemUIEvent) -> Unit,
+    onNavigateToAppPicker: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToNetworkSpeed: () -> Unit = {}
 ) {
@@ -750,50 +750,24 @@ fun DetailPaneSystemUI(
         }
 
         DividerText(R.string.notification)
-        Column {
-            var showAppPicker by rememberSaveable { mutableStateOf(false) }
-            val selectedPackages = remember(uiState.notification.hideOngoingActivityMediaPackages) {
-                uiState.notification.hideOngoingActivityMediaPackages
-                    .split(",")
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-                    .toSet()
+        val selectedPackages = uiState.notification.hideOngoingActivityMediaPackages
+            .split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.music_note),
+            title = stringResource(id = R.string.hideOngoingActivityMedia_title),
+            summary = if (uiState.notification.hideOngoingActivityMedia && selectedPackages.isNotEmpty()) {
+                stringResource(R.string.app_picker_selected_count, selectedPackages.size)
+            } else {
+                stringResource(id = R.string.hideOngoingActivityMedia_summary)
+            },
+            clickable = true,
+            onClick = onNavigateToAppPicker,
+            checked = uiState.notification.hideOngoingActivityMedia,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.Notification.HideOngoingActivityMedia(it))
+                if (it && selectedPackages.isEmpty()) onNavigateToAppPicker()
             }
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.music_note),
-                title = stringResource(id = R.string.hideOngoingActivityMedia_title),
-                summary = if (uiState.notification.hideOngoingActivityMedia && selectedPackages.isNotEmpty()) {
-                    stringResource(R.string.app_picker_selected_count, selectedPackages.size)
-                } else {
-                    stringResource(id = R.string.hideOngoingActivityMedia_summary)
-                },
-                clickable = true,
-                onClick = { showAppPicker = true },
-                checked = uiState.notification.hideOngoingActivityMedia,
-                onCheckedChange = {
-                    if (it && selectedPackages.isEmpty()) {
-                        showAppPicker = true
-                    } else if (!it) {
-                        showAppPicker = false
-                    }
-                    onEvent(SystemUIEvent.Notification.HideOngoingActivityMedia(it))
-                }
-            )
-            if (showAppPicker) {
-                AppPickerDialog(
-                    selectedPackages = selectedPackages,
-                    onDismissRequest = { showAppPicker = false },
-                    onConfirm = { packages ->
-                        onEvent(
-                            SystemUIEvent.Notification.HideOngoingActivityMediaPackages(
-                                packages.sorted().joinToString(",")
-                            )
-                        )
-                        showAppPicker = false
-                    }
-                )
-            }
-        }
+        )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.notifications),
             title = stringResource(id = R.string.disableNotificationGrouping_title),
