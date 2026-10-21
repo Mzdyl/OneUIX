@@ -139,6 +139,7 @@
     <string name="supportOutdoorMode_title">야외 모드 잠금 해제</string>
     <string name="disablePinVerifyPer72h_title">72시간마다 PIN 번호 인증 요구 비활성화</string>
     <string name="hideAODStatusBar_title">AOD 상태바 숨기기</string>
+    <string name="hideAODChargingInfo_title">AOD 충전 정보 숨기기</string>
     <string name="aodLockSupportLunar_title">AOD/잠금 화면에 음력 표시</string>
     <string name="enableChineseHolidayDisplay_title">캘린더에 중국 공휴일 표시</string>
     <string name="supportBlockMessage_title">메시지 차단 기능 지원</string>

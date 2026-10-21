@@ -733,6 +733,14 @@ fun DetailPaneSystemUI(
             DividerText(R.string.aod)
             SwitchItem(
                 icon = ImageVector.vectorResource(id = R.drawable.battery),
+                title = stringResource(id = R.string.hideAODChargingInfo_title),
+                checked = uiState.aod.hideAODChargingInfo,
+                onCheckedChange = {
+                    onEvent(SystemUIEvent.AOD.HideAODChargingInfo(it))
+                }
+            )
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.battery),
                 title = stringResource(id = R.string.hideAODStatusBar_title),
                 checked = uiState.aod.hideAODStatusBar,
                 onCheckedChange = {
@@ -1080,6 +1088,9 @@ sealed interface SystemUIEvent {
     }
 
     sealed interface AOD : SystemUIEvent {
+        @JvmInline
+        value class HideAODChargingInfo(val value: Boolean) : AOD
+
         @JvmInline
         value class HideAODStatusBar(val value: Boolean) : AOD
 
@@ -1602,6 +1613,16 @@ private fun SettingViewModel.onQSEvent(event: SystemUIEvent.QS) {
 private fun SettingViewModel.onAODEvent(event: SystemUIEvent.AOD) {
     updateData { preference ->
         when (event) {
+            is SystemUIEvent.AOD.HideAODChargingInfo -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        aod = preference.systemUI.aod.copy(
+                            hideAODChargingInfo = event.value
+                        )
+                    )
+                )
+            }
+
             is SystemUIEvent.AOD.HideAODStatusBar -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(

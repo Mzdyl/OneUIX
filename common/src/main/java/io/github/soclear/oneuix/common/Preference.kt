@@ -99,6 +99,7 @@ data class Preference(
         @Serializable
         data class AOD(
             val hideAODStatusBar: Boolean = false,
+            val hideAODChargingInfo: Boolean = false,
             val aodLockSupportLunar: Boolean = false,
         )
 

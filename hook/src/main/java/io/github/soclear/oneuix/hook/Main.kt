@@ -396,6 +396,10 @@ class Main : XposedModule() {
                     QS.showTraditionalChineseDateOnQS()
                 }
 
+                if (preference.systemUI.aod.hideAODChargingInfo) {
+                    AOD.hideAODChargingInfo()
+                }
+
                 if (preference.systemUI.aod.hideAODStatusBar) {
                     AOD.hideAODStatusBar()
                 }

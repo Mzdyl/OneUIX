@@ -139,6 +139,7 @@
     <string name="supportOutdoorMode_title">Déverrouiller le mode Extérieur</string>
     <string name="disablePinVerifyPer72h_title">Désactiver la vérification du code PIN toutes les 72 heures</string>
     <string name="hideAODStatusBar_title">Masquer la barre d\'état sur l\'AOD</string>
+    <string name="hideAODChargingInfo_title">Masquer les informations de charge sur l\'AOD</string>
     <string name="aodLockSupportLunar_title">Afficher le calendrier lunaire chinois sur l\'AOD</string>
     <string name="enableChineseHolidayDisplay_title">Afficher les jours fériés chinois dans le calendrier</string>
     <string name="supportBlockMessage_title">Prendre en charge le blocage des SMS</string>
