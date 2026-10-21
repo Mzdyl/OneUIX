@@ -89,13 +89,11 @@ object StatusBar {
         val targetId = resources.getIdentifier(batterMeterFormat, "string", Package.SYSTEMUI)
         if (targetId != 0) {
             val resourcesClass = classLoader.loadClass("android.content.res.Resources")
-            resourcesClass.declaredMethods
-                .filter { it.name == "getString" && it.parameterTypes.firstOrNull() == Int::class.javaPrimitiveType }
-                .forEach { method ->
-                    xposedModule.hook(method).intercept { chain ->
-                        if (chain.args.firstOrNull() == targetId) "%d" else chain.proceed()
-                    }
-                }
+            // Keep the formatting overload intact so it can substitute the battery level.
+            val method = resourcesClass.getDeclaredMethod("getString", Int::class.javaPrimitiveType)
+            xposedModule.hook(method).intercept { chain ->
+                if (chain.args.firstOrNull() == targetId) "%d" else chain.proceed()
+            }
         }
     }
 
