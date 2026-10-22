@@ -36,6 +36,13 @@
         <package android:name="com.samsung.android.agent.storage" />
         <package android:name="com.android.nfc" />
         <package android:name="com.samsung.android.samsungpay.gear" />
+        <package android:name="com.samsung.wearable.watchuniteplugin" />
+        <package android:name="com.samsung.android.waterplugin" />
+        <package android:name="com.samsung.android.gearoplugin" />
+        <package android:name="com.samsung.android.geargplugin" />
+        <package android:name="com.samsung.android.gearpplugin" />
+        <package android:name="com.samsung.android.gearnplugin" />
+        <package android:name="com.samsung.android.gearrplugin" />
     </queries>
 
     <uses-feature

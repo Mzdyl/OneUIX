@@ -577,6 +577,16 @@ class Main : XposedModule() {
                 SamsungPayGear.init()
             }
 
+            Package.WATCH_UNITE_PLUGIN,
+            Package.WATER_PLUGIN,
+            Package.GEAR_O_PLUGIN,
+            Package.GEAR_G_PLUGIN,
+            Package.GEAR_P_PLUGIN,
+            Package.GEAR_N_PLUGIN,
+            Package.GEAR_R_PLUGIN -> {
+                WatchPlugin.init()
+            }
+
             Package.TRANSLATION -> {
                 if (preference.other.sPenTranslationSource != SPenTranslationSource.DEFAULT) {
                     SPen.switchTranslateSource(preference.other.sPenTranslationSource)

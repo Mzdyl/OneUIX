@@ -40,4 +40,11 @@ object Package {
     const val NFC = "com.android.nfc"
     const val SPP = "com.sec.spp.push"
     const val SAMSUNG_PAY_GEAR = "com.samsung.android.samsungpay.gear"
+    const val WATCH_UNITE_PLUGIN = "com.samsung.wearable.watchuniteplugin"
+    const val WATER_PLUGIN = "com.samsung.android.waterplugin"
+    const val GEAR_O_PLUGIN = "com.samsung.android.gearoplugin"
+    const val GEAR_G_PLUGIN = "com.samsung.android.geargplugin"
+    const val GEAR_P_PLUGIN = "com.samsung.android.gearpplugin"
+    const val GEAR_N_PLUGIN = "com.samsung.android.gearnplugin"
+    const val GEAR_R_PLUGIN = "com.samsung.android.gearrplugin"
 }
