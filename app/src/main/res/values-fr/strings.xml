@@ -78,6 +78,9 @@
     <string name="redirect_custom_tab_title">Forcer l\'ouverture dans Samsung Internet externe</string>
     <string name="redirect_custom_tab_summary">Quand Samsung Internet est défini comme navigateur par défaut, de nombreuses applications ouvrent les liens dans un onglet personnalisé Samsung Internet limité. Activez cette option pour quitter l\'application et ouvrir les liens dans le navigateur Samsung Internet complet.</string>
     <string name="blockGalaxyStoreAds_title">Bloquer les publicités du Galaxy Store</string>
+    <string name="galaxyStoreRegion_title">Opérateur SIM du Galaxy Store (MCC+MNC)</string>
+    <string name="galaxyStoreRegion_summary">Saisissez 5 ou 6 chiffres en conservant les zéros initiaux, puis appuyez sur Confirmer pour enregistrer. Laissez vide pour ne rien modifier. Redémarrez Galaxy Store pour appliquer.</string>
+    <string name="galaxyStoreRegion_reference">Consulter les codes de pays et opérateurs (UIT)</string>
     <string name="blockGalaxyStoreAds_summary">Bloque les pubs au démarrage, les recommandations et les pop-ups de limite d\'âge</string>
     <string name="supportAllCameraMenu_title">Afficher tous les menus de l\'appareil photo</string>
     <string name="supportAllCameraMenu_summary">Son de l\'obturateur, Auto HDR, Log, Filigrane avec cadre</string>

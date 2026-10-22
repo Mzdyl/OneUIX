@@ -227,6 +227,9 @@ class Main : XposedModule() {
             }
 
             Package.STORE -> {
+                if (preference.other.setGalaxyStoreSimOperator) {
+                    GalaxyStore.setRegion(preference.other.galaxyStoreSimOperator)
+                }
                 if (preference.other.blockGalaxyStoreAds) {
                     GalaxyStore.blockGalaxyStoreAds()
                 }

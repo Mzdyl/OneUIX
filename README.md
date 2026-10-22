@@ -139,6 +139,7 @@
 
 - 对所选应用隐藏截图行为
 - 去除应用商店的广告
+- 自定义应用商店 SIM 运营商代码（MCC+MNC）
 - 应用分身支持所有用户应用
 - 天气源设为中国天气
 - 最近任务页面显示内存信息
@@ -301,6 +302,7 @@
 
 - Hide screenshot activity from selected apps
 - Remove ads in Galaxy Store
+- Customize the SIM operator code (MCC+MNC) seen by Galaxy Store
 - Make all user apps available for app cloning
 - Set weather provider to China Weather
 - Show memory usage in Recents page

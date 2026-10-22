@@ -78,6 +78,9 @@
     <string name="redirect_custom_tab_title">Force links to open in external Samsung Internet</string>
     <string name="redirect_custom_tab_summary">When Samsung Internet is set as the default browser, many apps open links in a limited in-app Samsung Internet Custom Tab. Enable this to force links out of the app and open them in the full Samsung Internet browser.</string>
     <string name="blockGalaxyStoreAds_title">Remove ads in Galaxy Store</string>
+    <string name="galaxyStoreRegion_title">Galaxy Store SIM operator (MCC+MNC)</string>
+    <string name="galaxyStoreRegion_summary">Enter 5 or 6 digits, keeping leading zeros, then tap Confirm to save. Leave blank for no modification. Restart Galaxy Store to apply.</string>
+    <string name="galaxyStoreRegion_reference">Look up country and operator codes (ITU)</string>
     <string name="blockGalaxyStoreAds_summary">Remove splash screen ads, recommended ads/pop-ups, and installation age restriction pop-ups</string>
     <string name="supportAllCameraMenu_title">Show all camera menus</string>
     <string name="supportAllCameraMenu_summary">Shutter sound, Auto HDR, Log, Frame watermark</string>
