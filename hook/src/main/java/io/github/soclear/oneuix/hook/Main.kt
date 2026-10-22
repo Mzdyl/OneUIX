@@ -573,6 +573,10 @@ class Main : XposedModule() {
                 }
             }
 
+            Package.SAMSUNG_PAY_GEAR -> {
+                SamsungPayGear.init()
+            }
+
             Package.TRANSLATION -> {
                 if (preference.other.sPenTranslationSource != SPenTranslationSource.DEFAULT) {
                     SPen.switchTranslateSource(preference.other.sPenTranslationSource)
