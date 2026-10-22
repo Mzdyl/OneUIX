@@ -574,7 +574,9 @@ class Main : XposedModule() {
             }
 
             Package.SAMSUNG_PAY_GEAR -> {
-                SamsungPayGear.init()
+                if (preference.other.bypassSamsungPayWearableCnCheck) {
+                    SamsungPayGear.init()
+                }
             }
 
             Package.WATCH_UNITE_PLUGIN,
@@ -584,7 +586,9 @@ class Main : XposedModule() {
             Package.GEAR_P_PLUGIN,
             Package.GEAR_N_PLUGIN,
             Package.GEAR_R_PLUGIN -> {
-                WatchPlugin.init()
+                if (preference.other.preventWatchPluginUnpair) {
+                    WatchPlugin.init()
+                }
             }
 
             Package.TRANSLATION -> {

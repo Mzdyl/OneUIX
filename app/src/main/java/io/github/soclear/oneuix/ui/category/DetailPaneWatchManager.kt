@@ -48,6 +48,20 @@ fun DetailPaneWatchManager(
                 onCheckedChange = { onEvent(WatchManagerEvent.SupplementChinaWearOsGms(it)) }
             )
         }
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.ic_nfc),
+            title = stringResource(id = R.string.bypassSamsungPayWearableCnCheck_title),
+            summary = stringResource(id = R.string.bypassSamsungPayWearableCnCheck_summary),
+            checked = uiState.bypassSamsungPayWearableCnCheck,
+            onCheckedChange = { onEvent(WatchManagerEvent.BypassSamsungPayWearableCnCheck(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.bluetooth_connected),
+            title = stringResource(id = R.string.preventWatchPluginUnpair_title),
+            summary = stringResource(id = R.string.preventWatchPluginUnpair_summary),
+            checked = uiState.preventWatchPluginUnpair,
+            onCheckedChange = { onEvent(WatchManagerEvent.PreventWatchPluginUnpair(it)) }
+        )
     }
 }
 
@@ -60,6 +74,12 @@ sealed interface WatchManagerEvent {
 
     @JvmInline
     value class SupplementChinaWearOsGms(val value: Boolean) : WatchManagerEvent
+
+    @JvmInline
+    value class BypassSamsungPayWearableCnCheck(val value: Boolean) : WatchManagerEvent
+
+    @JvmInline
+    value class PreventWatchPluginUnpair(val value: Boolean) : WatchManagerEvent
 }
 
 fun SettingViewModel.onWatchManagerEvent(event: WatchManagerEvent) {
@@ -85,6 +105,18 @@ fun SettingViewModel.onWatchManagerEvent(event: WatchManagerEvent) {
             is WatchManagerEvent.SupplementChinaWearOsGms -> preference.copy(
                 other = preference.other.copy(
                     supplementChinaWearOsGms = event.value
+                )
+            )
+
+            is WatchManagerEvent.BypassSamsungPayWearableCnCheck -> preference.copy(
+                other = preference.other.copy(
+                    bypassSamsungPayWearableCnCheck = event.value
+                )
+            )
+
+            is WatchManagerEvent.PreventWatchPluginUnpair -> preference.copy(
+                other = preference.other.copy(
+                    preventWatchPluginUnpair = event.value
                 )
             )
         }

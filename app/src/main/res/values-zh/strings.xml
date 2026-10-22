@@ -256,6 +256,10 @@
     <string name="bypassWatchPairingRegionCheck_summary">绕过区域、CSC 和不支持手机的配对检查</string>
     <string name="supplementChinaWearOsGms_title">补充国行 WearOS GMS</string>
     <string name="supplementChinaWearOsGms_summary">当 WearOS CN 未自动加入时，将 com.google.android.wearable.app.cn 加入下载列表</string>
+    <string name="bypassSamsungPayWearableCnCheck_title">三星智能卡解除 Wear OS CN 限制</string>
+    <string name="bypassSamsungPayWearableCnCheck_summary">跳过 Wear OS CN 依赖检查，允许三星智能卡走全球 GMS 并在 Watch7/9 统一插件下正常使用</string>
+    <string name="preventWatchPluginUnpair_title">防止卸载应用导致手表解绑重置</string>
+    <string name="preventWatchPluginUnpair_summary">拦截手表插件在卸载 Wear OS CN 时触发的强制解绑重置，保护手表蓝牙连接</string>
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>
     <string name="sideKeySettings">侧面按钮设置</string>
