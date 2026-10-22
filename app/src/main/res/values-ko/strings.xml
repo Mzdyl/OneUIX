@@ -46,6 +46,7 @@
     <string name="immersiveModeQsTile_title">몰입 모드 빠른 설정 버튼 활성화</string>
     <string name="rootImmersiveModeQsTile_summary">루팅(Root) 권한이 필요합니다. 버튼을 수동으로 추가한 후 눌러서 상태바를 숨기거나 다시 표시할 수 있습니다</string>
     <string name="outdoorModeQsTile_label">야외 모드</string>
+    <string name="autoBrightnessQsTile_label">자동 밝기</string>
     <string name="setStatusBarClockFormat_title">상태바 날짜 및 시간 형식 설정</string>
     <string name="setStatusBarClockTextScale_title">상태바 시계 크기 배율 설정</string>
     <string name="updateStatusBarClockEverySecond_title">상태바 시계 초 단위 업데이트</string>

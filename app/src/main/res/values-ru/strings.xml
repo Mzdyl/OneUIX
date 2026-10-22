@@ -46,6 +46,7 @@
     <string name="immersiveModeQsTile_title">Включить плитку иммерсивного режима в быстрых настройках</string>
     <string name="rootImmersiveModeQsTile_summary">Требуются Root-права. Добавьте плитку вручную; нажмите на неё, чтобы скрыть или восстановить строку состояния</string>
     <string name="outdoorModeQsTile_label">Режим “На улице”</string>
+    <string name="autoBrightnessQsTile_label">Автояркость</string>
     <string name="setStatusBarClockFormat_title">Формат даты и времени в строке состояния</string>
     <string name="setStatusBarClockTextScale_title">Масштаб часов в строке состояния</string>
     <string name="updateStatusBarClockEverySecond_title">Обновлять часы в строке состояния каждую секунду</string>

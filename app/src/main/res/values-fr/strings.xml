@@ -46,6 +46,7 @@
     <string name="immersiveModeQsTile_title">Activer la tuile du mode immersif dans les paramètres rapides</string>
     <string name="rootImmersiveModeQsTile_summary">Nécessite un accès root. Ajoutez manuellement la tuile, puis appuyez dessus pour masquer ou réafficher la barre d\'état</string>
     <string name="outdoorModeQsTile_label">Mode Extérieur</string>
+    <string name="autoBrightnessQsTile_label">Luminosité automatique</string>
     <string name="setStatusBarClockFormat_title">Définir le format de l\'horloge de la barre d\'état</string>
     <string name="setStatusBarClockTextScale_title">Définir le facteur d\'échelle de l\'horloge de la barre d\'état</string>
     <string name="updateStatusBarClockEverySecond_title">Mettre à jour l\'heure de la barre d\'état chaque seconde</string>
