@@ -45,6 +45,7 @@
 
 - 修改状态栏左边距
 - 修改状态栏右边距
+- 状态栏内容置顶（保留原高度）
 - 设置电池图标宽度缩放倍数
 - 设置电池图标高度缩放倍数
 - 隐藏状态栏电池的百分号
@@ -210,6 +211,7 @@
 
 - Modify status bar left padding
 - Modify status bar right padding
+- Align status bar content to the top without changing its height
 - Set battery icon width scale factor
 - Set battery icon height scale factor
 - Hide battery percentage sign in status bar

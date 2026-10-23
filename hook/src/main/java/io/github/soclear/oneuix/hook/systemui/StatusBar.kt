@@ -2,6 +2,7 @@ package io.github.soclear.oneuix.hook.systemui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -27,6 +28,23 @@ import kotlin.math.roundToInt
 
 @SuppressLint("PrivateApi")
 object StatusBar {
+    context(xposedModule: XposedModule)
+    fun alignContentToTop() = afterAttachTry {
+        val clazz = classLoader.loadClass("com.android.systemui.statusbar.phone.IndicatorBasicGardener")
+        val method = clazz.declaredMethods.single { it.name == "updateGarden" }
+        xposedModule.hook(method).intercept { chain ->
+            val result = chain.proceed()
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
+                chain.thisObject.reflect["gardenName"] == "PhoneStatusBarViewController"
+            ) {
+                val params = chain.thisObject.reflect.call("getCameraTopMarginContainerMarginLayoutParams")
+                    as? ViewGroup.MarginLayoutParams
+                params?.topMargin = 0
+            }
+            result
+        }
+    }
+
     context(xposedModule: XposedModule)
     fun setStatusBarPaddingDp(left: Float?, right: Float?) = afterAttachTry(left != null || right != null) {
         val clazz =

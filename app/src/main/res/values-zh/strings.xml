@@ -218,6 +218,8 @@
     <string name="nfc_note">备注（选填）</string>
     <string name="nfc_save">保存 / 更新</string>
     <string name="nfc_delete">删除</string>
+    <string name="alignStatusBarContentToTop_title">状态栏内容置顶</string>
+    <string name="alignStatusBarContentToTop_summary">仅竖屏生效，保留状态栏原高度和应用顶部避让区域</string>
     <string name="hideLockscreenEmergencyButton_title">隐藏锁屏紧急呼叫按钮</string>
     <string name="hideLockscreenEmergencyButton_summary">移除解锁界面的紧急呼叫快捷入口，会降低紧急拨号的便捷性。</string>
 </resources>

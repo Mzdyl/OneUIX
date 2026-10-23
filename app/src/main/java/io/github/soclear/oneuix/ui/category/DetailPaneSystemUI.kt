@@ -540,6 +540,14 @@ fun DetailPaneSystemUI(
             }
         )
 
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.padding),
+            title = stringResource(R.string.alignStatusBarContentToTop_title),
+            summary = stringResource(R.string.alignStatusBarContentToTop_summary),
+            checked = uiState.statusBar.alignStatusBarContentToTop,
+            onCheckedChange = { onEvent(SystemUIEvent.StatusBar.AlignContentToTop(it)) }
+        )
+
         DividerText(R.string.qs)
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.format_letter_spacing),
@@ -930,6 +938,9 @@ private fun powerMenuActionTitle(actionName: String): Int = when (actionName) {
 sealed interface SystemUIEvent {
     sealed interface StatusBar : SystemUIEvent {
         @JvmInline
+        value class AlignContentToTop(val value: Boolean) : StatusBar
+
+        @JvmInline
         value class ModifyStatusBarLeftPadding(val value: Boolean) : StatusBar
 
         @JvmInline
@@ -1147,6 +1158,14 @@ fun SettingViewModel.onSystemUIEvent(event: SystemUIEvent) {
 private fun SettingViewModel.onStatusBarEvent(event: SystemUIEvent.StatusBar) {
     updateData { preference ->
         when (event) {
+            is SystemUIEvent.StatusBar.AlignContentToTop -> preference.copy(
+                systemUI = preference.systemUI.copy(
+                    statusBar = preference.systemUI.statusBar.copy(
+                        alignStatusBarContentToTop = event.value
+                    )
+                )
+            )
+
             is SystemUIEvent.StatusBar.ModifyStatusBarLeftPadding -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(
