@@ -160,6 +160,7 @@
 - 绕过 Samsung Health Monitor 国家检查
 - S Pen 使用谷歌翻译
 - 隐藏应用屏幕搜索栏
+- 修改桌面底部栏下边距（手机竖屏）
 - 移除快捷方式图标右下角小角标
 - 手表连接模式（WearOS CN / WearOS Global）
 - 绕过手表配对区域检查
@@ -326,6 +327,7 @@
 - Bypass Samsung Health Monitor country check
 - Use Google Translate for S Pen
 - Hide search bar on app screen
+- Modify home screen dock bottom padding (phones in portrait mode)
 - Remove bottom-right shortcut badge
 - Watch connection mode (WearOS CN / WearOS Global)
 - Bypass watch pairing region checks

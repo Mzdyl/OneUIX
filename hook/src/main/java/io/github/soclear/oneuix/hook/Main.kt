@@ -127,6 +127,10 @@ class Main : XposedModule() {
             }
 
             Package.LAUNCHER -> {
+                if (preference.other.modifyDockBottomPadding) {
+                    Launcher.setDockBottomPadding(preference.other.dockBottomPaddingDp)
+                }
+
                 if (preference.other.showMemoryUsageInRecents) {
                     Launcher.showMemoryUsageInRecents()
                 }
