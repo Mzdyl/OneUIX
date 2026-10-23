@@ -174,6 +174,7 @@ data class Preference(
         val setThemeTrialNeverExpired: Boolean = true,
         val spoofBrowserCountryCodeToUS: Boolean = false,
         val noAIWatermark: Boolean = true,
+        val hideSamsungHealthDiscover: Boolean = false,
         val bypassHealthMonitorCountryCheck: Boolean = false,
         val useSPenGoogleTranslate: Boolean = false,
         val hideAppsSearchBar: Boolean = false,

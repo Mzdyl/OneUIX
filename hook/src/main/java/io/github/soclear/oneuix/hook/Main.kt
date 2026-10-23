@@ -106,6 +106,12 @@ class Main : XposedModule() {
                 }
             }
 
+            Package.HEALTH -> {
+                if (preference.other.hideSamsungHealthDiscover) {
+                    SamsungHealth.hideDiscover()
+                }
+            }
+
             Package.HEALTH_MONITOR -> {
                 if (preference.other.bypassHealthMonitorCountryCheck) {
                     HealthMonitor.bypassCountryCheck()

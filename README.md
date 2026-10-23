@@ -154,6 +154,7 @@
 - 主题和图标试用永不过期
 - 伪装浏览器国家/地区代码为美国
 - 禁用 AI 水印
+- 隐藏三星健康的“发现”页面
 - 绕过 Samsung Health Monitor 国家检查
 - S Pen 使用谷歌翻译
 - 隐藏应用屏幕搜索栏
@@ -317,6 +318,7 @@
 - Never expire theme and icon trials
 - Spoof Browser Region to US
 - Disable AI watermark
+- Hide the Discover tab in Samsung Health
 - Bypass Samsung Health Monitor country check
 - Use Google Translate for S Pen
 - Hide search bar on app screen
