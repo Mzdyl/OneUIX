@@ -95,6 +95,7 @@
 ##### 其他
 
 - 自定义关机菜单按钮（包括软重启）
+- 隐藏锁屏紧急呼叫按钮
 - 禁用截图声音
 - 隐藏所选音乐应用的实时活动和媒体通知
 - 允许所有旋转角度
@@ -259,6 +260,7 @@
 ##### Other
 
 - Customize power menu actions (including soft reboot)
+- Hide the lock screen emergency call button
 - Disable screenshot sound
 - Hide ongoing media activity and media notifications for selected apps
 - Allow all rotation angles

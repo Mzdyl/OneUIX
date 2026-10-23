@@ -218,4 +218,6 @@
     <string name="nfc_note">Note (facultative)</string>
     <string name="nfc_save">Enregistrer / mettre à jour</string>
     <string name="nfc_delete">Supprimer</string>
+    <string name="hideLockscreenEmergencyButton_title">Masquer le bouton d’appel d’urgence sur l’écran de verrouillage</string>
+    <string name="hideLockscreenEmergencyButton_summary">Supprime le raccourci d’appel d’urgence de l’écran de déverrouillage et rend les appels d’urgence moins accessibles.</string>
 </resources>

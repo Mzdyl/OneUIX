@@ -218,4 +218,6 @@
     <string name="nfc_note">Note (optional)</string>
     <string name="nfc_save">Save / update</string>
     <string name="nfc_delete">Delete</string>
+    <string name="hideLockscreenEmergencyButton_title">Hide lock screen emergency call button</string>
+    <string name="hideLockscreenEmergencyButton_summary">Removes the emergency call shortcut from the unlock screen. This makes emergency dialing less accessible.</string>
 </resources>

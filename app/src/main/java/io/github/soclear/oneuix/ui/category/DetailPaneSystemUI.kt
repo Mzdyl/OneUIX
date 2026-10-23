@@ -825,6 +825,13 @@ fun DetailPaneSystemUI(
                 onEvent(SystemUIEvent.Other.DisableScreenshotCaptureSound(it))
             }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.block),
+            title = stringResource(R.string.hideLockscreenEmergencyButton_title),
+            summary = stringResource(R.string.hideLockscreenEmergencyButton_summary),
+            checked = uiState.other.hideLockscreenEmergencyButton,
+            onCheckedChange = { onEvent(SystemUIEvent.Other.HideLockscreenEmergencyButton(it)) }
+        )
     }
 }
 
@@ -1113,6 +1120,9 @@ sealed interface SystemUIEvent {
     }
 
     sealed interface Other : SystemUIEvent {
+        @JvmInline
+        value class HideLockscreenEmergencyButton(val value: Boolean) : Other
+
         @JvmInline
         value class CustomPowerMenu(val value: Boolean) : Other
 
@@ -1695,6 +1705,14 @@ private fun SettingViewModel.onNotification(event: SystemUIEvent.Notification) {
 private fun SettingViewModel.onOtherEvent(event: SystemUIEvent.Other) {
     updateData { preference ->
         when (event) {
+            is SystemUIEvent.Other.HideLockscreenEmergencyButton -> preference.copy(
+                systemUI = preference.systemUI.copy(
+                    other = preference.systemUI.other.copy(
+                        hideLockscreenEmergencyButton = event.value
+                    )
+                )
+            )
+
             is SystemUIEvent.Other.CustomPowerMenu -> {
                 preference.copy(
                     systemUI = preference.systemUI.copy(

@@ -218,4 +218,6 @@
     <string name="nfc_note">메모(선택 사항)</string>
     <string name="nfc_save">저장 / 업데이트</string>
     <string name="nfc_delete">삭제</string>
+    <string name="hideLockscreenEmergencyButton_title">잠금 화면 긴급 전화 버튼 숨기기</string>
+    <string name="hideLockscreenEmergencyButton_summary">잠금 해제 화면의 긴급 전화 바로가기를 제거하여 긴급 전화 접근이 어려워집니다.</string>
 </resources>

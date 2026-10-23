@@ -272,6 +272,10 @@ class Main : XposedModule() {
                     StatusBar.setBatteryIconScale(widthScale, heightScale)
                 }
 
+                if (preference.systemUI.other.hideLockscreenEmergencyButton) {
+                    SystemUIOther.hideLockscreenEmergencyButton()
+                }
+
                 if (preference.systemUI.statusBar.hideBatteryPercentageSign) {
                     StatusBar.hideBatteryPercentageSign()
                 }

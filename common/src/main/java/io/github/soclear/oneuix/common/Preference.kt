@@ -113,6 +113,7 @@ data class Preference(
 
         @Serializable
         data class Other(
+            val hideLockscreenEmergencyButton: Boolean = false,
             val disableScreenshotCaptureSound: Boolean = false,
             val customPowerMenu: Boolean = false,
             val powerMenuActions: List<PowerMenuAction> = PowerMenuAction.defaultPreferences()

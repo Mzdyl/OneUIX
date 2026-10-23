@@ -218,4 +218,6 @@
     <string name="nfc_note">Заметка (необязательно)</string>
     <string name="nfc_save">Сохранить / обновить</string>
     <string name="nfc_delete">Удалить</string>
+    <string name="hideLockscreenEmergencyButton_title">Скрыть кнопку экстренного вызова на экране блокировки</string>
+    <string name="hideLockscreenEmergencyButton_summary">Удаляет ярлык экстренного вызова с экрана разблокировки, затрудняя доступ к экстренному набору.</string>
 </resources>
