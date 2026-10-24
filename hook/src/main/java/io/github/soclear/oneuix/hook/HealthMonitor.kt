@@ -12,6 +12,7 @@ import io.github.soclear.oneuix.hook.util.xlog
 import kotlinx.serialization.Serializable
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.wrap.DexMethod
+import java.io.File
 import java.lang.reflect.Modifier
 
 object HealthMonitor {
@@ -23,19 +24,37 @@ object HealthMonitor {
             return
         }
         afterAttach {
-            val hookConfig = getHookConfig { getHookConfigFromDexKit() } ?: return@afterAttach
+            val hookConfig = getHookConfig(File(filesDir, "HealthMonitorHookConfig_v2.json")) {
+                getHookConfigFromDexKit()
+            } ?: return@afterAttach
+
             try {
                 val supportedTypeClass = classLoader.loadClass(SUPPORTED_TYPE_CLASS)
 
-                // 使用 准确的 ALL_SUPPORT 为后续可能的血压功能提前准备
-                // 开启血压功能需要手表区域检验通过
                 val allSupportType = supportedTypeClass.enumConstants
                     ?.filterIsInstance<Enum<*>>()
                     ?.firstOrNull { it.name == "ALL_SUPPORT" }
-                    ?: return@afterAttach
 
-                val method = DexMethod(hookConfig.isSupportedCountryMethod).getMethodInstance(classLoader)
-                xposedModule.hook(method).intercept { allSupportType }
+                if (allSupportType != null) {
+                    val method = DexMethod(hookConfig.isSupportedCountryMethod).getMethodInstance(classLoader)
+                    xposedModule.hook(method).intercept { allSupportType }
+                }
+
+                hookConfig.getSavedSimNetworkCountryMethod?.let {
+                    val method = DexMethod(it).getMethodInstance(classLoader)
+                    xposedModule.hook(method).intercept { "KR" }
+                }
+
+                hookConfig.getControllerListMethod?.let {
+                    val method = DexMethod(it).getMethodInstance(classLoader)
+                    xposedModule.hook(method).intercept {
+                        arrayListOf(
+                            "com.samsung.android.shealthmonitor.sleep.control.SleepController",
+                            "com.samsung.android.shealthmonitor.bp.control.BloodPressureController",
+                            "com.samsung.android.shealthmonitor.ecg2.control.Ecg2Controller",
+                        )
+                    }
+                }
             } catch (t: Throwable) {
                 xlog(t)
             }
@@ -46,6 +65,8 @@ object HealthMonitor {
     data class HealthMonitorHookConfig(
         override val versionCode: Long,
         val isSupportedCountryMethod: String,
+        val getSavedSimNetworkCountryMethod: String? = null,
+        val getControllerListMethod: String? = null,
     ) : HookConfig
 
     private fun Context.getHookConfigFromDexKit(): HealthMonitorHookConfig? {
@@ -66,9 +87,33 @@ object HealthMonitor {
                 }
             }.singleOrNull() ?: return null
 
+            val getSavedSimNetworkCountryMethod = bridge.findMethod {
+                matcher {
+                    modifiers = Modifier.PUBLIC or Modifier.STATIC
+                    declaredClass(isSupportedCountryMethod.toDexMethod().className)
+                    returnType = "java.lang.String"
+                    paramCount = 0
+                    usingStrings("shealth_monitor_base_app_setup_saved_sim_country")
+                }
+            }.singleOrNull()
+
+            val getControllerListMethod = bridge.findMethod {
+                matcher {
+                    modifiers = Modifier.PUBLIC or Modifier.STATIC
+                    returnType = "java.util.ArrayList"
+                    paramCount = 0
+                    usingStrings(
+                        "com.samsung.android.shealthmonitor.sleep.control.SleepController",
+                        "com.samsung.android.shealthmonitor.ecg2.control.Ecg2Controller",
+                    )
+                }
+            }.singleOrNull()
+
             return HealthMonitorHookConfig(
                 versionCode = longVersionCode,
-                isSupportedCountryMethod = isSupportedCountryMethod.toDexMethod().serialize()
+                isSupportedCountryMethod = isSupportedCountryMethod.toDexMethod().serialize(),
+                getSavedSimNetworkCountryMethod = getSavedSimNetworkCountryMethod?.toDexMethod()?.serialize(),
+                getControllerListMethod = getControllerListMethod?.toDexMethod()?.serialize(),
             )
         }
     }

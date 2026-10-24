@@ -204,7 +204,7 @@
     <string name="noAIWatermark_title">Disable AI watermark</string>
     <string name="noAIWatermark_summary">Includes Photo Editor and Creative Studio</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
-    <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries</string>
+    <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries, unlocking IHRN and Sleep Apnea detection</string>
     <string name="samsungHealthBypassAccountCountry_title">Bypass account region restrictions</string>
     <string name="samsungHealthBypassAccountCountry_summary">Allow the app flavor and account country to differ, including restricted China accounts</string>
     <string name="samsungHealthServerRegion_title">Health data server</string>

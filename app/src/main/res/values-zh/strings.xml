@@ -204,7 +204,7 @@
     <string name="noAIWatermark_title">去除 AI 水印</string>
     <string name="noAIWatermark_summary">包含照片编辑器与创意工作室</string>
     <string name="bypassHealthMonitorCountryCheck_title">绕过三星健康监测国家/地区检查</string>
-    <string name="bypassHealthMonitorCountryCheck_summary">允许在不支持的国家/地区使用三星健康监测</string>
+    <string name="bypassHealthMonitorCountryCheck_summary">允许在不支持的国家/地区使用三星健康监测，解锁心律不齐预警 (IHRN) 与睡眠呼吸暂停检测</string>
     <string name="samsungHealthBypassAccountCountry_title">绕过账号区域限制</string>
     <string name="samsungHealthBypassAccountCountry_summary">允许应用版本与账号归属地不同，包括受限的中国区账号</string>
     <string name="samsungHealthServerRegion_title">健康数据服务器</string>
