@@ -13,7 +13,6 @@ object SamsungPayGear {
         xlog("OneUIX: SamsungPayGear init")
 
         bypassWearableCnCheck()
-        supportWatchUnitePlugin()
     }
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
@@ -26,35 +25,6 @@ object SamsungPayGear {
             xposedModule.hook(method).intercept {
                 xlog("OneUIX: bypass checkIsWearableCNInstalled")
                 Unit
-            }
-        } catch (t: Throwable) {
-            xlog(t)
-        }
-    }
-
-    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
-    private fun supportWatchUnitePlugin() {
-        try {
-            val wearableProviderClass = param.classLoader.loadClass(
-                "com.samsung.android.samsungpay.gear.common.provider.WearableProvider"
-            )
-            val method = wearableProviderClass.getDeclaredMethod("d")
-            xposedModule.hook(method).intercept { chain ->
-                val real = runCatching { chain.proceed() as? Boolean }.getOrNull()
-                if (real == true) return@intercept true
-                try {
-                    val pluginCheckerClass = param.classLoader.loadClass(
-                        "com.samsung.android.samsungpay.gear.common.provider.WearablePluginChecker"
-                    )
-                    val activePlugin = pluginCheckerClass.getDeclaredMethod("getActivePlugin").invoke(null) as? String
-                    if (activePlugin == "com.samsung.wearable.watchuniteplugin") {
-                        xlog("OneUIX: WearableProvider.d() plugin=$activePlugin -> true")
-                        return@intercept true
-                    }
-                } catch (t: Throwable) {
-                    xlog(t)
-                }
-                real ?: false
             }
         } catch (t: Throwable) {
             xlog(t)
