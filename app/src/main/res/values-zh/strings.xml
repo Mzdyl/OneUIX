@@ -220,6 +220,16 @@
     <string name="samsungHealthFixWearableSync_summary">解除国行环境下对 Wear OS 中国版应用的依赖，允许使用 GMS 通道同步数据</string>
     <string name="samsungHealthUnlockFeatureList_title">解锁开发者设置 (Feature List)</string>
     <string name="samsungHealthUnlockFeatureList_summary">免密开启 Feature List 与开发者模式，并在“关于”页面常驻入口</string>
+    <string name="samsungHealthDataBridge_title">本地数据库桥接（端口 8099）</string>
+    <string name="samsungHealthDataBridge_summary">把三星健康的活体数据库通过 HTTP 暴露出来，供外部工具读取 Health Connect 拿不到的数据（压力、HRV、GPS、皮肤温度）。带令牌校验、只读、限制返回行数。只有明确知道谁会连接时才打开。</string>
+    <string name="samsungHealthDataBridgeToken_title">访问令牌</string>
+    <string name="samsungHealthDataBridgeToken_summary">外部工具请求时需带上 X-OneUIX-Token 头。点按获取。</string>
+    <string name="samsungHealthDataBridgeToken_failed">读取失败：需要 root 授权</string>
+    <string name="samsungHealthDataBridgeEndpoint_title">端点</string>
+    <string name="samsungHealthDataBridgeEndpoint_summary">/status · /tables?db= · /query?sql=&amp;raw=1（raw=1 时 BLOB 以 base64 返回）</string>
+    <string name="samsungHealthDataBridgeCopied">已复制</string>
+    <string name="samsungHealthDataBridgeCopy">复制令牌</string>
+    <string name="samsungHealthDataBridgeCopyCmd">复制读取命令</string>
     <string name="disableAsksRestriction_title">禁用 ASKS 限制</string>
     <string name="disableAsksRestriction_summary">移除 ASKS 策略对应用安装的限制</string>
     <string name="fcmFix_title">强制唤醒 FCM</string>

@@ -220,6 +220,16 @@
     <string name="samsungHealthFixWearableSync_summary">Bypass ChinaLeApp check on CN CSC to allow data sync over Google Play Services Wearable APIs</string>
     <string name="samsungHealthUnlockFeatureList_title">Unlock Feature List (Developer Settings)</string>
     <string name="samsungHealthUnlockFeatureList_summary">Bypass password check for Feature List and Developer Mode, and keep shortcut visible in About page</string>
+    <string name="samsungHealthDataBridge_title">Local Database Bridge (port 8099)</string>
+    <string name="samsungHealthDataBridge_summary">Expose Samsung Health\'s live database over HTTP so external tools can read what Health Connect does not provide (stress, HRV, GPS, skin temperature). Token-protected, read-only, row-capped. Only enable if you know what is connecting.</string>
+    <string name="samsungHealthDataBridgeToken_title">Access token</string>
+    <string name="samsungHealthDataBridgeToken_summary">Requests must carry the X-OneUIX-Token header. Tap to reveal.</string>
+    <string name="samsungHealthDataBridgeToken_failed">Failed to read: root permission required</string>
+    <string name="samsungHealthDataBridgeEndpoint_title">Endpoints</string>
+    <string name="samsungHealthDataBridgeEndpoint_summary">/status · /tables?db= · /query?sql=&amp;raw=1 (raw=1 returns BLOBs as base64)</string>
+    <string name="samsungHealthDataBridgeCopied">Copied</string>
+    <string name="samsungHealthDataBridgeCopy">Copy token</string>
+    <string name="samsungHealthDataBridgeCopyCmd">Copy read command</string>
     <string name="disableAsksRestriction_title">Disable ASKS restriction</string>
     <string name="disableAsksRestriction_summary">Remove ASKS policy restrictions on app installation</string>
     <string name="fcmFix_title">Force FCM wake</string>

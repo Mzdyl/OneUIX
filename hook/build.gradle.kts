@@ -29,6 +29,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.dexkit)
     implementation(libs.kotlinx.serialization.json)
+    // 数据桥的 HTTP 口
+    implementation(libs.nanohttpd)
 
     compileOnly(libs.libxposed.api)
     compileOnly(project(":stub"))

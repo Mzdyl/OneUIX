@@ -228,6 +228,8 @@ data class Preference(
         val unlockAccessoryProfiles: Boolean = false,
         val fixWearableSync: Boolean = true,
         val unlockFeatureList: Boolean = true,
+        /** 把活体数据库暴露成带 token 的 HTTP 查询口（:8099），默认关闭。 */
+        val dataBridge: Boolean = false,
     )
 
     @Serializable

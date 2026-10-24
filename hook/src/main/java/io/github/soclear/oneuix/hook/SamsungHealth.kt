@@ -46,6 +46,11 @@ object SamsungHealth {
         "com.samsung.android.app.shealth.config.VerificationDialogActivity"
     private const val FEATURE_LIST_ACTIVITY_CLASS =
         "com.samsung.android.app.shealth.config.FeatureListActivity"
+
+    // 数据桥：拿活体数据库实例的入口
+    private const val HEALTH_SQLITE_OPEN_HELPER_CLASS =
+        "com.samsung.android.sdk.healthdata.privileged.database.HealthSQLiteOpenHelper"
+    private const val DEFAULT_HEALTH_DB = "SecureHealthData.db"
     private const val HOME_SETTINGS_ABOUT_ACTIVITY_CLASS =
         "com.samsung.android.app.shealth.home.settings.info.about.HomeSettingsAboutActivity"
     private const val ACCESSORY_INFO_CLASS =
@@ -77,6 +82,9 @@ object SamsungHealth {
             }
             if (preference.unlockFeatureList) {
                 hookFeatureList(this, classLoader)
+            }
+            if (preference.dataBridge) {
+                hookDataBridge(this, classLoader)
             }
         }
     }
@@ -538,6 +546,56 @@ object SamsungHealth {
             config?.aboutFeatureButtonMethod?.let { methodData ->
                 val method = DexMethod(methodData).getMethodInstance(classLoader)
                 xposedModule.hook(method).intercept { true }
+            }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
+    }
+
+    /**
+     * 把三星健康的活体数据库暴露成 HTTP 查询口（见 DataBridgeServer）。
+     *
+     * 这条链路的来源：Health Connect 只拿到三星愿意写出去的 14/23 类，压力 / HRV / GPS /
+     * 皮肤温度 / 静息心率这些它根本不写。而 getReadableDatabase(byte[]) 拿到的
+     * SamsungSQLiteSecureDatabase 是活体实例，rawQuery 直接能读 SecureHealthData.db
+     * 的 182 张表，不必解密文件。
+     *
+     * 顺带把传进来的密钥记下来（只用于排查，不落盘）—— 出问题时能确认 hook 到底有没有命中。
+     */
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookDataBridge(context: Context, classLoader: ClassLoader) {
+        try {
+            val clazz = classLoader.loadClass(HEALTH_SQLITE_OPEN_HELPER_CLASS)
+            var hooked = 0
+
+            for (methodName in listOf("getReadableDatabase", "getWritableDatabase")) {
+                clazz.declaredMethods
+                    .filter {
+                        it.name == methodName &&
+                            it.parameterCount == 1 &&
+                            it.parameterTypes[0] == ByteArray::class.java
+                    }
+                    .forEach { method ->
+                        xposedModule.hook(method).intercept { chain ->
+                            val db = chain.proceed()
+                            if (db != null) {
+                                val dbName = runCatching {
+                                    chain.thisObject.javaClass
+                                        .getMethod("getDatabaseName")
+                                        .invoke(chain.thisObject) as? String
+                                }.getOrNull() ?: DEFAULT_HEALTH_DB
+
+                                DataBridgeServer.rememberDatabase(dbName, db)
+                                DataBridgeServer.ensureStarted(context)
+                            }
+                            db
+                        }
+                        hooked++
+                    }
+            }
+
+            if (hooked == 0) {
+                xlog(IllegalStateException("data bridge: no HealthSQLiteOpenHelper DB-open method found"))
             }
         } catch (t: Throwable) {
             xlog(t)
