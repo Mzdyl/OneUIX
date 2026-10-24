@@ -59,6 +59,20 @@ fun DetailPaneSamsungHealth(
             checked = uiState.unlockAccessoryProfiles,
             onCheckedChange = { onEvent(SamsungHealthEvent.UnlockAccessoryProfiles(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.watch_pairing),
+            title = stringResource(id = R.string.samsungHealthFixWearableSync_title),
+            summary = stringResource(id = R.string.samsungHealthFixWearableSync_summary),
+            checked = uiState.fixWearableSync,
+            onCheckedChange = { onEvent(SamsungHealthEvent.FixWearableSync(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.logo_dev),
+            title = stringResource(id = R.string.samsungHealthUnlockFeatureList_title),
+            summary = stringResource(id = R.string.samsungHealthUnlockFeatureList_summary),
+            checked = uiState.unlockFeatureList,
+            onCheckedChange = { onEvent(SamsungHealthEvent.UnlockFeatureList(it)) }
+        )
     }
 }
 
@@ -74,6 +88,12 @@ sealed interface SamsungHealthEvent {
 
     @JvmInline
     value class UnlockAccessoryProfiles(val value: Boolean) : SamsungHealthEvent
+
+    @JvmInline
+    value class FixWearableSync(val value: Boolean) : SamsungHealthEvent
+
+    @JvmInline
+    value class UnlockFeatureList(val value: Boolean) : SamsungHealthEvent
 }
 
 fun SettingViewModel.onSamsungHealthEvent(event: SamsungHealthEvent) {
@@ -100,6 +120,18 @@ fun SettingViewModel.onSamsungHealthEvent(event: SamsungHealthEvent) {
             is SamsungHealthEvent.UnlockAccessoryProfiles -> preference.copy(
                 samsungHealth = preference.samsungHealth.copy(
                     unlockAccessoryProfiles = event.value
+                )
+            )
+
+            is SamsungHealthEvent.FixWearableSync -> preference.copy(
+                samsungHealth = preference.samsungHealth.copy(
+                    fixWearableSync = event.value
+                )
+            )
+
+            is SamsungHealthEvent.UnlockFeatureList -> preference.copy(
+                samsungHealth = preference.samsungHealth.copy(
+                    unlockFeatureList = event.value
                 )
             )
         }

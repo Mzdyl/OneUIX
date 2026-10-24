@@ -1,6 +1,10 @@
 package io.github.soclear.oneuix.hook
 
+import android.app.Activity
 import android.content.Context
+import android.os.Bundle
+import android.widget.RadioGroup
+import android.widget.Toast
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
@@ -36,6 +40,14 @@ object SamsungHealth {
         "com.samsung.android.app.shealth.config.HCscFeature"
     private const val KIDS_INIT_STATUS_RESPONSE_CLASS =
         "com.samsung.android.app.shealth.home.watchsettings.viewmodel.KidsInitStatusResponse"
+    private const val FEATURE_VERIFICATION_UTILS_CLASS =
+        "com.samsung.android.app.shealth.config.FeatureVerificationUtils"
+    private const val VERIFICATION_DIALOG_ACTIVITY_CLASS =
+        "com.samsung.android.app.shealth.config.VerificationDialogActivity"
+    private const val FEATURE_LIST_ACTIVITY_CLASS =
+        "com.samsung.android.app.shealth.config.FeatureListActivity"
+    private const val HOME_SETTINGS_ABOUT_ACTIVITY_CLASS =
+        "com.samsung.android.app.shealth.home.settings.info.about.HomeSettingsAboutActivity"
     private const val ACCESSORY_INFO_CLASS =
         "com.samsung.android.app.shealth.sensor.accessory.service.data.accessoryinfo.AccessoryInfoInternal"
     private const val PERMANENT_PREFERENCES_MAIN = "permanent_sharedpreferences_main"
@@ -59,6 +71,12 @@ object SamsungHealth {
             }
             if (preference.unlockAccessoryProfiles) {
                 hookAccessoryProfiles(classLoader)
+            }
+            if (preference.fixWearableSync) {
+                hookWearableSync(this, classLoader)
+            }
+            if (preference.unlockFeatureList) {
+                hookFeatureList(this, classLoader)
             }
         }
     }
@@ -358,6 +376,169 @@ object SamsungHealth {
                 .forEach { method ->
                     xposedModule.hook(method).intercept { true }
                 }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
+    }
+
+    @Serializable
+    private data class WearableSyncHookConfig(
+        override val versionCode: Long,
+        val gmsDisabledMethod: String?,
+    ) : HookConfig
+
+    private fun Context.getWearableSyncHookConfig(): WearableSyncHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val method = bridge.findMethod {
+                matcher {
+                    returnType = "boolean"
+                    paramCount = 0
+                    usingStrings(
+                        "SHEALTH#WI#GmsWearableHelper",
+                        "isChinaLeAppEnabled() : ChinaLeApp is NOT installed !!!"
+                    )
+                }
+            }.singleOrNull()
+
+            return WearableSyncHookConfig(
+                versionCode = longVersionCode,
+                gmsDisabledMethod = method?.toDexMethod()?.serialize()
+            )
+        }
+    }
+
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookWearableSync(context: Context, classLoader: ClassLoader) {
+        try {
+            val config = context.getHookConfig(
+                File(context.filesDir, "SamsungHealthWearableSyncHookConfig.json")
+            ) {
+                getWearableSyncHookConfig()
+            }
+            config?.gmsDisabledMethod?.let { methodData ->
+                val method = DexMethod(methodData).getMethodInstance(classLoader)
+                xposedModule.hook(method).intercept { false }
+            }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
+    }
+
+    @Serializable
+    private data class FeatureListHookConfig(
+        override val versionCode: Long,
+        val aboutFeatureButtonMethod: String?,
+    ) : HookConfig
+
+    private fun Context.getFeatureListHookConfig(): FeatureListHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val method = bridge.findMethod {
+                matcher {
+                    returnType = "boolean"
+                    paramCount = 0
+                    usingStrings(
+                        "SHEALTH#HomeSettingsAboutActivity",
+                        "isEnabledFeatureManager() : enable Feature"
+                    )
+                }
+            }.singleOrNull()
+
+            return FeatureListHookConfig(
+                versionCode = longVersionCode,
+                aboutFeatureButtonMethod = method?.toDexMethod()?.serialize()
+            )
+        }
+    }
+
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    private fun hookFeatureList(context: Context, classLoader: ClassLoader) {
+        try {
+            val clazz = classLoader.loadClass(FEATURE_VERIFICATION_UTILS_CLASS)
+            clazz.declaredMethods.filter { it.name == "isVerified" }.forEach { method ->
+                xposedModule.hook(method).intercept { true }
+            }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
+
+        try {
+            val clazz = classLoader.loadClass(VERIFICATION_DIALOG_ACTIVITY_CLASS)
+            clazz.declaredMethods.filter { it.name == "onCreate" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val activity = chain.thisObject as? Activity
+                    activity?.setResult(Activity.RESULT_OK)
+                    activity?.finish()
+                    null
+                }
+            }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
+
+        try {
+            val clazz = classLoader.loadClass(FEATURE_LIST_ACTIVITY_CLASS)
+            clazz.declaredMethods.filter { it.name == "onCreate" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val savedInstanceState = chain.args.getOrNull(0) as? Bundle
+                    if (savedInstanceState == null) {
+                        val newBundle = Bundle().apply {
+                            putBoolean("verification_passed", true)
+                        }
+                        chain.proceed(arrayOf(newBundle))
+                    } else {
+                        savedInstanceState.putBoolean("verification_passed", true)
+                        chain.proceed()
+                    }
+                }
+            }
+
+            clazz.declaredMethods.filter { it.name == "handleDeveloperModeEnable" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val activity = chain.thisObject
+                    val key = chain.args.getOrNull(0) as? String ?: "dev_mode_key_validation"
+                    val radioGroup = chain.args.getOrNull(1) as? RadioGroup
+                    try {
+                        val mFeatureManagerField = clazz.getDeclaredField("mFeatureManager").apply { isAccessible = true }
+                        val mFeatureManager = mFeatureManagerField.get(activity)
+                        mFeatureManager?.javaClass?.getMethod("setStringValue", String::class.java, String::class.java)
+                            ?.invoke(mFeatureManager, key, "on")
+
+                        clazz.getDeclaredMethod("addChangeItem", String::class.java).apply { isAccessible = true }
+                            .invoke(activity, key)
+
+                        clazz.getDeclaredMethod("setChangedTag").apply { isAccessible = true }
+                            .invoke(activity)
+
+                        radioGroup?.let { rg ->
+                            if (rg.childCount > 0) {
+                                rg.check(rg.getChildAt(0).id)
+                            }
+                        }
+                        (activity as? Context)?.let { ctx ->
+                            Toast.makeText(ctx, "Developer mode enabled.", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Throwable) {
+                        xlog(e)
+                    }
+                    null
+                }
+            }
+        } catch (t: Throwable) {
+            xlog(t)
+        }
+
+        try {
+            val config = context.getHookConfig(
+                File(context.filesDir, "SamsungHealthAboutFeatureButtonHookConfig.json")
+            ) {
+                getFeatureListHookConfig()
+            }
+            config?.aboutFeatureButtonMethod?.let { methodData ->
+                val method = DexMethod(methodData).getMethodInstance(classLoader)
+                xposedModule.hook(method).intercept { true }
+            }
         } catch (t: Throwable) {
             xlog(t)
         }

@@ -216,6 +216,10 @@
     <string name="samsungHealthUnlockCountryFeatures_summary">Bypass country, CSC, and flavor conditions in feature settings</string>
     <string name="samsungHealthUnlockAccessories_title">Unlock health accessory profiles</string>
     <string name="samsungHealthUnlockAccessories_summary">Allow accessory profiles blocked for the current country</string>
+    <string name="samsungHealthFixWearableSync_title">Fix watch data sync</string>
+    <string name="samsungHealthFixWearableSync_summary">Bypass ChinaLeApp check on CN CSC to allow data sync over Google Play Services Wearable APIs</string>
+    <string name="samsungHealthUnlockFeatureList_title">Unlock Feature List (Developer Settings)</string>
+    <string name="samsungHealthUnlockFeatureList_summary">Bypass password check for Feature List and Developer Mode, and keep shortcut visible in About page</string>
     <string name="disableAsksRestriction_title">Disable ASKS restriction</string>
     <string name="disableAsksRestriction_summary">Remove ASKS policy restrictions on app installation</string>
     <string name="fcmFix_title">Force FCM wake</string>

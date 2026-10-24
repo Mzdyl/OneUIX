@@ -226,6 +226,8 @@ data class Preference(
         val serverRegion: Int = 0,
         val unlockCountryFeatures: Boolean = false,
         val unlockAccessoryProfiles: Boolean = false,
+        val fixWearableSync: Boolean = true,
+        val unlockFeatureList: Boolean = true,
     )
 
     @Serializable
