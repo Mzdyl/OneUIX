@@ -214,6 +214,9 @@ data class Preference(
         val supplementChinaWearOsGms: Boolean = false,
         val bypassSamsungPayWearableCnCheck: Boolean = true,
         val preventWatchPluginUnpair: Boolean = true,
+        val unlockWatchPluginGlobalFeatures: Boolean = true,
+        val forceShowAllWatchfaceComplications: Boolean = true,
+        val enableWatchPluginHiddenMenuShortcut: Boolean = true,
         val enableGoogleQuickShare: Boolean = true,
     )
 

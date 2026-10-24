@@ -592,9 +592,7 @@ class Main : XposedModule() {
             Package.GEAR_P_PLUGIN,
             Package.GEAR_N_PLUGIN,
             Package.GEAR_R_PLUGIN -> {
-                if (preference.other.preventWatchPluginUnpair) {
-                    WatchPlugin.init()
-                }
+                WatchPlugin.init(preference.other)
             }
 
             Package.TRANSLATION -> {

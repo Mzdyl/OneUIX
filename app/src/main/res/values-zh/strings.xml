@@ -263,6 +263,12 @@
     <string name="bypassSamsungPayWearableCnCheck_summary">跳过 Wear OS CN 依赖检查，允许三星智能卡走全球 GMS 并在 Watch7/9 统一插件下正常使用</string>
     <string name="preventWatchPluginUnpair_title">防止卸载应用导致手表解绑重置</string>
     <string name="preventWatchPluginUnpair_summary">拦截手表插件在卸载 Wear OS CN 时触发的强制解绑重置，保护手表蓝牙连接</string>
+    <string name="unlockWatchPluginGlobalFeatures_title">解锁手表海外全量功能与 Google 账号</string>
+    <string name="unlockWatchPluginGlobalFeatures_summary">解除国行对手表插件的区域限制，恢复配对与设置中的 Google 账号登录/同步、抬腕说话切换 Google Assistant 及 SmartThings Find 离线查找</string>
+    <string name="forceShowAllWatchfaceComplications_title">强制解锁全量表盘复杂功能/微件</string>
+    <string name="forceShowAllWatchfaceComplications_summary">强制显示所有受地区和条件限制的表盘复杂功能与微件（血压、心电图、活力得分、睡眠教练、用药等）</string>
+    <string name="enableWatchPluginHiddenMenuShortcut_title">开启隐藏工程菜单一键直达与表盘调试</string>
+    <string name="enableWatchPluginHiddenMenuShortcut_summary">在关于页面单击标题即可打开隐藏工程菜单（支持 APK 侧载直传与 eSIM 二维码模式），并解锁内置的表盘工程调试页面</string>
     <string name="restartSystemUI_title">重启系统界面</string>
     <string name="restartSystemUI_summary">重启 System UI 以应用更改</string>
     <string name="sideKeySettings">侧面按钮设置</string>

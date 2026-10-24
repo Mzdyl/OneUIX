@@ -263,6 +263,12 @@
     <string name="bypassSamsungPayWearableCnCheck_summary">Bypass WearOS CN check and enable Samsung Pay Gear under global GMS with Watch7/9 unified plugins</string>
     <string name="preventWatchPluginUnpair_title">Prevent watch auto-reset on package removal</string>
     <string name="preventWatchPluginUnpair_summary">Block watch plugins from force-unpairing and resetting the watch when WearOS CN is uninstalled or changed</string>
+    <string name="unlockWatchPluginGlobalFeatures_title">Unlock global watch features &amp; Google account</string>
+    <string name="unlockWatchPluginGlobalFeatures_summary">Bypass China region restrictions in watch plugin; enable Google account login/sync in setup &amp; settings, Raise-to-Talk digital assistant choice, and SmartThings Find offline search</string>
+    <string name="forceShowAllWatchfaceComplications_title">Force unlock all watch face complications</string>
+    <string name="forceShowAllWatchfaceComplications_summary">Forcefully display all conditional and region-restricted complications on watch faces (BP, ECG, Energy Score, Sleep Coaching, Medication, etc.)</string>
+    <string name="enableWatchPluginHiddenMenuShortcut_title">Enable hidden engineering menu shortcut &amp; watch face debug</string>
+    <string name="enableWatchPluginHiddenMenuShortcut_summary">Tap title once in About page to open Wearable Hidden Menu (supports APK sideloading &amp; eSIM QR mode), and unlock the hidden watch face debug page</string>
     <string name="restartSystemUI_title">Restart System UI</string>
     <string name="restartSystemUI_summary">Restart System UI to apply changes</string>
     <string name="sideKeySettings">Side button settings</string>

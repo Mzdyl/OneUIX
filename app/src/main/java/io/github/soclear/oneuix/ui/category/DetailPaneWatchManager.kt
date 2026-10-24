@@ -62,6 +62,27 @@ fun DetailPaneWatchManager(
             checked = uiState.preventWatchPluginUnpair,
             onCheckedChange = { onEvent(WatchManagerEvent.PreventWatchPluginUnpair(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.globe),
+            title = stringResource(id = R.string.unlockWatchPluginGlobalFeatures_title),
+            summary = stringResource(id = R.string.unlockWatchPluginGlobalFeatures_summary),
+            checked = uiState.unlockWatchPluginGlobalFeatures,
+            onCheckedChange = { onEvent(WatchManagerEvent.UnlockWatchPluginGlobalFeatures(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.nest_clock_farsight_digital),
+            title = stringResource(id = R.string.forceShowAllWatchfaceComplications_title),
+            summary = stringResource(id = R.string.forceShowAllWatchfaceComplications_summary),
+            checked = uiState.forceShowAllWatchfaceComplications,
+            onCheckedChange = { onEvent(WatchManagerEvent.ForceShowAllWatchfaceComplications(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.logo_dev),
+            title = stringResource(id = R.string.enableWatchPluginHiddenMenuShortcut_title),
+            summary = stringResource(id = R.string.enableWatchPluginHiddenMenuShortcut_summary),
+            checked = uiState.enableWatchPluginHiddenMenuShortcut,
+            onCheckedChange = { onEvent(WatchManagerEvent.EnableWatchPluginHiddenMenuShortcut(it)) }
+        )
     }
 }
 
@@ -80,6 +101,15 @@ sealed interface WatchManagerEvent {
 
     @JvmInline
     value class PreventWatchPluginUnpair(val value: Boolean) : WatchManagerEvent
+
+    @JvmInline
+    value class UnlockWatchPluginGlobalFeatures(val value: Boolean) : WatchManagerEvent
+
+    @JvmInline
+    value class ForceShowAllWatchfaceComplications(val value: Boolean) : WatchManagerEvent
+
+    @JvmInline
+    value class EnableWatchPluginHiddenMenuShortcut(val value: Boolean) : WatchManagerEvent
 }
 
 fun SettingViewModel.onWatchManagerEvent(event: WatchManagerEvent) {
@@ -117,6 +147,24 @@ fun SettingViewModel.onWatchManagerEvent(event: WatchManagerEvent) {
             is WatchManagerEvent.PreventWatchPluginUnpair -> preference.copy(
                 other = preference.other.copy(
                     preventWatchPluginUnpair = event.value
+                )
+            )
+
+            is WatchManagerEvent.UnlockWatchPluginGlobalFeatures -> preference.copy(
+                other = preference.other.copy(
+                    unlockWatchPluginGlobalFeatures = event.value
+                )
+            )
+
+            is WatchManagerEvent.ForceShowAllWatchfaceComplications -> preference.copy(
+                other = preference.other.copy(
+                    forceShowAllWatchfaceComplications = event.value
+                )
+            )
+
+            is WatchManagerEvent.EnableWatchPluginHiddenMenuShortcut -> preference.copy(
+                other = preference.other.copy(
+                    enableWatchPluginHiddenMenuShortcut = event.value
                 )
             )
         }
