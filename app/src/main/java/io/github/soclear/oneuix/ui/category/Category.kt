@@ -17,6 +17,7 @@ enum class Category(val packageName: String) {
     HealthMonitor(Package.HEALTH_MONITOR),
     Launcher(Package.LAUNCHER),
     Messaging(Package.MESSAGING),
+    NFC(Package.NFC),
     Notes(Package.NOTES),
     PhotoRetouching(Package.PHOTO_RETOUCHING),
     SketchBook(Package.SKETCH_BOOK),
@@ -27,5 +28,5 @@ enum class Category(val packageName: String) {
     Weather(Package.WEATHER),
     SamsungHealth(Package.SAMSUNG_HEALTH),
     QuickShare(Package.SHARE_LIVE),
-    Nfc(Package.NFC);
+    Other("");
 }

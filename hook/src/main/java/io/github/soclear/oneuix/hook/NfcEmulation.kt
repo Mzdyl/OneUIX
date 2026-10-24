@@ -7,7 +7,7 @@ import io.github.soclear.oneuix.hook.util.xlog
 
 import io.github.soclear.oneuix.hook.util.reflect
 
-object Nfc {
+object NfcEmulation {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun init(enableSimulation: Boolean, bypassPrompt: Boolean) {
         if (param.packageName != Package.NFC) return

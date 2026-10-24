@@ -1,6 +1,7 @@
 package io.github.soclear.oneuix.ui.category
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +47,32 @@ object NfcScanChannel {
 }
 
 @Composable
-fun DetailPaneNfc(
+fun DetailPaneNFC(
+    uiState: Preference.Nfc,
+    busy: Boolean,
+    onNavigateToNfcCards: () -> Unit,
+    onEvent: (NfcEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    PackagePane(modifier) {
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.nfc_filter_title)) },
+            supportingContent = { Text(stringResource(R.string.nfc_filter_summary)) },
+            modifier = Modifier.clickable(onClick = onNavigateToNfcCards)
+        )
+
+        HorizontalDivider()
+
+        NfcEmulationContent(
+            uiState = uiState,
+            onEvent = onEvent,
+            busy = busy
+        )
+    }
+}
+
+@Composable
+private fun NfcEmulationContent(
     uiState: Preference.Nfc,
     onEvent: (NfcEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -59,8 +85,7 @@ fun DetailPaneNfc(
 
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .fillMaxWidth()
             .padding(bottom = 24.dp)
     ) {
         SwitchItem(
@@ -654,5 +679,22 @@ fun SettingViewModel.onNfcEvent(event: NfcEvent) {
                 Toast.makeText(application, application.getString(R.string.nfc_toast_sim_success, uid), Toast.LENGTH_SHORT).show()
             }
         }
+    }
+}
+
+sealed interface NFCEvent {
+    @JvmInline
+    value class FilterMode(val value: Int) : NFCEvent
+
+    @JvmInline
+    value class Cards(val value: Map<String, String>) : NFCEvent
+}
+
+fun SettingViewModel.onNFCEvent(event: NFCEvent) {
+    updateData { preference ->
+        preference.copy(other = when (event) {
+            is NFCEvent.FilterMode -> preference.other.copy(nfcFilterMode = event.value)
+            is NFCEvent.Cards -> preference.other.copy(nfcCards = event.value)
+        })
     }
 }

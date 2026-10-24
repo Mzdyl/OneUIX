@@ -41,13 +41,14 @@ class SettingViewModel(val application: Application) : ViewModel() {
             .loadIcon(packageManager)
             .toBitmap()
             .asImageBitmap()
-        val categoryAppInfoList = Category.entries.map { category ->
+        val categoryAppInfoList = Category.entries.filter { it != Category.Other }.map { category ->
             val applicationInfo = try {
                 packageManager.getApplicationInfo(category.packageName, 0)
             } catch (_: PackageManager.NameNotFoundException) {
                 null
             }
-            val label = applicationInfo?.loadLabel(packageManager)?.toString()
+            val label = if (category == Category.NFC) application.getString(R.string.nfc_service)
+                else applicationInfo?.loadLabel(packageManager)?.toString()
                 ?: category.packageName
             val icon = applicationInfo?.loadIcon(packageManager)?.toBitmap()?.asImageBitmap()
                 ?: fallbackIcon

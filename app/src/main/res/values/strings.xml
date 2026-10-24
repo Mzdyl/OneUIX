@@ -107,7 +107,10 @@
     <string name="autoExpandNotifications_title">Auto expand notifications</string>
     <string name="hideOngoingActivityMedia_title">Hide ongoing activity for media apps</string>
     <string name="hideOngoingActivityMedia_summary">Hide the ongoing activity chip in status bar and media notification card in notification shade when playing music in the background</string>
-    <string name="hideOngoingActivityMedia_packages_hint">Package names, separated by commas</string>
+    <string name="app_picker_title">Select apps</string>
+    <string name="app_picker_search_hint">Search app name or package name</string>
+    <string name="app_picker_selected_count">Selected apps: %1$d</string>
+    <string name="app_picker_empty">No matching apps</string>
     <string name="customPowerMenu_title">Customize power menu actions</string>
     <string name="powerMenuActionVisible_summary">Visible, position %1$d</string>
     <string name="powerMenuActionHidden_summary">Hidden</string>
@@ -271,6 +274,8 @@
     <string name="disableWritingToolkitGlobally_title">Disable Writing Toolkit globally</string>
     <string name="disableWritingToolkitGlobally_summary">Removes Samsung Writing Toolkit from text selection menus in all apps through the System Framework</string>
     <string name="disableFlagSecure_title">Disable FLAG_SECURE</string>
+    <string name="hideScreenshotDetection_title">Hide screenshots from apps</string>
+    <string name="hideScreenshotDetection_summary">Add the selected apps to the module scope and restart them. Block screenshot callbacks and recognized screenshot change notifications. Screenshots remain visible in photo pickers; other photo notifications are preserved</string>
     <string name="disableFlagSecure_summary">Allow screenshots and screen recording in secure windows</string>
     <string name="chargingLimit_title">Charging limit</string>
     <string name="chargingLimit_summary" formatted="false">Use Samsung battery protection to limit charging to 20–100%. Set to 100% to turn protection off</string>
@@ -336,4 +341,19 @@
     <string name="sPenTranslationSource_summary">Choose the translation provider for either China or international firmware. Restart S Pen translation to apply.</string>
     <string name="operation_in_progress">Applying…</string>
     <string name="operation_failed">Operation failed. Check the current state and try again.</string>
+
+    <string name="nfc_filter_title">NFC card filter</string>
+    <string name="nfc_service">NFC service</string>
+    <string name="nfc_filter_summary">Add NFC (com.android.nfc) to the module scope and restart the phone once. List changes apply immediately. Tap a saved card to edit its note.</string>
+    <string name="nfc_mode_off">Off</string>
+    <string name="nfc_mode_blacklist">Blacklist: ignore listed cards</string>
+    <string name="nfc_mode_whitelist">Whitelist: only recognize listed cards</string>
+    <string name="nfc_scan_hint">Hold a card near the phone to read its UID, or enter it manually, then save. Cards can be read here even when filtered.</string>
+    <string name="nfc_unavailable">This device does not support NFC. You can still enter UIDs manually.</string>
+    <string name="nfc_disabled">Turn on NFC to read a card, or enter its UID manually.</string>
+    <string name="nfc_settings">NFC settings</string>
+    <string name="nfc_uid_invalid">Enter complete hexadecimal bytes, such as 92014119.</string>
+    <string name="nfc_note">Note (optional)</string>
+    <string name="nfc_save">Save / update</string>
+    <string name="nfc_delete">Delete</string>
 </resources>

@@ -37,7 +37,6 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.soclear.oneuix.R
-import io.github.soclear.oneuix.common.NetworkSpeedOption
 import io.github.soclear.oneuix.common.ONE_UI_VERSION
 import io.github.soclear.oneuix.common.PowerMenuAction
 import io.github.soclear.oneuix.common.Preference
@@ -55,6 +54,7 @@ import io.github.soclear.oneuix.common.R as CommonR
 fun DetailPaneSystemUI(
     uiState: Preference.SystemUI,
     onEvent: (SystemUIEvent) -> Unit,
+    onNavigateToAppPicker: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToNetworkSpeed: () -> Unit = {}
 ) {
@@ -748,54 +748,24 @@ fun DetailPaneSystemUI(
         }
 
         DividerText(R.string.notification)
-        Column {
-            var expanded by rememberSaveable { mutableStateOf(false) }
-            SwitchItem(
-                icon = ImageVector.vectorResource(id = R.drawable.music_note),
-                title = stringResource(id = R.string.hideOngoingActivityMedia_title),
-                summary = if (uiState.notification.hideOngoingActivityMedia && uiState.notification.hideOngoingActivityMediaPackages.isNotEmpty()) {
-                    uiState.notification.hideOngoingActivityMediaPackages
-                } else {
-                    stringResource(id = R.string.hideOngoingActivityMedia_summary)
-                },
-                clickable = true,
-                onClick = { expanded = !expanded },
-                checked = uiState.notification.hideOngoingActivityMedia,
-                onCheckedChange = {
-                    if (it && uiState.notification.hideOngoingActivityMediaPackages.isEmpty()) {
-                        expanded = true
-                    } else if (!it) {
-                        expanded = false
-                    }
-                    onEvent(SystemUIEvent.Notification.HideOngoingActivityMedia(it))
-                }
-            )
-            AnimatedVisibility(expanded && uiState.notification.hideOngoingActivityMedia) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    var tempPackages by remember {
-                        mutableStateOf(uiState.notification.hideOngoingActivityMediaPackages)
-                    }
-                    OutlinedTextField(
-                        value = tempPackages,
-                        onValueChange = { tempPackages = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text(text = stringResource(id = R.string.hideOngoingActivityMedia_packages_hint)) },
-                        singleLine = true,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            onEvent(SystemUIEvent.Notification.HideOngoingActivityMediaPackages(tempPackages))
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.confirm))
-                    }
-                }
+        val selectedPackages = uiState.notification.hideOngoingActivityMediaPackages
+            .split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.music_note),
+            title = stringResource(id = R.string.hideOngoingActivityMedia_title),
+            summary = if (uiState.notification.hideOngoingActivityMedia && selectedPackages.isNotEmpty()) {
+                stringResource(R.string.app_picker_selected_count, selectedPackages.size)
+            } else {
+                stringResource(id = R.string.hideOngoingActivityMedia_summary)
+            },
+            clickable = true,
+            onClick = onNavigateToAppPicker,
+            checked = uiState.notification.hideOngoingActivityMedia,
+            onCheckedChange = {
+                onEvent(SystemUIEvent.Notification.HideOngoingActivityMedia(it))
+                if (it && selectedPackages.isEmpty()) onNavigateToAppPicker()
             }
-        }
+        )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.notifications),
             title = stringResource(id = R.string.disableNotificationGrouping_title),

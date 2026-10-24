@@ -1,4 +1,5 @@
 system
+com.android.nfc
 com.android.settings
 com.android.systemui
 com.samsung.android.app.notes
@@ -32,7 +33,6 @@ com.sec.imsservice
 com.samsung.android.app.sharelive
 com.sec.android.app.shealth
 com.samsung.android.agent.storage
-com.android.nfc
 io.github.soclear.oneuix
 io.github.mzdyl.oneuix
 com.samsung.android.samsungpay.gear
