@@ -20,17 +20,34 @@ object WatchPlugin {
      * 背景：
      * 三星手表插件（watchuniteplugin、waterplugin 等）后台常驻服务 SettingsCompanion
      * 会监听 ACTION_PACKAGE_REMOVED。当监听到 com.google.android.wearable.app.cn 被卸载且手机
-     * 判定为国行时，会通过 launchDialogActivity() 调起 SettingsDialogActivity。
+     * 判定为国行时，会触发 requestWearOSPluginList() 并通过 launchDialogActivity() 调起 SettingsDialogActivity。
      * SettingsDialogActivity 在 onCreate() 中会立即无条件调用 removeBond()，
      * 向蓝牙协议栈发送 WEAR_OS_PACKAGE_REMOVED 指令并清除底层配对关系，强行导致手表断联并重置。
      *
-     * 防护策略：
+     * 防护策略（四重拦截）：
+     * 0. 拦截 SettingsCompanion.requestWearOSPluginList()，从源头掐灭向 WearOSPluginInfoSubscriber 的请求；
      * 1. 拦截 SettingsCompanion.launchDialogActivity(ArrayList)，阻止调起解绑弹窗 Activity；
      * 2. 拦截 SettingsDialogActivity.removeBond(ArrayList)，彻底掐死任何触发底层蓝牙解绑的通路；
      * 3. 拦截 SettingsDialogActivity.showDialog(ArrayList)，直接 finish() 避免显示弹窗。
      */
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     private fun preventWearOsPackageRemovedReset() {
+        // 闸门 0：拦截 SettingsCompanion.requestWearOSPluginList()（源头拦截）
+        try {
+            val companionClass = param.classLoader.loadClass(
+                "com.samsung.android.companionservice.service.SettingsCompanion"
+            )
+            val requestMethod = companionClass.getDeclaredMethod("requestWearOSPluginList")
+            requestMethod.isAccessible = true
+            xposedModule.hook(requestMethod).intercept {
+                xlog("OneUIX: [WatchPlugin] BLOCKED SettingsCompanion.requestWearOSPluginList()!")
+                Unit
+            }
+            xlog("OneUIX: [WatchPlugin] Hooked SettingsCompanion.requestWearOSPluginList")
+        } catch (t: Throwable) {
+            xlog("OneUIX: [WatchPlugin] Hook SettingsCompanion.requestWearOSPluginList failed: $t")
+        }
+
         // 闸门 1：拦截 SettingsCompanion.launchDialogActivity(ArrayList<String>)
         try {
             val companionClass = param.classLoader.loadClass(
