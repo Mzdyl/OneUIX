@@ -117,72 +117,126 @@ object StatusBar {
 
     context(xposedModule: XposedModule)
     fun updateStatusBarClockEverySecond() = afterAttachTry {
-        // 每秒更新
-        try {
-            val helperClass = classLoader.loadClass(
-                "com.android.systemui.statusbar.policy.QSClockQuickStarHelper"
-            )
-            val method = helperClass.getDeclaredMethod("updateSecondsClockHandler")
-            xposedModule.hook(method).intercept { chain ->
+        if (ONE_UI_VERSION >= 90000) {
+            val towerClass = classLoader.loadClass("com.android.systemui.statusbar.policy.QSClockBellTower")
+            xposedModule.hook(towerClass.declaredConstructors.single()).intercept { chain ->
                 val result = chain.proceed()
                 try {
-                    val mSecondsHandler = chain.thisObject.reflect["mSecondsHandler"]
-                    if (mSecondsHandler == null) {
-                        val looper = Looper.myLooper()
-                        if (looper != null) {
-                            val handler = Handler(looper)
-                            chain.thisObject.reflect["mSecondsHandler"] = handler
-                            val mSecondTick = chain.thisObject.reflect["mSecondTick"] as? Runnable
-                            if (mSecondTick != null) {
-                                handler.post(mSecondTick)
+                    val tower = chain.thisObject
+                    val handler = tower.reflect["mHandler"] as Handler
+                    val updateTime = tower.reflect["mUpdateNotifyNewClockTime"] as Runnable
+                    // Use the clock's own update task, independently of QuickStar's panel state.
+                    handler.post(object : Runnable {
+                        override fun run() {
+                            updateTime.run()
+                            handler.postAtTime(this, SystemClock.uptimeMillis() + 1000 - System.currentTimeMillis() % 1000)
+                        }
+                    })
+                } catch (t: Throwable) {
+                    xlog(t)
+                }
+                result
+            }
+
+            val clockClass = classLoader.loadClass("com.android.systemui.statusbar.policy.QSClockIndicatorView")
+            xposedModule.hook(clockClass.getDeclaredMethod("onAttachedToWindow")).intercept { chain ->
+                val result = chain.proceed()
+                (chain.thisObject as TextView).fontFeatureSettings = "tnum"
+                result
+            }
+        } else {
+            // 每秒更新
+            try {
+                val helperClass = classLoader.loadClass(
+                    "com.android.systemui.statusbar.policy.QSClockQuickStarHelper"
+                )
+                val method = helperClass.getDeclaredMethod("updateSecondsClockHandler")
+                xposedModule.hook(method).intercept { chain ->
+                    val result = chain.proceed()
+                    try {
+                        val mSecondsHandler = chain.thisObject.reflect["mSecondsHandler"]
+                        if (mSecondsHandler == null) {
+                            val looper = Looper.myLooper()
+                            if (looper != null) {
+                                val handler = Handler(looper)
+                                chain.thisObject.reflect["mSecondsHandler"] = handler
+                                val mSecondTick = chain.thisObject.reflect["mSecondTick"] as? Runnable
+                                if (mSecondTick != null) {
+                                    handler.post(mSecondTick)
+                                }
                             }
                         }
+                    } catch (t: Throwable) {
+                        xlog(t)
                     }
-                } catch (t: Throwable) {
-                    xlog(t)
+                    result
                 }
-                result
+            } catch (t: Throwable) {
+                xlog(t)
             }
-        } catch (t: Throwable) {
-            xlog(t)
-        }
 
-        // 数字字体等宽
-        try {
-            val controllerClass = classLoader.loadClass(
-                "com.android.systemui.statusbar.policy.QSClockIndicatorViewController"
-            )
-            val onViewAttachedMethod = controllerClass.getDeclaredMethod("onViewAttached")
-            xposedModule.hook(onViewAttachedMethod).intercept { chain ->
-                val result = chain.proceed()
-                try {
-                    val clockTextView = chain.thisObject.reflect["view"] as? TextView
-                    clockTextView?.fontFeatureSettings = "tnum"
-                } catch (t: Throwable) {
-                    xlog(t)
+            // 数字字体等宽
+            try {
+                val controllerClass = classLoader.loadClass(
+                    "com.android.systemui.statusbar.policy.QSClockIndicatorViewController"
+                )
+                val onViewAttachedMethod = controllerClass.getDeclaredMethod("onViewAttached")
+                xposedModule.hook(onViewAttachedMethod).intercept { chain ->
+                    val result = chain.proceed()
+                    try {
+                        val clockTextView = chain.thisObject.reflect["view"] as? TextView
+                        clockTextView?.fontFeatureSettings = "tnum"
+                    } catch (t: Throwable) {
+                        xlog(t)
+                    }
+                    result
                 }
-                result
+            } catch (t: Throwable) {
+                xlog(t)
             }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 
     context(xposedModule: XposedModule)
     fun setStatusBarClockTextScale(scale: Float) = afterAttachTry {
-        val controllerClass = classLoader.loadClass(
-            "com.android.systemui.statusbar.policy.QSClockIndicatorViewController"
-        )
-        val method = controllerClass.getDeclaredMethod("onDensityOrFontScaleChanged")
-        xposedModule.hook(method).intercept { chain ->
-            val result = chain.proceed()
-            try {
-                val clockView = chain.thisObject.reflect["view"] as? TextView
-                clockView?.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockView.textSize * scale)
-            } catch (t: Throwable) {
-                xlog(t)
+        if (ONE_UI_VERSION >= 90000) {
+            val controllerClass = classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorViewController"
+            )
+            val pending = mutableMapOf<TextView, Runnable>()
+            val method = controllerClass.getDeclaredMethod("onDensityOrFontScaleChanged")
+            xposedModule.hook(method).intercept { chain ->
+                val result = chain.proceed()
+                try {
+                    val view = chain.thisObject.reflect["view"] as TextView
+                    pending.remove(view)?.let { view.removeCallbacks(it) }
+                    val task = Runnable {
+                        pending.remove(view)
+                        view.setTextSize(TypedValue.COMPLEX_UNIT_PX, view.textSize * scale)
+                    }
+                    pending[view] = task
+                    // One UI 9 posts its size update; scale afterwards, once per pending update.
+                    view.post(task)
+                } catch (t: Throwable) {
+                    xlog(t)
+                }
+                result
             }
-            result
+        } else {
+            val controllerClass = classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorViewController"
+            )
+            val method = controllerClass.getDeclaredMethod("onDensityOrFontScaleChanged")
+            xposedModule.hook(method).intercept { chain ->
+                val result = chain.proceed()
+                try {
+                    val clockView = chain.thisObject.reflect["view"] as? TextView
+                    clockView?.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockView.textSize * scale)
+                } catch (t: Throwable) {
+                    xlog(t)
+                }
+                result
+            }
         }
     }
 
