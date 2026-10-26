@@ -185,8 +185,8 @@
     <string name="liftFcmNetworkLimit_title">解除 FCM 网络限制</string>
     <string name="liftFcmNetworkLimit_summary">解除国行（包含港版）固件对 GMS/FCM 推送的网络限制</string>
     <string name="disableScreenWakeOnPowerUnplugged_title">拔出充电器时不亮屏</string>
-    <string name="disableWritingToolkitGlobally_title">全局禁用写作工具包</string>
-    <string name="disableWritingToolkitGlobally_summary">通过系统框架从所有应用的文本选择菜单中移除三星写作工具包</string>
+    <string name="disableWritingToolkit_title">禁用写作工具包</string>
+    <string name="disableWritingToolkit_summary">将所选应用加入模块作用域并重启应用，从其文本选择菜单中移除三星写作工具包</string>
     <string name="disableFlagSecure_title">禁用安全标记 (FLAG_SECURE)</string>
     <string name="hideScreenshotDetection_title">对应用隐藏截图行为</string>
     <string name="hideScreenshotDetection_summary">将所选应用加入模块作用域并重启应用后生效。屏蔽截图回调与识别到的截图变更通知；仍可查看截图，普通照片通知保留</string>

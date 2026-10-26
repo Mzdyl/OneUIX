@@ -26,6 +26,12 @@ class Main : XposedModule() {
         if (!isFirstPackage) return@with
         val preference = PreferenceProvider.loadPreference() ?: return@with
 
+        if (preference.other.disableWritingToolkit &&
+            packageName in preference.other.disableWritingToolkitPackages
+        ) {
+            Other.disableWritingToolkit()
+        }
+
         if (preference.other.hideScreenshotDetection &&
             packageName in preference.other.hideScreenshotDetectionPackages
         ) {
@@ -514,10 +520,6 @@ class Main : XposedModule() {
 
     override fun onSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) = with(param) {
         val preference = PreferenceProvider.loadPreference() ?: return@with
-
-        if (preference.android.disableWritingToolkitGlobally) {
-            Android.disableWritingToolkitGlobally()
-        }
 
         if (preference.android.disablePinVerifyPer72h) {
             Android.disablePinVerifyPer72h()

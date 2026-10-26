@@ -22,7 +22,6 @@ data class Preference(
         val allowAllRotation: Boolean = false,
         val liftFcmNetworkLimit: Boolean = false,
         val disableScreenWakeOnPowerUnplugged: Boolean = false,
-        val disableWritingToolkitGlobally: Boolean = false,
         val disableFlagSecure: Boolean = false,
     )
 
@@ -152,6 +151,8 @@ data class Preference(
     data class Other(
         val nfcFilterMode: Int = 0, // 0: 关闭，1: 黑名单，2: 白名单
         val nfcCards: Map<String, String> = emptyMap(),
+        val disableWritingToolkit: Boolean = false,
+        val disableWritingToolkitPackages: Set<String> = emptySet(),
         val hideScreenshotDetection: Boolean = false,
         val hideScreenshotDetectionPackages: Set<String> = emptySet(),
         val unlockBixbyOfflineProcessing: Boolean = false,

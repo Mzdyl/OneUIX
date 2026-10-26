@@ -284,7 +284,10 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                         Category.Other -> DetailPaneOther(
                             uiState = preference.other,
                             onEvent = viewModel::onOtherEvent,
-                            onNavigateToAppPicker = {
+                            onNavigateToWritingToolkitApps = {
+                                navigateToExtra(SettingDestination.Extra.DisableWritingToolkitApps)
+                            },
+                            onNavigateToScreenshotDetectionApps = {
                                 navigateToExtra(SettingDestination.Extra.HideScreenshotDetectionApps)
                             }
                         )
@@ -315,6 +318,12 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                                 SystemUIEvent.Notification.HideOngoingActivityMediaPackages(it.sorted().joinToString(","))
                             )
                         },
+                        onBack = onBack
+                    )
+
+                    SettingDestination.Extra.DisableWritingToolkitApps -> AppPicker(
+                        selectedPackages = preference.other.disableWritingToolkitPackages,
+                        onSelectionChange = { viewModel.onOtherEvent(OtherEvent.DisableWritingToolkitPackages(it)) },
                         onBack = onBack
                     )
 

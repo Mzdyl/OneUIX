@@ -185,8 +185,8 @@
     <string name="liftFcmNetworkLimit_title">FCM 네트워크 제한 해제</string>
     <string name="liftFcmNetworkLimit_summary">중국(홍콩 포함) 펌웨어에서 GMS/FCM 푸시 네트워크 연결을 제한하는 정책을 제거합니다</string>
     <string name="disableScreenWakeOnPowerUnplugged_title">충전기 분리 시 화면 켜짐 방지</string>
-    <string name="disableWritingToolkitGlobally_title">글쓰기 도구 전체 비활성화</string>
-    <string name="disableWritingToolkitGlobally_summary">시스템 프레임워크를 통해 모든 앱의 텍스트 선택 메뉴에서 Samsung 글쓰기 도구를 제거합니다</string>
+    <string name="disableWritingToolkit_title">글쓰기 도구 비활성화</string>
+    <string name="disableWritingToolkit_summary">선택한 앱을 모듈 적용 범위에 추가하고 다시 시작하면 텍스트 선택 메뉴에서 Samsung 글쓰기 도구가 제거됩니다</string>
     <string name="disableFlagSecure_title">FLAG_SECURE 비활성화</string>
     <string name="hideScreenshotDetection_title">앱에서 스크린샷 감지 숨기기</string>
     <string name="hideScreenshotDetection_summary">선택한 앱을 모듈 적용 범위에 추가한 후 다시 시작하세요. 스크린샷 콜백과 스크린샷으로 식별된 변경 알림만 차단합니다. 사진 선택기에서 스크린샷을 볼 수 있으며 일반 사진 알림은 유지됩니다</string>

@@ -185,8 +185,8 @@
     <string name="liftFcmNetworkLimit_title">Снять ограничение сети FCM</string>
     <string name="liftFcmNetworkLimit_summary">Убрать ограничение прошивки Китая (включая Гонконг), блокирующее сетевой доступ push GMS/FCM</string>
     <string name="disableScreenWakeOnPowerUnplugged_title">Не включать экран при отключении зарядки</string>
-    <string name="disableWritingToolkitGlobally_title">Отключить инструменты для письма глобально</string>
-    <string name="disableWritingToolkitGlobally_summary">Удаляет инструменты для письма Samsung из меню выделения текста во всех приложениях через системный фреймворк</string>
+    <string name="disableWritingToolkit_title">Отключить инструменты для письма</string>
+    <string name="disableWritingToolkit_summary">Добавьте выбранные приложения в область действия модуля и перезапустите их, чтобы убрать инструменты для письма Samsung из меню выделения текста</string>
     <string name="disableFlagSecure_title">Отключить FLAG_SECURE</string>
     <string name="hideScreenshotDetection_title">Скрывать снимки экрана от приложений</string>
     <string name="hideScreenshotDetection_summary">Добавьте выбранные приложения в область действия модуля и перезапустите их. Блокируются уведомления о захвате экрана и распознанных снимках. Снимки видимы при выборе фото; уведомления об обычных фото сохраняются</string>
