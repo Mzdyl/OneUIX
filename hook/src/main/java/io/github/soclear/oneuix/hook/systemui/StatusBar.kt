@@ -72,6 +72,31 @@ object StatusBar {
         widthScale: Float?,
         heightScale: Float?
     ) = afterAttachTry(widthScale != null || heightScale != null) {
+        if (ONE_UI_VERSION >= 90000) {
+            val clazz = classLoader.loadClass("androidx.compose.ui.platform.AbstractComposeView")
+            xposedModule.hook(clazz.declaredMethods.single { it.name == "onLayout" }).intercept { chain ->
+                val result = chain.proceed()
+                val view = chain.thisObject as View
+                val parent = view.parent as? ViewGroup
+                // The Compose battery replaces a hidden BatteryMeterView in the same container.
+                if (parent != null && (0 until parent.childCount).any {
+                        parent.getChildAt(it).javaClass.name == "com.android.systemui.battery.BatteryMeterView"
+                    }) {
+                    view.scaleX = widthScale ?: 1f
+                    view.scaleY = heightScale ?: 1f
+                    view.pivotX = if (view.layoutDirection == View.LAYOUT_DIRECTION_RTL) view.width.toFloat() else 0f
+                    view.pivotY = view.height / 2f
+                    val params = view.layoutParams as ViewGroup.MarginLayoutParams
+                    val margin = (view.width * (view.scaleX - 1f)).roundToInt()
+                    if (params.marginEnd != margin) {
+                        params.marginEnd = margin
+                        view.layoutParams = params
+                    }
+                }
+                result
+            }
+            return@afterAttachTry
+        }
         val clazz = classLoader.loadClass("com.android.systemui.battery.BatteryMeterView")
         val method = clazz.getDeclaredMethod("scaleBatteryMeterViewsLegacy")
         xposedModule.hook(method).intercept { chain ->
