@@ -288,10 +288,6 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                             onEvent = viewModel::onWeatherEvent
                         )
 
-                        Category.SamsungHealth -> DetailPaneSamsungHealth(
-                            uiState = preference.samsungHealth,
-                            onEvent = viewModel::onSamsungHealthEvent
-                        )
 
                         Category.Bixby -> DetailPaneBixby(
                             uiState = preference.bixby,

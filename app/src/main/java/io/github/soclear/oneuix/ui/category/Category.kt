@@ -27,7 +27,6 @@ enum class Category(val packageName: String) {
     Video(Package.VIDEO),
     WatchManager(Package.WATCH_MANAGER),
     Weather(Package.WEATHER),
-    SamsungHealth(Package.SAMSUNG_HEALTH),
     QuickShare(Package.SHARE_LIVE),
     Other("");
 }
