@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun DetailPaneSamsungHealth(
     uiState: Preference.SamsungHealth,
+    otherUiState: Preference.Other,
     onEvent: (SamsungHealthEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -48,6 +49,12 @@ fun DetailPaneSamsungHealth(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.health_metrics),
+            title = stringResource(id = R.string.hideSamsungHealthDiscover_title),
+            checked = otherUiState.hideSamsungHealthDiscover,
+            onCheckedChange = { onEvent(SamsungHealthEvent.HideDiscover(it)) }
+        )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.lock_open),
             title = stringResource(id = R.string.samsungHealthBypassAccountCountry_title),
@@ -263,6 +270,9 @@ sealed interface SamsungHealthEvent {
 
     @JvmInline
     value class DataBridge(val value: Boolean) : SamsungHealthEvent
+
+    @JvmInline
+    value class HideDiscover(val value: Boolean) : SamsungHealthEvent
 }
 
 fun SettingViewModel.onSamsungHealthEvent(event: SamsungHealthEvent) {
@@ -307,6 +317,12 @@ fun SettingViewModel.onSamsungHealthEvent(event: SamsungHealthEvent) {
             is SamsungHealthEvent.DataBridge -> preference.copy(
                 samsungHealth = preference.samsungHealth.copy(
                     dataBridge = event.value
+                )
+            )
+
+            is SamsungHealthEvent.HideDiscover -> preference.copy(
+                other = preference.other.copy(
+                    hideSamsungHealthDiscover = event.value
                 )
             )
         }

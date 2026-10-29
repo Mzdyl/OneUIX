@@ -28,7 +28,6 @@ data class Preference(
         val fcmFix: Boolean = false,
         val hideNavigationBarGestureHint: Boolean = false,
         val disableScreenWakeOnPowerUnplugged: Boolean = false,
-        val disableWritingToolkitGlobally: Boolean = false,
         val disableFlagSecure: Boolean = false,
     )
 
@@ -46,6 +45,11 @@ data class Preference(
             val statusBarLeftPaddingDp: Float = 0f,
             val modifyStatusBarRightPadding: Boolean = false,
             val statusBarRightPaddingDp: Float = 0f,
+            val alignStatusBarContentToTop: Boolean = false,
+            val setBatteryIconWidthScale: Boolean = false,
+            val batteryIconWidthScale: Float = 1f,
+            val setBatteryIconHeightScale: Boolean = false,
+            val batteryIconHeightScale: Float = 1f,
             val hideBatteryPercentageSign: Boolean = false,
             val hideBatteryIcon: Boolean = false,
             val addBatteryLevelText: Boolean = false,
@@ -105,6 +109,7 @@ data class Preference(
         @Serializable
         data class AOD(
             val hideAODStatusBar: Boolean = false,
+            val hideAODChargingInfo: Boolean = false,
             val aodLockSupportLunar: Boolean = false,
         )
 
@@ -118,6 +123,7 @@ data class Preference(
 
         @Serializable
         data class Other(
+            val hideLockscreenEmergencyButton: Boolean = false,
             val disableScreenshotCaptureSound: Boolean = false,
             val customPowerMenu: Boolean = false,
             val powerMenuActions: List<PowerMenuAction> = PowerMenuAction.defaultPreferences()
@@ -169,6 +175,8 @@ data class Preference(
     data class Other(
         val nfcFilterMode: Int = 0, // 0: 关闭，1: 黑名单，2: 白名单
         val nfcCards: Map<String, String> = emptyMap(),
+        val disableWritingToolkit: Boolean = false,
+        val disableWritingToolkitPackages: Set<String> = emptySet(),
         val hideScreenshotDetection: Boolean = false,
         val hideScreenshotDetectionPackages: Set<String> = emptySet(),
         val unlockBixbyOfflineProcessing: Boolean = false,
@@ -177,6 +185,8 @@ data class Preference(
         val blockGalaxyStoreAds: Boolean = true,
         val changeRegion: Boolean = false,
         val regionCode: String = "US",
+        val setGalaxyStoreSimOperator: Boolean = false,
+        val galaxyStoreSimOperator: String = "",
         val makeAllUserAppsAvailable: Boolean = true,
         val setWeatherProviderCN: Boolean = false,
         val showMemoryUsageInRecents: Boolean = false,
@@ -205,10 +215,13 @@ data class Preference(
         val spoofBrowserCountryCodeToUS: Boolean = false,
         val noAIWatermark: Boolean = true,
         val enableSketch: Boolean = false,
+        val hideSamsungHealthDiscover: Boolean = false,
         val bypassHealthMonitorCountryCheck: Boolean = false,
         val sPenTranslationSource: SPenTranslationSource = SPenTranslationSource.DEFAULT,
         val hideAppsSearchBar: Boolean = false,
         val removeShortcutBadge: Boolean = false,
+        val modifyDockBottomPadding: Boolean = false,
+        val dockBottomPaddingDp: Float = 0f,
         val bypassWatchPairingRegionCheck: Boolean = false,
         val watchPairingConnectionMode: Int = 0,
         val supplementChinaWearOsGms: Boolean = false,

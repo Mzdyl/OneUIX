@@ -11,6 +11,7 @@ import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.common.Preference
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
+import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.getHookConfig
 import io.github.soclear.oneuix.hook.util.longVersionCode
 import io.github.soclear.oneuix.hook.util.xlog
@@ -599,6 +600,35 @@ object SamsungHealth {
             }
         } catch (t: Throwable) {
             xlog(t)
+        }
+    }
+    context(xposedModule: XposedModule)
+    fun hideDiscover() = afterAttachTry {
+        val config = getHookConfig { getHookConfigFromDexKit() } ?: return@afterAttachTry
+        xposedModule.hook(DexMethod(config.isDiscoverPlusSupported).getMethodInstance(classLoader))
+            .intercept { false }
+    }
+
+    @Serializable
+    private data class SamsungHealthHookConfig(
+        override val versionCode: Long,
+        val isDiscoverPlusSupported: String,
+    ) : HookConfig
+
+    private fun Context.getHookConfigFromDexKit(): SamsungHealthHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val method = bridge.findMethod {
+                matcher {
+                    usingEqStrings("isDiscoverPlusSupported()")
+                    returnType = "boolean"
+                    paramCount = 0
+                }
+            }.singleOrNull() ?: return null
+            return SamsungHealthHookConfig(
+                versionCode = longVersionCode,
+                isDiscoverPlusSupported = method.toDexMethod().serialize(),
+            )
         }
     }
 }

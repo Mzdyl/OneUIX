@@ -51,6 +51,7 @@
     <string name="immersiveModeQsTile_title">开启沉浸模式快捷设置磁贴</string>
     <string name="rootImmersiveModeQsTile_summary">需要 root 权限。请手动添加磁贴，点击后隐藏状态栏，再次点击恢复</string>
     <string name="outdoorModeQsTile_label">户外模式</string>
+    <string name="autoBrightnessQsTile_label">自动调节亮度</string>
     <string name="setStatusBarClockFormat_title">设置状态栏时钟格式</string>
     <string name="setStatusBarClockFormat_summary">支持时间格式和变量：\n{temp}=电池温度, {lunar}=农历, {rate}=刷新率, {shichen}=时辰, {sec}=秒数, {date}=系统日期\n示例：HH:mm {temp} → 12:30 25.0°C</string>
     <string name="setStatusBarClockTextScale_title">设置状态栏时间日期缩放倍数</string>
@@ -84,8 +85,11 @@
     <string name="blockGalaxyStoreAds_summary">去除开屏广告、推荐广告/弹窗以及安装时年龄限制弹窗</string>
     <string name="galaxyStoreChangeRegion_title">切换三星应用商店区域</string>
     <string name="galaxyStoreChangeRegion_summary">伪造设备区域以访问不同国家/地区的应用商店内容</string>
-    <string name="galaxyStoreRegion_title">选择目标区域</string>
-    <string name="galaxyStoreRegion_summary">伪造的目标国家/地区代码</string>
+    <string name="galaxyStoreSelectRegion_title">选择目标区域</string>
+    <string name="galaxyStoreSelectRegion_summary">伪造的目标国家/地区代码</string>
+    <string name="galaxyStoreSimOperator_title">应用商店 SIM 运营商代码（MCC+MNC）</string>
+    <string name="galaxyStoreSimOperator_summary">填写 5 或 6 位数字，保留前导零，点击确认保存；留空不修改。重启应用商店后生效。</string>
+    <string name="galaxyStoreSimOperator_reference">查询国家和运营商代码（ITU）</string>
     <string name="region_us">美国 (US)</string>
     <string name="region_cn">中国大陆 (CN)</string>
     <string name="region_hk">香港 (HK)</string>
@@ -181,6 +185,7 @@
     <string name="showForcePeakRefreshRatePreference_summary">设置中搜索“强制最高刷新率”</string>
     <string name="disablePinVerifyPer72h_title">禁用每 72 小时验证一次锁屏 PIN 码</string>
     <string name="hideAODStatusBar_title">隐藏 AOD 状态栏</string>
+    <string name="hideAODChargingInfo_title">隐藏息屏提醒的充电信息</string>
     <string name="aodLockSupportLunar_title">AOD/锁屏 支持农历显示</string>
     <string name="enableChineseHolidayDisplay_title">日历显示中国节假日</string>
     <string name="supportBlockMessage_title">支持短信拦截</string>
@@ -230,6 +235,7 @@
     <string name="samsungHealthDataBridgeCopied">已复制</string>
     <string name="samsungHealthDataBridgeCopy">复制令牌</string>
     <string name="samsungHealthDataBridgeCopyCmd">复制读取命令</string>
+    <string name="hideSamsungHealthDiscover_title">隐藏“发现”页面</string>
     <string name="disableAsksRestriction_title">禁用 ASKS 限制</string>
     <string name="disableAsksRestriction_summary">移除 ASKS 策略对应用安装的限制</string>
     <string name="fcmFix_title">强制唤醒 FCM</string>
@@ -291,8 +297,8 @@
     <string name="liftFcmNetworkLimit_title">解除 FCM 网络限制</string>
     <string name="liftFcmNetworkLimit_summary">解除国行（包含港版）固件对 GMS/FCM 推送的网络限制</string>
     <string name="disableScreenWakeOnPowerUnplugged_title">拔出充电器时不亮屏</string>
-    <string name="disableWritingToolkitGlobally_title">全局禁用写作工具包</string>
-    <string name="disableWritingToolkitGlobally_summary">通过系统框架从所有应用的文本选择菜单中移除三星写作工具包</string>
+    <string name="disableWritingToolkit_title">禁用写作工具包</string>
+    <string name="disableWritingToolkit_summary">将所选应用加入模块作用域并重启应用，从其文本选择菜单中移除三星写作工具包</string>
     <string name="disableFlagSecure_title">禁用安全标记 (FLAG_SECURE)</string>
     <string name="hideScreenshotDetection_title">对应用隐藏截图行为</string>
     <string name="hideScreenshotDetection_summary">将所选应用加入模块作用域并重启应用后生效。屏蔽截图回调与识别到的截图变更通知；仍可查看截图，普通照片通知保留</string>
@@ -375,4 +381,10 @@
     <string name="nfc_note">备注（选填）</string>
     <string name="nfc_save">保存 / 更新</string>
     <string name="nfc_delete">删除</string>
+    <string name="alignStatusBarContentToTop_title">状态栏内容置顶</string>
+    <string name="alignStatusBarContentToTop_summary">仅竖屏生效，保留状态栏原高度和应用顶部避让区域</string>
+    <string name="hideLockscreenEmergencyButton_title">隐藏锁屏紧急呼叫按钮</string>
+    <string name="hideLockscreenEmergencyButton_summary">移除解锁界面的紧急呼叫快捷入口，会降低紧急拨号的便捷性。</string>
+    <string name="modifyDockBottomPadding_title">修改桌面底部栏下边距</string>
+    <string name="modifyDockBottomPadding_summary">手机竖屏：%1$.1f dp，设为 0 移除底部留白，可能与手势区域重叠。</string>
 </resources>

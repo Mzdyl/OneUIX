@@ -51,6 +51,7 @@
     <string name="immersiveModeQsTile_title">Enable Immersive mode Quick Settings tile</string>
     <string name="rootImmersiveModeQsTile_summary">Requires root access. Add the tile manually; tap it to hide or restore the status bar</string>
     <string name="outdoorModeQsTile_label">Outdoor mode</string>
+    <string name="autoBrightnessQsTile_label">Auto brightness</string>
     <string name="setStatusBarClockFormat_title">Set status bar date and time format</string>
     <string name="setStatusBarClockFormat_summary">Supports time format and variables:\n{temp} = battery temp, {lunar} = lunar date, {rate} = refresh rate, {shichen} = Chinese hour, {sec} = seconds, {date} = system date\nExample: HH:mm {temp} → 12:30 25.0°C</string>
     <string name="setStatusBarClockTextScale_title">Set status bar clock scale factor</string>
@@ -81,11 +82,14 @@
     <string name="redirect_custom_tab_title">Force links to open in external Samsung Internet</string>
     <string name="redirect_custom_tab_summary">When Samsung Internet is set as the default browser, many apps open links in a limited in-app Samsung Internet Custom Tab. Enable this to force links out of the app and open them in the full Samsung Internet browser.</string>
     <string name="blockGalaxyStoreAds_title">Remove ads in Galaxy Store</string>
+    <string name="galaxyStoreSimOperator_title">Galaxy Store SIM operator (MCC+MNC)</string>
+    <string name="galaxyStoreSimOperator_summary">Enter 5 or 6 digits, keeping leading zeros, then tap Confirm to save. Leave blank for no modification. Restart Galaxy Store to apply.</string>
+    <string name="galaxyStoreSimOperator_reference">Look up country and operator codes (ITU)</string>
     <string name="blockGalaxyStoreAds_summary">Remove splash screen ads, recommended ads/pop-ups, and installation age restriction pop-ups</string>
     <string name="galaxyStoreChangeRegion_title">Change Galaxy Store region</string>
     <string name="galaxyStoreChangeRegion_summary">Spoof device region to access different store content</string>
-    <string name="galaxyStoreRegion_title">Select region</string>
-    <string name="galaxyStoreRegion_summary">Target region to spoof</string>
+    <string name="galaxyStoreSelectRegion_title">Select region</string>
+    <string name="galaxyStoreSelectRegion_summary">Target region to spoof</string>
     <string name="region_us">United States</string>
     <string name="region_cn">China</string>
     <string name="region_hk">Hong Kong</string>
@@ -181,6 +185,7 @@
     <string name="showForcePeakRefreshRatePreference_summary">Search for \'Force peak refresh rate\' in Settings</string>
     <string name="disablePinVerifyPer72h_title">Disable PIN verification every 72 hours</string>
     <string name="hideAODStatusBar_title">Hide AOD status bar</string>
+    <string name="hideAODChargingInfo_title">Hide AOD charging information</string>
     <string name="aodLockSupportLunar_title">Show Chinese Lunar calendar on AOD/Lock screen</string>
     <string name="enableChineseHolidayDisplay_title">Show Chinese holidays in Calendar</string>
     <string name="supportBlockMessage_title">Support message blocking</string>
@@ -203,6 +208,7 @@
     <string name="spoofPhoneStatusAsOfficial_summary">Settings -> About phone -> Status information</string>
     <string name="noAIWatermark_title">Disable AI watermark</string>
     <string name="noAIWatermark_summary">Includes Photo Editor and Creative Studio</string>
+    <string name="hideSamsungHealthDiscover_title">Hide Discover tab</string>
     <string name="bypassHealthMonitorCountryCheck_title">Bypass Samsung Health Monitor country check</string>
     <string name="bypassHealthMonitorCountryCheck_summary">Allow using Health Monitor in unsupported countries, unlocking IHRN and Sleep Apnea detection</string>
     <string name="samsungHealthBypassAccountCountry_title">Bypass account region restrictions</string>
@@ -291,8 +297,8 @@
     <string name="liftFcmNetworkLimit_title">Lift FCM network limit</string>
     <string name="liftFcmNetworkLimit_summary">Remove the China (including Hong Kong) firmware restriction that throttles GMS/FCM push network access</string>
     <string name="disableScreenWakeOnPowerUnplugged_title">Keep screen off when unplugged</string>
-    <string name="disableWritingToolkitGlobally_title">Disable Writing Toolkit globally</string>
-    <string name="disableWritingToolkitGlobally_summary">Removes Samsung Writing Toolkit from text selection menus in all apps through the System Framework</string>
+    <string name="disableWritingToolkit_title">Disable Writing Toolkit</string>
+    <string name="disableWritingToolkit_summary">Add the selected apps to the module scope and restart them to remove Samsung Writing Toolkit from their text selection menus</string>
     <string name="disableFlagSecure_title">Disable FLAG_SECURE</string>
     <string name="hideScreenshotDetection_title">Hide screenshots from apps</string>
     <string name="hideScreenshotDetection_summary">Add the selected apps to the module scope and restart them. Block screenshot callbacks and recognized screenshot change notifications. Screenshots remain visible in photo pickers; other photo notifications are preserved</string>
@@ -376,4 +382,10 @@
     <string name="nfc_note">Note (optional)</string>
     <string name="nfc_save">Save / update</string>
     <string name="nfc_delete">Delete</string>
+    <string name="alignStatusBarContentToTop_title">Align status bar content to the top</string>
+    <string name="alignStatusBarContentToTop_summary">Portrait mode only. Keeps the original status bar height and app insets.</string>
+    <string name="hideLockscreenEmergencyButton_title">Hide lock screen emergency call button</string>
+    <string name="hideLockscreenEmergencyButton_summary">Removes the emergency call shortcut from the unlock screen. This makes emergency dialing less accessible.</string>
+    <string name="modifyDockBottomPadding_title">Modify home screen dock bottom padding</string>
+    <string name="modifyDockBottomPadding_summary">Phones in portrait mode: %1$.1f dp. Set to 0 to remove bottom padding. May overlap the gesture area.</string>
 </resources>
