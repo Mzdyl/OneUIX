@@ -41,19 +41,15 @@ object SamsungPushService {
             }.onFailure { xlog(it) }
 
             runCatching {
-                val networkUtilClass = classLoader.loadClass("l3.d")
-                networkUtilClass.declaredMethods.filter { it.name == "b" && it.returnType == String::class.java }.forEach {
-                    xposedModule.hook(it).intercept { "CN" }
-                }
-                networkUtilClass.declaredMethods.filter { it.name == "r" && it.returnType == java.lang.Boolean.TYPE }.forEach {
-                    xposedModule.hook(it).intercept { true }
-                }
-            }.onFailure { xlog(it) }
-
-            runCatching {
-                val eosCheckerClass = classLoader.loadClass("c4.l")
-                eosCheckerClass.declaredMethods.filter { it.returnType == java.lang.Boolean.TYPE && it.parameterCount == 0 }.forEach {
-                    xposedModule.hook(it).intercept { false }
+                val sysPropClass = classLoader.loadClass("android.os.SystemProperties")
+                sysPropClass.declaredMethods.filter { it.name == "get" }.forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        val key = chain.args.firstOrNull() as? String
+                        when (key) {
+                            "ro.csc.countryiso_code" -> "CN"
+                            else -> chain.proceed()
+                        }
+                    }
                 }
             }.onFailure { xlog(it) }
         }

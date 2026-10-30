@@ -54,18 +54,23 @@ object StorageAgent {
             xlog(t)
         }
 
-        // 2. Direct hook on zzqr.zzA to bypass system app check completely
+        // 2. Hook SystemProperties to enable GSDK useragent spoofing and logcat debug dynamically
         try {
-            val zzqrClass = classLoader.loadClass("com.google.android.gms.internal.media_sync.zzqr")
-            val zzaMethod = zzqrClass.getDeclaredMethod("zzA")
-            val zzhMethod = zzqrClass.getDeclaredMethod("zzH")
-            xposedModule.hook(zzaMethod).intercept { chain ->
-                runCatching { zzhMethod.invoke(chain.thisObject) }.onFailure { xlog(it) }
-                null
+            val sysPropClass = classLoader.loadClass("android.os.SystemProperties")
+            sysPropClass.declaredMethods.filter { it.name == "get" }.forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    val key = chain.args.firstOrNull() as? String
+                    when (key) {
+                        "gsdktest.spoofuseragent" -> "true"
+                        "gsdk.log_to_logcat" -> "true"
+                        else -> chain.proceed()
+                    }
+                }
             }
         } catch (t: Throwable) {
             xlog(t)
         }
+
 
         // 3. Hook GCloudSDKBaseAsync.getCountryCodeByDevice to return non-blacklisted country ("US")
         try {
@@ -123,15 +128,6 @@ object StorageAgent {
             xlog(t)
         }
 
-        try {
-            val zzerClass = classLoader.loadClass("com.google.android.gms.internal.media_sync.zzer")
-            val zzcMethod = zzerClass.getDeclaredMethod("zzc", String::class.java)
-            xposedModule.hook(zzcMethod).intercept { chain ->
-                if (chain.args.firstOrNull() == "gsdktest.spoofuseragent") "true" else chain.proceed()
-            }
-        } catch (t: Throwable) {
-            xlog(t)
-        }
 
         // 7. Force unhide auth WebView when page finishes loading & log auth events
         try {
@@ -162,17 +158,13 @@ object StorageAgent {
             xlog(t)
         }
 
-        // 8. Plaintext logging for Samsung GCS and GMS MediaSync debug
+        // 8. Plaintext logging for Samsung GCS debug
         try {
             val logClass = classLoader.loadClass("com.samsung.android.agent.storage.ui.utils.Log")
             val getEncodedMethod = logClass.getDeclaredMethod("getEncodedString", String::class.java)
             xposedModule.hook(getEncodedMethod).intercept { chain ->
                 chain.args.firstOrNull() as? String ?: ""
             }
-
-            val zzfbClass = classLoader.loadClass("com.google.android.gms.internal.media_sync.zzfb")
-            val zzbMethod = zzfbClass.getDeclaredMethod("zzb")
-            xposedModule.hook(zzbMethod).intercept { true }
         } catch (t: Throwable) {
             xlog(t)
         }

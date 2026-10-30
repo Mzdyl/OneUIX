@@ -472,7 +472,7 @@ object Gallery {
                     val name = (chain.thisObject as? Enum<*>)?.name
                         ?: runCatching { chain.thisObject.reflect.call("name") as? String }.getOrNull()
                     when (name) {
-                        "GalleryLabsDev" -> if (other.unlockGalleryDeveloperLabs) true else chain.proceed()
+                        "GalleryLabs", "GalleryLabsDev" -> if (other.unlockGalleryDeveloperLabs) true else chain.proceed()
                         "UndoDelete" -> if (other.enableGalleryUndoDelete) true else chain.proceed()
                         "DualPhotoPreview", "CompareImages" -> if (other.enableGalleryDualPhotoPreview) true else chain.proceed()
                         "DoubleTapSeek" -> if (other.enableGalleryQuickSeek) true else chain.proceed()
