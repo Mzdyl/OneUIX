@@ -4,73 +4,29 @@ import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.common.SPenTranslationSource
-import io.github.soclear.oneuix.hook.util.xlog
+import io.github.soclear.oneuix.hook.util.SamsungFeature
 
 object SPen {
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun switchTranslateSource(source: SPenTranslationSource) {
         if (param.packageName != Package.TRANSLATION || source == SPenTranslationSource.DEFAULT) return
-        val useGoogle = source == SPenTranslationSource.GOOGLE
-
-        val classLoader = param.classLoader
-
-        if (useGoogle) {
-            try {
-                val validationClass = classLoader.loadClass(
-                    "com.samsung.sdk.clickstreamanalytics.internal.policy.Validation"
-                )
-
-                xposedModule.hook(
-                    validationClass.getDeclaredMethod("isChinaModel")
-                ).intercept { false }
-
-                xposedModule.hook(
-                    validationClass.getDeclaredMethod("getCountryCode", String::class.java)
-                ).intercept { "CN" }
-            } catch (_: ClassNotFoundException) {
-            } catch (t: Throwable) {
-                xlog(t)
-            }
+        val targetSolution = when (source) {
+            SPenTranslationSource.GOOGLE -> "Google"
+            SPenTranslationSource.BAIDU -> "Baidu"
+            SPenTranslationSource.DEFAULT -> return
         }
 
-        try {
-            val cscFeatureClass = classLoader.loadClass(
-                "com.samsung.android.feature.SemCscFeature"
-            )
-
-            xposedModule.hook(
-                cscFeatureClass.getDeclaredMethod("getString", String::class.java)
-            ).intercept { chain ->
-                val key = chain.args[0] as? String
-                if (key != null &&
-                    (key.contains("translate", ignoreCase = true) ||
-                        key.contains("SPen_ConfigDefTranslatorSolution", ignoreCase = true) ||
-                        key == "DefaultCscFeature_Spen_Translation" ||
-                        key == "CscFeature_Spen_Translation")
-                ) {
-                    if (useGoogle) "GOOGLE" else "BAIDU"
-                } else {
-                    chain.proceed()
-                }
+        SamsungFeature.overrideCscString("SPenTranslate") { key, _ ->
+            if (key.contains("SPen_ConfigDefTranslatorSolution", ignoreCase = true) ||
+                key.contains("translate", ignoreCase = true) ||
+                key == "DefaultCscFeature_Spen_Translation" ||
+                key == "CscFeature_Spen_Translation"
+            ) {
+                targetSolution
+            } else {
+                null
             }
-
-            xposedModule.hook(
-                cscFeatureClass.getDeclaredMethod("getString", String::class.java, String::class.java)
-            ).intercept { chain ->
-                val key = chain.args[0] as? String
-                if (key != null &&
-                    (key.contains("translate", ignoreCase = true) ||
-                        key.contains("SPen_ConfigDefTranslatorSolution", ignoreCase = true) ||
-                        key == "DefaultCscFeature_Spen_Translation" ||
-                        key == "CscFeature_Spen_Translation")
-                ) {
-                    if (useGoogle) "GOOGLE" else "BAIDU"
-                } else {
-                    chain.proceed()
-                }
-            }
-        } catch (t: Throwable) {
-            xlog(t)
         }
     }
 }
+
