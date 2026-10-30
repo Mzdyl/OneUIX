@@ -406,7 +406,10 @@ class Main : XposedModule() {
 
                 if (preference.systemUI.statusBar.setStatusBarClockFormat) {
                     val format = preference.systemUI.statusBar.statusBarClockFormat
-                    StatusBarClock.setStatusBarClockStyle(format)
+                    StatusBarClock.setStatusBarClockStyle(
+                        format = format,
+                        needsSecondUpdate = preference.systemUI.statusBar.updateStatusBarClockEverySecond,
+                    )
                 }
 
                 if (preference.systemUI.statusBar.setStatusBarClockTextScale) {

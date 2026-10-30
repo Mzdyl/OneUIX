@@ -240,26 +240,24 @@ object StatusBarClock {
         }
 
         try {
-            val indicatorClass = param.classLoader.loadClass(
-                "com.android.systemui.statusbar.policy.QSClockIndicatorView"
+            val controllerClass = param.classLoader.loadClass(
+                "com.android.systemui.statusbar.policy.QSClockIndicatorViewController"
             )
-            indicatorClass.declaredMethods
-                .filter { it.name == "onViewDetached" || it.name == "onDetachedFromWindow" }
-                .forEach { method ->
-                    xposedModule.hook(method).intercept { chain ->
-                        val result = chain.proceed()
-                        val clockTextView = chain.thisObject as? TextView
-                        if (clockTextView != null) {
-                            synchronized(clockViews) {
-                                clockViews.remove(clockTextView)
-                                if (clockViews.isEmpty()) {
-                                    stopSecondUpdate()
-                                }
-                            }
+            val onViewDetachedMethod = controllerClass.getDeclaredMethod("onViewDetached")
+            xposedModule.hook(onViewDetachedMethod).intercept { chain ->
+                val result = chain.proceed()
+                val clockTextView = (chain.thisObject.reflect["mView"] as? TextView)
+                    ?: (chain.thisObject.reflect["view"] as? TextView)
+                if (clockTextView != null) {
+                    synchronized(clockViews) {
+                        clockViews.remove(clockTextView)
+                        if (clockViews.isEmpty()) {
+                            stopSecondUpdate()
                         }
-                        result
                     }
                 }
+                result
+            }
         } catch (_: Throwable) {}
     }
 
@@ -411,7 +409,7 @@ object StatusBarClock {
 
     private fun getRefreshRate(context: Context): String {
         val refreshRate = context.display?.refreshRate?.toInt() ?: -1
-        return "${refreshRate}Hz"
+        return if (refreshRate > 0) "${refreshRate}Hz" else ""
     }
 
     private fun getChineseTimeHour(): String {
