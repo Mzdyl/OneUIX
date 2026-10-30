@@ -635,10 +635,7 @@ class Main : XposedModule() {
 
             Package.NFC -> {
                 NFC.filterNfcCards()
-                NfcEmulation.init(
-                    enableSimulation = preference.nfc.enableSimulation,
-                    bypassPrompt = preference.nfc.bypassPrompt
-                )
+                NfcEmulation.init()
             }
         }
     }
