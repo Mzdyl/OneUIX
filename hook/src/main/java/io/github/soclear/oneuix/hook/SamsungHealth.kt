@@ -64,7 +64,7 @@ object SamsungHealth {
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun init(preference: Preference.SamsungHealth) {
-        if (param.packageName != Package.SAMSUNG_HEALTH) return
+        if (param.packageName != Package.HEALTH) return
         afterAttach {
             if (preference.bypassAccountCountryCheck) {
                 hookAccountCountryCheck(this, classLoader)

@@ -19,7 +19,6 @@ object Package {
     const val PHONE = "com.android.phone"
     const val PHOTO_RETOUCHING = "com.sec.android.mimage.photoretouching"
     const val SETTINGS = "com.android.settings"
-    const val SAMSUNG_HEALTH = "com.sec.android.app.shealth"
     const val SKETCH_BOOK = "com.samsung.android.app.sketchbook"
     const val SM_CN = "com.samsung.android.sm_cn"
     const val SPEN = "com.samsung.android.service.airviewdictionary"
