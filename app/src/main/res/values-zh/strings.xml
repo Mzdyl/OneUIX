@@ -320,6 +320,8 @@
     <string name="restore_failed">恢复失败，文件可能已损坏</string>
     <string name="enableGoogleQuickShare_title">开启 Google 快速分享支持</string>
     <string name="enableGoogleQuickShare_summary">在 S 互传中解除对 Google 快速分享能力的限制，实现国内互传联盟（小米/OPPO/vivo）与 Google Quick Share（Pixel/电脑等）双向并存。</string>
+    <string name="unlockQuickShareLabs_title">解锁实验室与开发者选项</string>
+    <string name="unlockQuickShareLabs_summary">解锁快速分享 Labs 实验室（文件夹整包发送、NFC 触碰分享与动画）、右上角开发者菜单（强制 Wi-Fi Direct P2P 直连、缓存与会话控制）以及实时传输协议显示。</string>
     <string name="nfc_label">NFC 门禁卡模拟</string>
     <string name="nfc_bypass_prompt_title">免弹窗开启 NFC</string>
     <string name="nfc_bypass_prompt_summary">允许 Shell、Root 及应用静默开启 NFC，无需手动确认系统弹窗</string>

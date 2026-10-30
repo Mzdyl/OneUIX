@@ -24,12 +24,22 @@ fun DetailPaneQuickShare(
             checked = uiState.enableGoogleQuickShare,
             onCheckedChange = { onEvent(QuickShareEvent.EnableGoogleQuickShare(it)) }
         )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.logo_dev),
+            title = stringResource(id = R.string.unlockQuickShareLabs_title),
+            summary = stringResource(id = R.string.unlockQuickShareLabs_summary),
+            checked = uiState.unlockQuickShareLabs,
+            onCheckedChange = { onEvent(QuickShareEvent.UnlockQuickShareLabs(it)) }
+        )
     }
 }
 
 sealed interface QuickShareEvent {
     @JvmInline
     value class EnableGoogleQuickShare(val value: Boolean) : QuickShareEvent
+
+    @JvmInline
+    value class UnlockQuickShareLabs(val value: Boolean) : QuickShareEvent
 }
 
 fun SettingViewModel.onQuickShareEvent(event: QuickShareEvent) {
@@ -38,6 +48,12 @@ fun SettingViewModel.onQuickShareEvent(event: QuickShareEvent) {
             is QuickShareEvent.EnableGoogleQuickShare -> preference.copy(
                 other = preference.other.copy(
                     enableGoogleQuickShare = event.value
+                )
+            )
+
+            is QuickShareEvent.UnlockQuickShareLabs -> preference.copy(
+                other = preference.other.copy(
+                    unlockQuickShareLabs = event.value
                 )
             )
         }

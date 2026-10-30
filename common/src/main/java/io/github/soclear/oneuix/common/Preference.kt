@@ -227,6 +227,7 @@ data class Preference(
         val forceShowAllWatchfaceComplications: Boolean = true,
         val enableWatchPluginHiddenMenuShortcut: Boolean = true,
         val enableGoogleQuickShare: Boolean = true,
+        val unlockQuickShareLabs: Boolean = true,
     )
 
     @Serializable

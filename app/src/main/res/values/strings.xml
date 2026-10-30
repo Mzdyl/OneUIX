@@ -320,6 +320,8 @@
     <string name="restore_failed">Restore failed, the file may be corrupted</string>
     <string name="enableGoogleQuickShare_title">Enable Google Quick Share</string>
     <string name="enableGoogleQuickShare_summary">Enable Google Quick Share in S-Transfer. Allows transferring with Google Pixel, Android devices, and Windows PCs alongside China MTA.</string>
+    <string name="unlockQuickShareLabs_title">Unlock Labs &amp; Developer Options</string>
+    <string name="unlockQuickShareLabs_summary">Unlock Quick Share Labs (folder sharing, NFC tap-to-share, lucky share), top-right developer options (forced Wi-Fi Direct P2P transfer, cache &amp; session management), and real-time transfer protocol display.</string>
     <string name="nfc_label">NFC Card Simulation</string>
     <string name="nfc_bypass_prompt_title">Bypass NFC Prompt</string>
     <string name="nfc_bypass_prompt_summary">Allow Shell, Root, and apps to enable NFC silently without confirmation dialog</string>

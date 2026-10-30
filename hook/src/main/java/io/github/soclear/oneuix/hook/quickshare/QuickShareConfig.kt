@@ -12,10 +12,14 @@ internal data class QuickShareConfig(
     val isMoseySupportedMethod: String? = null,
     val sepGlobalCheckMethod: String? = null,
     val temporaryModeMethod: String? = null,
+    val isProductShipMethod: String? = null,
+    val prepareAppbarMenuMethod: String? = null,
+    val removePreferenceMethod: String? = null,
+    val setPreferenceVisibleMethod: String? = null,
 )
 
 internal object QuickShareConfigCache {
-    const val SCHEMA_VERSION = 1
+    const val SCHEMA_VERSION = 2
     private val json = Json { ignoreUnknownKeys = true }
 
     fun load(file: File, versionCode: Long, discover: () -> QuickShareConfig): QuickShareConfig {

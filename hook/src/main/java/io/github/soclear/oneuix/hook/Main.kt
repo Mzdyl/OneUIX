@@ -317,9 +317,10 @@ class Main : XposedModule() {
             }
 
             Package.SHARE_LIVE -> {
-                if (preference.other.enableGoogleQuickShare) {
-                    QuickShare.enableGoogleQuickShare()
-                }
+                QuickShare.handleHooks(
+                    enableGoogleQuickShare = preference.other.enableGoogleQuickShare,
+                    unlockQuickShareLabs = preference.other.unlockQuickShareLabs
+                )
             }
 
             Package.STORE -> {
