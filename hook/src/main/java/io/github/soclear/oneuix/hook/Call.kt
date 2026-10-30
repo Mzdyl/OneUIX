@@ -390,6 +390,63 @@ object Call {
                                 }
                             }
 
+                            // 2.4 强制副设备 (SD) 采用单呼叫按键布局 (LayoutType = 0)
+                            // 在国行双卡环境下，DialpadButtonHelperCHN 会因 isMultiSim && isManualMode 强制返回布局 21 (双按键)，
+                            // 双按键硬编码呼叫本地 SIM 1 / SIM 2，完全绕过底部药丸切换栏，导致第 3/4 张 CMC 远程卡无法呼出。
+                            // 强制 LayoutType = 0 并重置双卡控制位后，拨号盘将呈现居中单按键，
+                            // 并在下方药丸栏中支持在全部本地卡与全部远程 CMC 卡（最多 4 张卡）之间平滑循环切换与外拨。
+                            val helperClasses = bridge.findClass {
+                                matcher {
+                                    usingStrings("getLayoutType")
+                                }
+                            }
+
+                            for (helperClassData in helperClasses) {
+                                val methodData = bridge.findMethod {
+                                    matcher {
+                                        declaredClass(helperClassData.name)
+                                        returnType("int")
+                                        paramCount(0)
+                                        usingStrings("getLayoutType")
+                                    }
+                                }.firstOrNull() ?: continue
+
+                                val fieldsToClear = mutableSetOf<Field>()
+                                methodData.usingFields.forEach { uf ->
+                                    runCatching {
+                                        val f = uf.field.getFieldInstance(classLoader)
+                                        if (f.type == java.lang.Boolean.TYPE) {
+                                            f.isAccessible = true
+                                            fieldsToClear.add(f)
+                                        }
+                                    }
+                                }
+
+                                val getLayoutTypeMethod = methodData.getMethodInstance(classLoader)
+                                xposedModule.hook(getLayoutTypeMethod).intercept { chain ->
+                                    try {
+                                        val target = chain.thisObject
+                                        if (fieldsToClear.isNotEmpty()) {
+                                            fieldsToClear.forEach { f ->
+                                                runCatching { f.setBoolean(target, false) }
+                                            }
+                                        } else {
+                                            var clz: Class<*>? = target.javaClass
+                                            while (clz != null && clz != Any::class.java) {
+                                                clz.declaredFields.forEach { f ->
+                                                    if (!Modifier.isStatic(f.modifiers) && f.type == java.lang.Boolean.TYPE) {
+                                                        f.isAccessible = true
+                                                        f.setBoolean(target, false)
+                                                    }
+                                                }
+                                                clz = clz.superclass
+                                            }
+                                        }
+                                    } catch (_: Throwable) {}
+                                    0
+                                }
+                            }
+
                             val callLogsModelClassData = bridge.findClass {
                                 matcher {
                                     usingStrings("CallLogsModel")
