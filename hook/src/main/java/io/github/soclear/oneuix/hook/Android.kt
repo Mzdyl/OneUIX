@@ -2,6 +2,7 @@ package io.github.soclear.oneuix.hook
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
+import android.content.Intent
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.hook.util.reflect
@@ -132,7 +133,8 @@ object Android {
     // 禁用 ASKS 限制
     context(xposedModule: XposedModule, param: XposedModuleInterface.SystemServerStartingParam)
     fun disableAsksRestriction() {
-        try {
+        // Legacy ASKS (One UI 5 / Android 13 及以下)
+        runCatching {
             val asksManagerClass = param.classLoader
                 .loadClass("com.android.server.asks.ASKSManager")
             val policyClass = param.classLoader
@@ -148,35 +150,58 @@ object Android {
                 .forEach {
                     xposedModule.hook(it).intercept { false }
                 }
-        } catch (t: Throwable) {
-            xlog(t)
+        }
+
+        // Modern ASKS (One UI 6+ / Android 14, 15, 16)
+        runCatching {
+            val asksServiceClass = param.classLoader
+                .loadClass("com.android.server.asks.ASKSManagerService")
+            asksServiceClass.declaredMethods
+                .filter {
+                    it.name == "isTargetPackage" ||
+                    it.name == "isUnknownApps" ||
+                    it.name == "isSuspiciousMsgTarget" ||
+                    it.name == "isBlockTarget" ||
+                    it.name == "hasBlockPolicy"
+                }
+                .forEach {
+                    xposedModule.hook(it).intercept { false }
+                }
+
+            asksServiceClass.declaredMethods
+                .filter { it.name == "checkFollowingLegitimateWay" }
+                .forEach {
+                    xposedModule.hook(it).intercept { true }
+                }
+
+            asksServiceClass.declaredMethods
+                .filter { it.name == "checkASKSTarget" }
+                .forEach {
+                    xposedModule.hook(it).intercept { emptyArray<String>() }
+                }
         }
     }
 
     // FCM 强制唤醒
     context(xposedModule: XposedModule, param: XposedModuleInterface.SystemServerStartingParam)
     fun fcmFix() {
-        try {
-            val amsClass = param.classLoader
-                .loadClass("com.android.server.am.ActivityManagerService")
-            amsClass.declaredMethods
-                .filter { it.name == "broadcastIntentLocked" }
+        fun hookBroadcast(clazz: Class<*>) {
+            clazz.declaredMethods
+                .filter { it.name == "broadcastIntentLocked" || it.name == "broadcastIntentLockedTraced" }
                 .forEach { method ->
                     xposedModule.hook(method).intercept { chain ->
-                        for (i in chain.args.indices) {
-                            val arg = chain.args[i]
-                            if (arg is android.content.Intent) {
+                        for (arg in chain.args) {
+                            if (arg is Intent) {
                                 val action = arg.action
                                 if (action != null && (
                                     action == "com.google.firebase.INSTANCE_ID_EVENT" ||
                                     action == "com.google.firebase.MESSAGING_EVENT" ||
                                     action.endsWith(".android.c2dm.intent.RECEIVE")
                                 )) {
-                                    if (chain.args.isNotEmpty() && chain.args[0] is Int) {
-                                        val newArgs = chain.args.toTypedArray()
-                                        newArgs[0] = 0
-                                        return@intercept chain.proceed(newArgs)
-                                    }
+                                    arg.addFlags(
+                                        Intent.FLAG_RECEIVER_FOREGROUND or
+                                        Intent.FLAG_INCLUDE_STOPPED_PACKAGES
+                                    )
                                 }
                                 break
                             }
@@ -184,8 +209,16 @@ object Android {
                         chain.proceed()
                     }
                 }
+        }
+
+        try {
+            hookBroadcast(param.classLoader.loadClass("com.android.server.am.ActivityManagerService"))
         } catch (t: Throwable) {
             xlog(t)
         }
+
+        try {
+            hookBroadcast(param.classLoader.loadClass("com.android.server.am.BroadcastController"))
+        } catch (_: Throwable) {}
     }
 }
