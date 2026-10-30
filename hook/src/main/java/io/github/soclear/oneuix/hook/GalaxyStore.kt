@@ -107,19 +107,23 @@ object GalaxyStore {
         val config = regionConfigs[regionCode] ?: return
         val classLoader = param.classLoader
 
-        try {
-            val systemProperties = classLoader.loadClass("android.os.SystemProperties")
-            val getMethod = systemProperties.getDeclaredMethod("get", String::class.java)
-            xposedModule.hook(getMethod).intercept { chain ->
-                val key = chain.args[0] as? String
-                when (key) {
-                    "ro.csc.sales_code" -> config.salesCode
-                    "ro.csc.country_code" -> config.countryCode
-                    "ro.csc.countryiso_code" -> config.countryIsoCode
-                    else -> chain.proceed()
+        val propertyClasses = listOf("android.os.SystemProperties", "android.os.SemSystemProperties")
+        for (className in propertyClasses) {
+            try {
+                val clazz = classLoader.loadClass(className)
+                clazz.declaredMethods.filter { it.name == "get" }.forEach { method ->
+                    xposedModule.hook(method).intercept { chain ->
+                        val key = chain.args.getOrNull(0) as? String
+                        when (key) {
+                            "ro.csc.sales_code", "persist.omc.sales_code" -> config.salesCode
+                            "ro.csc.country_code", "persist.omc.country_code" -> config.countryCode
+                            "ro.csc.countryiso_code", "persist.omc.countryiso_code" -> config.countryIsoCode
+                            else -> chain.proceed()
+                        }
+                    }
                 }
-            }
-        } catch (_: Throwable) {}
+            } catch (_: Throwable) {}
+        }
 
         try {
             val telephonyManager = classLoader.loadClass("android.telephony.TelephonyManager")
@@ -135,11 +139,21 @@ object GalaxyStore {
         } catch (_: Throwable) {}
     }
 
-    context(xposedModule: XposedModule)
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun setRegion(simOperator: String) {
         if (!simOperator.matches(Regex("[0-9]{5,6}"))) return
-        xposedModule.hook(TelephonyManager::class.java.getDeclaredMethod("getSimOperator"))
-            .intercept { simOperator }
+        try {
+            val telephonyManager = param.classLoader.loadClass("android.telephony.TelephonyManager")
+            telephonyManager.declaredMethods.filter { it.name == "getSimOperator" && it.parameterCount == 0 }.forEach {
+                xposedModule.hook(it).intercept { simOperator }
+            }
+        } catch (_: Throwable) {
+            try {
+                TelephonyManager::class.java.declaredMethods.filter { it.name == "getSimOperator" && it.parameterCount == 0 }.forEach {
+                    xposedModule.hook(it).intercept { simOperator }
+                }
+            } catch (_: Throwable) {}
+        }
     }
 
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)

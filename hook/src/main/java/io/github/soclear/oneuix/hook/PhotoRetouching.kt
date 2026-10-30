@@ -43,7 +43,7 @@ object PhotoRetouching {
 
         val classLoader = param.classLoader
 
-        // ============== Hook 1: SemSystemProperties.get(String) ==============
+        // ============== Hook 1: SemSystemProperties.get ==============
         try {
             val semSystemPropertiesClass = classLoader.loadClass("android.os.SemSystemProperties")
             semSystemPropertiesClass.declaredMethods
@@ -52,9 +52,9 @@ object PhotoRetouching {
                     xposedModule.hook(method).intercept { chain ->
                         val key = chain.args.getOrNull(0) as? String
                         when (key) {
-                            "ro.csc.countryiso_code" -> "HK"
-                            "ro.csc.sales_code" -> "TGY"
-                            "ro.csc.country_code" -> "Hong Kong"
+                            "ro.csc.countryiso_code", "persist.omc.countryiso_code" -> "HK"
+                            "ro.csc.sales_code", "persist.omc.sales_code" -> "TGY"
+                            "ro.csc.country_code", "persist.omc.country_code" -> "Hong Kong"
                             else -> chain.proceed()
                         }
                     }
@@ -63,13 +63,18 @@ object PhotoRetouching {
             xlog(t)
         }
 
-        // ============== Hook 2: SemSystemProperties.getCountryIso() ==============
+        // ============== Hook 2: SemSystemProperties.getCountryIso() & getSalesCode() ==============
         try {
             val semSystemPropertiesClass = classLoader.loadClass("android.os.SemSystemProperties")
             semSystemPropertiesClass.declaredMethods
                 .filter { it.name == "getCountryIso" }
                 .forEach { method ->
                     xposedModule.hook(method).intercept { "HK" }
+                }
+            semSystemPropertiesClass.declaredMethods
+                .filter { it.name == "getSalesCode" }
+                .forEach { method ->
+                    xposedModule.hook(method).intercept { "TGY" }
                 }
         } catch (t: Throwable) {
             xlog(t)
@@ -81,7 +86,7 @@ object PhotoRetouching {
             val productField = buildClass.getDeclaredField("PRODUCT").apply { isAccessible = true }
             val product = productField.get(null) as? String
             if (product != null) {
-                val suffixes = listOf("zc", "zm", "zcx", "zcw", "ctcx")
+                val suffixes = listOf("zcx", "zcw", "ctcx", "zc", "zm")
                 var modifiedProduct = product
                 for (suffix in suffixes) {
                     if (product.endsWith(suffix, ignoreCase = true)) {
