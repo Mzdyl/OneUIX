@@ -81,6 +81,16 @@
     <string name="showMorePlaybackSpeeds_summary">Includes local video player and built-in browser player</string>
     <string name="redirect_custom_tab_title">Force links to open in external Samsung Internet</string>
     <string name="redirect_custom_tab_summary">When Samsung Internet is set as the default browser, many apps open links in a limited in-app Samsung Internet Custom Tab. Enable this to force links out of the app and open them in the full Samsung Internet browser.</string>
+    <string name="smartSuggestionsUnlock_title">Enable Smart Suggestions tweaks</string>
+    <string name="smartSuggestionsUnlock_summary">Master switch; turning it off disables everything below</string>
+    <string name="smartSuggestionsChatTranslation_title">Chat translation</string>
+    <string name="smartSuggestionsChatTranslation_summary">Remove the model restriction so the chat translation entry appears in Messages/keyboard</string>
+    <string name="smartSuggestionsGlobalCards_title">Global card set</string>
+    <string name="smartSuggestionsGlobalCards_summary">Unlocks Gemini travel, YouTube new card, nano-banana, KimGiSa and other global cards; the Amap card and creative selfie card stop working</string>
+    <string name="smartSuggestionsHealthCards_title">Health cards</string>
+    <string name="smartSuggestionsHealthCards_summary">Health personalization, exercise greeting, activity forecast (hardcoded off in this ROM; may still not appear)</string>
+    <string name="smartSuggestionsNowNudge_title">Now Nudge</string>
+    <string name="smartSuggestionsNowNudge_summary">Unlocks the gate; actual display also needs a newer on-device model, may still not show on this device</string>
     <string name="blockGalaxyStoreAds_title">Remove ads in Galaxy Store</string>
     <string name="galaxyStoreSimOperator_title">Galaxy Store SIM operator (MCC+MNC)</string>
     <string name="galaxyStoreSimOperator_summary">Enter 5 or 6 digits, keeping leading zeros, then tap Confirm to save. Leave blank for no modification. Restart Galaxy Store to apply.</string>

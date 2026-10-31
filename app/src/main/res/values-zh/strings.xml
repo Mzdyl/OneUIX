@@ -81,6 +81,16 @@
     <string name="showMorePlaybackSpeeds_summary">包含系统自带播放器和内置浏览器播放器</string>
     <string name="redirect_custom_tab_title">强制在三星浏览器外部打开链接</string>
     <string name="redirect_custom_tab_summary">当设置三星浏览器为默认浏览器时，许多应用会在应用内的三星浏览器精简版（Custom Tab）中打开链接。开启此功能将强制跳出应用，并在完整的三星浏览器中打开网页。</string>
+    <string name="smartSuggestionsUnlock_title">启用智能建议增强</string>
+    <string name="smartSuggestionsUnlock_summary">总开关，关闭后下面的项目全部不生效</string>
+    <string name="smartSuggestionsChatTranslation_title">聊天翻译</string>
+    <string name="smartSuggestionsChatTranslation_summary">解除机型限制，信息/键盘里的聊天翻译入口可用</string>
+    <string name="smartSuggestionsGlobalCards_title">国际卡组</string>
+    <string name="smartSuggestionsGlobalCards_summary">放开 Gemini 行程、YouTube 新卡、nano-banana、KimGiSa 导航等国际卡片；代价是高德导航卡与美颜创意自拍卡会失效</string>
+    <string name="smartSuggestionsHealthCards_title">健康卡片</string>
+    <string name="smartSuggestionsHealthCards_summary">健康个性化分析、运动问候、活动预测（其中判定在 ROM 中被写死关闭，可能仍不显示）</string>
+    <string name="smartSuggestionsNowNudge_title">屏幕上的信息（Now Nudge）</string>
+    <string name="smartSuggestionsNowNudge_summary">放开判定；实际展示还依赖端侧模型版本，本机可能仍不出现</string>
     <string name="blockGalaxyStoreAds_title">去除三星应用商店广告</string>
     <string name="blockGalaxyStoreAds_summary">去除开屏广告、推荐广告/弹窗以及安装时年龄限制弹窗</string>
     <string name="galaxyStoreChangeRegion_title">切换三星应用商店区域</string>

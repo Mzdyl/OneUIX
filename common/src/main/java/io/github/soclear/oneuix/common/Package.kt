@@ -21,6 +21,7 @@ object Package {
     const val SETTINGS = "com.android.settings"
     const val SKETCH_BOOK = "com.samsung.android.app.sketchbook"
     const val SM_CN = "com.samsung.android.sm_cn"
+    const val SMART_SUGGESTIONS = "com.samsung.android.smartsuggestions"
     const val SPEN = "com.samsung.android.service.airviewdictionary"
     const val STORE = "com.sec.android.app.samsungapps"
     const val SYSTEMUI = "com.android.systemui"

@@ -43,6 +43,8 @@ import io.github.soclear.oneuix.ui.category.DetailPaneQuickShare
 import io.github.soclear.oneuix.ui.category.DetailPaneSPen
 import io.github.soclear.oneuix.ui.category.DetailPaneSamsungHealth
 import io.github.soclear.oneuix.ui.category.DetailPaneSettings
+import io.github.soclear.oneuix.ui.category.DetailPaneSmartSuggestions
+import io.github.soclear.oneuix.ui.category.onSmartSuggestionsEvent
 import io.github.soclear.oneuix.ui.category.DetailPaneSketchBook
 import io.github.soclear.oneuix.ui.category.DetailPaneSystemUI
 import io.github.soclear.oneuix.ui.category.DetailPaneThemeCenter
@@ -222,6 +224,11 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
                             uiState = preference.samsungHealth,
                             otherUiState = preference.other,
                             onEvent = viewModel::onSamsungHealthEvent
+                        )
+
+                        Category.SmartSuggestions -> DetailPaneSmartSuggestions(
+                            uiState = preference.other,
+                            onEvent = viewModel::onSmartSuggestionsEvent
                         )
 
                         Category.HealthMonitor -> DetailPaneHealthMonitor(

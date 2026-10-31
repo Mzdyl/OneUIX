@@ -316,6 +316,17 @@ class Main : XposedModule() {
                 }
             }
 
+            Package.SMART_SUGGESTIONS -> {
+                if (preference.other.unlockSmartSuggestions) {
+                    SmartSuggestions.applyHooks(
+                        chatTranslation = preference.other.smartSuggestionsChatTranslation,
+                        globalCards = preference.other.smartSuggestionsGlobalCards,
+                        healthCards = preference.other.smartSuggestionsHealthCards,
+                        nowNudge = preference.other.smartSuggestionsNowNudge
+                    )
+                }
+            }
+
             Package.SHARE_LIVE -> {
                 QuickShare.handleHooks(
                     enableGoogleQuickShare = preference.other.enableGoogleQuickShare,
