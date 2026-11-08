@@ -57,6 +57,13 @@ fun DetailPaneWatchManager(
         )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.bluetooth_connected),
+            title = stringResource(id = R.string.bypassReminderWearableCnCheck_title),
+            summary = stringResource(id = R.string.bypassReminderWearableCnCheck_summary),
+            checked = uiState.bypassReminderWearableCnCheck,
+            onCheckedChange = { onEvent(WatchManagerEvent.BypassReminderWearableCnCheck(it)) }
+        )
+        SwitchItem(
+            icon = ImageVector.vectorResource(id = R.drawable.bluetooth_connected),
             title = stringResource(id = R.string.preventWatchPluginUnpair_title),
             summary = stringResource(id = R.string.preventWatchPluginUnpair_summary),
             checked = uiState.preventWatchPluginUnpair,
@@ -100,6 +107,9 @@ sealed interface WatchManagerEvent {
     value class BypassSamsungPayWearableCnCheck(val value: Boolean) : WatchManagerEvent
 
     @JvmInline
+    value class BypassReminderWearableCnCheck(val value: Boolean) : WatchManagerEvent
+
+    @JvmInline
     value class PreventWatchPluginUnpair(val value: Boolean) : WatchManagerEvent
 
     @JvmInline
@@ -141,6 +151,12 @@ fun SettingViewModel.onWatchManagerEvent(event: WatchManagerEvent) {
             is WatchManagerEvent.BypassSamsungPayWearableCnCheck -> preference.copy(
                 other = preference.other.copy(
                     bypassSamsungPayWearableCnCheck = event.value
+                )
+            )
+
+            is WatchManagerEvent.BypassReminderWearableCnCheck -> preference.copy(
+                other = preference.other.copy(
+                    bypassReminderWearableCnCheck = event.value
                 )
             )
 

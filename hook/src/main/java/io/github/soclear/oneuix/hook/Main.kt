@@ -678,6 +678,8 @@ class Main : XposedModule() {
                 WatchPlugin.init(preference.other)
             }
 
+            Package.SREMINDER -> ReminderWear.init(preference.other)
+
             Package.TRANSLATION -> {
                 if (preference.other.sPenTranslationSource != SPenTranslationSource.DEFAULT) {
                     SPen.switchTranslateSource(preference.other.sPenTranslationSource)

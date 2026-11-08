@@ -229,6 +229,7 @@ data class Preference(
         val watchPairingConnectionMode: Int = 0,
         val supplementChinaWearOsGms: Boolean = false,
         val bypassSamsungPayWearableCnCheck: Boolean = true,
+        val bypassReminderWearableCnCheck: Boolean = true,
         val preventWatchPluginUnpair: Boolean = true,
         val unlockWatchPluginGlobalFeatures: Boolean = true,
         val forceShowAllWatchfaceComplications: Boolean = true,

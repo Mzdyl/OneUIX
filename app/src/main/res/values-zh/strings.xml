@@ -401,4 +401,6 @@
     <string name="hideLockscreenEmergencyButton_summary">移除解锁界面的紧急呼叫快捷入口，会降低紧急拨号的便捷性。</string>
     <string name="modifyDockBottomPadding_title">修改桌面底部栏下边距</string>
     <string name="modifyDockBottomPadding_summary">手机竖屏：%1$.1f dp，设为 0 移除底部留白，可能与手势区域重叠。</string>
+    <string name="bypassReminderWearableCnCheck_title">三星生活助手：绕过手表同步的国行包检查</string>
+    <string name="bypassReminderWearableCnCheck_summary">未安装国行 Wear OS companion（海外 GMS 配对）时，让三星生活助手仍能把手表数据同步出去</string>
 </resources>

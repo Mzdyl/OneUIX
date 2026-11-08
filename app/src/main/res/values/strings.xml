@@ -402,4 +402,6 @@
     <string name="hideLockscreenEmergencyButton_summary">Removes the emergency call shortcut from the unlock screen. This makes emergency dialing less accessible.</string>
     <string name="modifyDockBottomPadding_title">Modify home screen dock bottom padding</string>
     <string name="modifyDockBottomPadding_summary">Phones in portrait mode: %1$.1f dp. Set to 0 to remove bottom padding. May overlap the gesture area.</string>
+    <string name="bypassReminderWearableCnCheck_title">Reminder: bypass wearable CN check</string>
+    <string name="bypassReminderWearableCnCheck_summary">Keep Samsung Reminder syncing to the watch when the China Wear OS companion is not installed (global GMS pairing)</string>
 </resources>
