@@ -97,6 +97,7 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
     val preference by viewModel.preference.collectAsStateWithLifecycle()
     val nfcBusy by viewModel.nfcStateManager.busy.collectAsStateWithLifecycle()
     val navigationBarBusy by viewModel.navigationBarBusy.collectAsStateWithLifecycle()
+    val notificationCategoryBusy by viewModel.notificationCategoryBusy.collectAsStateWithLifecycle()
     var selectedCategory by rememberSaveable { mutableStateOf<Category?>(null) }
 
     fun navigateToExtra(destination: SettingDestination.Extra) {
@@ -182,7 +183,8 @@ fun SettingScreen(viewModel: SettingViewModel, modifier: Modifier = Modifier) {
 
                         Category.Settings -> DetailPaneSettings(
                             uiState = preference.settings,
-                            onEvent = viewModel::onSettingsEvent
+                            onEvent = viewModel::onSettingsEvent,
+                            notificationCategoryBusy = notificationCategoryBusy
                         )
 
                         Category.Call -> DetailPaneCall(

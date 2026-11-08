@@ -16,6 +16,8 @@ import io.github.soclear.oneuix.ui.category.Category
 import io.github.soclear.oneuix.ui.category.CategoryAppInfo
 import io.github.soclear.oneuix.util.NfcController
 import io.github.soclear.oneuix.util.NfcStateManager
+import io.github.soclear.oneuix.util.launchActivity
+import io.github.soclear.oneuix.util.putSettings
 import io.github.soclear.oneuix.util.setNavigationBarGestureHint
 import java.io.InputStream
 import java.io.OutputStream
@@ -83,6 +85,48 @@ class SettingViewModel(val application: Application) : ViewModel() {
 
     private val navigationBarBusyState = MutableStateFlow(false)
     val navigationBarBusy = navigationBarBusyState.asStateFlow()
+
+    private val notificationCategoryBusyState = MutableStateFlow(false)
+    val notificationCategoryBusy = notificationCategoryBusyState.asStateFlow()
+
+    fun changeShowNotificationCategory(show: Boolean) {
+        if (notificationCategoryBusyState.value) return
+        notificationCategoryBusyState.value = true
+        viewModelScope.launch {
+            try {
+                // su 会阻塞到授权弹窗结束，必须离开主线程
+                val written = withContext(Dispatchers.IO) {
+                    putSettings(
+                        "secure",
+                        "show_notification_category_setting",
+                        if (show) "1" else "0"
+                    )
+                }
+                if (!written) {
+                    Toast.makeText(application, R.string.operation_failed, Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+                dataStore.updateData {
+                    it.copy(settings = it.settings.copy(showNotificationCategory = show))
+                }
+                // 只在打开时跳过去给用户看效果；关闭时跳过去没有意义
+                if (show) {
+                    withContext(Dispatchers.IO) {
+                        launchActivity(
+                            "com.android.settings",
+                            ".Settings\$StatusBarNotificationActivity"
+                        )
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Toast.makeText(application, R.string.operation_failed, Toast.LENGTH_LONG).show()
+            } finally {
+                notificationCategoryBusyState.value = false
+            }
+        }
+    }
 
     fun changeNavigationBarGestureHint(hide: Boolean) {
         if (navigationBarBusyState.value) return

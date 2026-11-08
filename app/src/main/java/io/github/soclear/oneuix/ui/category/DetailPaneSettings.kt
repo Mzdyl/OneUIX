@@ -11,8 +11,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import io.github.soclear.oneuix.R
 import io.github.soclear.oneuix.common.Preference
-import io.github.soclear.oneuix.util.launchActivity
-import io.github.soclear.oneuix.util.putSettings
 import io.github.soclear.oneuix.ui.SettingViewModel
 import io.github.soclear.oneuix.ui.component.SwitchItem
 
@@ -20,7 +18,8 @@ import io.github.soclear.oneuix.ui.component.SwitchItem
 fun DetailPaneSettings(
     uiState: Preference.Settings,
     onEvent: (SettingsEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    notificationCategoryBusy: Boolean = false
 ) {
     Column(
         modifier = modifier
@@ -78,15 +77,13 @@ fun DetailPaneSettings(
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.notifications),
             title = stringResource(id = R.string.showNotificationCategory_title),
-            summary = stringResource(id = R.string.showNotificationCategory_summary),
+            summary = stringResource(
+                if (notificationCategoryBusy) R.string.operation_in_progress
+                else R.string.showNotificationCategory_summary
+            ),
             checked = uiState.showNotificationCategory,
-            onCheckedChange = {
-                val value = if (it) "1" else "0"
-                if (putSettings("secure", "show_notification_category_setting", value)) {
-                    launchActivity("com.android.settings", ".Settings\$StatusBarNotificationActivity")
-                    onEvent(SettingsEvent.ShowNotificationCategory(it))
-                }
-            }
+            enabled = !notificationCategoryBusy,
+            onCheckedChange = { onEvent(SettingsEvent.ShowNotificationCategory(it)) }
         )
         SwitchItem(
             icon = ImageVector.vectorResource(id = R.drawable.mobile_screensaver),
@@ -128,6 +125,10 @@ sealed interface SettingsEvent {
 }
 
 fun SettingViewModel.onSettingsEvent(event: SettingsEvent) {
+    if (event is SettingsEvent.ShowNotificationCategory) {
+        changeShowNotificationCategory(event.value)
+        return
+    }
     updateData { preference ->
         when (event) {
             is SettingsEvent.ShowForcePeakRefreshRatePreference -> preference.copy(
