@@ -176,6 +176,8 @@
     <string name="supportAllNotesFeatures_summary">数学求解器、AI 文字生成图像、涂鸦生图、语音转文本、OCR、翻译</string>
     <string name="modifyMaxNeverKilledAppNum_title">修改应用“保持开启”的最大数量</string>
     <string name="showTraditionalChineseDateOnQS_title">快捷设置面板显示农历</string>
+    <string name="removeQsBarTileAlpha_title">去掉 QS bar tile 的半透明</string>
+    <string name="removeQsBarTileAlpha_summary">亮度/音量/按钮背景/媒体播放器的自定义图不再被 SystemUI 额外乘 alpha(0.5)，与 quick tile 一样原样显示。改完需要重启 SystemUI。</string>
     <string name="modifyQSClockTextSize_title">修改快捷设置面板时钟文字大小</string>
     <string name="addBrightnessProgressToQsBar_title">快捷设置面板显示亮度数值</string>
     <string name="addVolumeProgressToQsBar_title">快捷设置面板显示音量数值</string>

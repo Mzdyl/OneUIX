@@ -14,19 +14,46 @@ import io.github.soclear.oneuix.hook.systemui.StatusBar
 import io.github.soclear.oneuix.hook.systemui.StatusBarClock
 import io.github.soclear.oneuix.hook.systemui.powermenu.PowerMenu
 import io.github.soclear.oneuix.hook.util.PreferenceProvider
+import io.github.soclear.oneuix.hook.util.diagBoth
 import io.github.soclear.oneuix.hook.util.addAssetPath
 import io.github.soclear.oneuix.hook.systemui.Other as SystemUIOther
 
 class Main : XposedModule() {
+    // 诊断构建开关：true=诊断版（有日志），false=干净版（一行都不写）
+    private val DIAG = false
+    private val systemUiApplied = java.util.concurrent.atomic.AtomicBoolean(false)
     private var processName = ""
+
+    // 无条件诊断日志：双通道（logcat + LSPosed 模块日志），带常量标记 + processName。
+    // 正式版把 DIAG 置 false 后这里彻底静音。
+    private fun diag(message: String) {
+        if (DIAG) diagBoth(this, message)
+    }
 
     override fun onModuleLoaded(param: XposedModuleInterface.ModuleLoadedParam) {
         processName = param.processName
+        diag("onModuleLoaded proc=$processName")
     }
 
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) = with(param) {
-        if (!isFirstPackage && packageName != Package.TELECOM) return@with
-        val preference = PreferenceProvider.loadPreference() ?: return@with
+        // SystemUI 进程必须无条件放行：LSPosed 在 systemui 进程里可能只 dispatch 到
+        // pkg=android，且 isFirstPackage=false；用 isFirstPackage 当通行证会把整个
+        // QS hook 拦在门外（2026-11-04 02:34 实测：pkg=android first=false 被拦掉）。
+        val inSystemUiProcess = processName == Package.SYSTEMUI ||
+            processName == "${Package.SYSTEMUI}:screenshot"
+        diag("onPackageReady pkg=$packageName proc=$processName first=$isFirstPackage inSystemUi=$inSystemUiProcess")
+        if (!inSystemUiProcess && !isFirstPackage && packageName != Package.TELECOM) {
+            diag("skip: !isFirstPackage pkg=$packageName")
+            return@with
+        }
+        val preference = PreferenceProvider.loadPreference() ?: run {
+            diag("skip: loadPreference()==null pkg=$packageName proc=$processName")
+            return@with
+        }
+        diag(
+            "preference ok pkg=$packageName qsAlpha=" +
+                preference.systemUI.qs.removeQsBarTileAlpha
+        )
 
         if (preference.other.disableWritingToolkit &&
             packageName in preference.other.disableWritingToolkitPackages
@@ -40,7 +67,11 @@ class Main : XposedModule() {
             Other.hideScreenshotDetection()
         }
 
-        when (packageName) {
+        // systemui 进程里 LSPosed 可能只把 pkg=android 送进来（见上），所以分支键要用
+        // "若是 systemui 进程则一律按 SYSTEMUI 处理"，否则 Package.SYSTEMUI 那两支永远匹配不上。
+        val dispatchPackage = if (inSystemUiProcess) Package.SYSTEMUI else packageName
+        diag("dispatch pkg=$packageName -> key=$dispatchPackage")
+        when (dispatchPackage) {
             Package.BROWSER -> {
                 if (preference.other.showMorePlaybackSpeeds) {
                     Browser.showMorePlaybackSpeeds()
@@ -343,6 +374,11 @@ class Main : XposedModule() {
             }
 
             Package.SYSTEMUI if (processName == Package.SYSTEMUI) -> {
+                if (!systemUiApplied.compareAndSet(false, true)) {
+                    diag("SYSTEMUI branch already applied, skip duplicate")
+                    return@with
+                }
+                diag("SYSTEMUI branch enter (proc=$processName pkg=$packageName first=$isFirstPackage)")
                 if (preference.android.setBlockableNotificationChannel) {
                     Android.setBlockableNotificationChannel()
                 }
@@ -516,6 +552,17 @@ class Main : XposedModule() {
                 if (preference.systemUI.qs.showTraditionalChineseDateOnQS) {
                     QS.showTraditionalChineseDateOnQS()
                 }
+
+                // 让 bar tile（亮度/音量/按钮背景/媒体播放器）的自定义图不再被
+                // SystemUI 的 alpha(0.5) 淡化，效果等同 quick tile
+                if (preference.systemUI.qs.removeQsBarTileAlpha) {
+                    QS.removeQsBarTileAlpha()
+                } else {
+                    diag("SYSTEMUI: removeQsBarTileAlpha switch is OFF, hook skipped")
+                }
+                // 无 UI 刷新 QS 主题：注册导出广播接收器，让 qstuner 侧一条 am broadcast
+                // 就能走"授权 URI + 写 Settings.Secure + notifyChange"，不必打开 QsTuner 界面
+                QS.registerQsRefreshReceiver()
 
                 if (preference.systemUI.aod.hideAODChargingInfo) {
                     AOD.hideAODChargingInfo()

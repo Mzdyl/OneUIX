@@ -99,6 +99,8 @@ data class Preference(
             val addVolumeProgressToQsBar: Boolean = false,
             val showTraditionalChineseDateOnQS: Boolean = false,
             val modifyQSClockTextSize: Boolean = false,
+            // 去掉 SystemUI 给 bar tile 自定义图套的 Modifier.alpha(0.5f)
+            val removeQsBarTileAlpha: Boolean = true,
             val qsClockTextSize: Float = 32f,
         )
 
