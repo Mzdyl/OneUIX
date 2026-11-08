@@ -1,9 +1,12 @@
 package io.github.soclear.oneuix.hook.systemui
 
 import android.annotation.SuppressLint
+import android.content.ContentResolver
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Color
 import android.os.Build
+import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -15,6 +18,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.ONE_UI_VERSION
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
@@ -23,6 +27,7 @@ import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.diagBoth
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
+import java.util.function.DoubleSupplier
 import kotlin.math.roundToInt
 
 @SuppressLint("PrivateApi")
@@ -35,6 +40,35 @@ object QS {
         SmartViewAndModes,
     }
 
+
+    context(xposedModule: XposedModule)
+    fun hideQuickQsTiles() = afterAttachTry(
+        Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE && ONE_UI_VERSION in 60100 until 70000
+    ) {
+        val controllerClass = classLoader.loadClass("com.android.systemui.qs.SecQuickQSPanelController")
+        val resourcePickerClass = classLoader.loadClass("com.android.systemui.qs.SecQSPanelResourcePicker")
+        val bottomMarginMethod = resourcePickerClass.getDeclaredMethod(
+            "getQuickQSCommonBottomMargin", Context::class.java
+        )
+        // Called once by SecQSPanelControllerBase.onInit, before the first measurement.
+        val createLayoutMethod = controllerClass.getDeclaredMethod("getOrCreateTileLayout")
+        xposedModule.hook(createLayoutMethod).intercept { chain ->
+            val tileLayout = chain.proceed() as View
+            val panel = chain.thisObject.reflect["mView"] as View
+            val heightSupplier = panel.reflect["mMeasuredHeightSupplier"] as DoubleSupplier
+
+            // Keep the layout for QsOpenAnimator's open_anim lookup; GONE also removes its margin.
+            tileLayout.visibility = View.GONE
+            // The supplier independently adds the QQS row's bottom margin, even when it is GONE.
+            // Preserve the heights of collapsed brightness/media/device bars and read the margin
+            // on every measurement so density and orientation changes still use current resources.
+            panel.reflect["mMeasuredHeightSupplier"] = DoubleSupplier {
+                val bottomMargin = bottomMarginMethod.invoke(null, panel.context) as Int
+                (heightSupplier.asDouble - bottomMargin).coerceAtLeast(0.0)
+            }
+            tileLayout
+        }
+    }
 
     context(xposedModule: XposedModule)
     fun hideDeviceControlQsTile() = afterAttachTry(Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -60,6 +94,38 @@ object QS {
                 chain.proceed()
             }
         }
+    }
+
+    // Hide the persistent "Audio Eraser" banner shown at the top of the QS panel
+    // while some media apps are playing. Only AudioEraser items are removed from the
+    // banner list; other banners (MicMode, VideoCallEffect, ...) are kept.
+    context(xposedModule: XposedModule)
+    fun hideAudioEraserBanner() = afterAttachTry(ONE_UI_VERSION >= 80500) {
+        val audioEraserClassName =
+            "com.android.systemui.samsung.quicksetting.ui.banner.AudioEraser"
+        classLoader
+            .loadClass($$"com.android.systemui.samsung.quicksetting.ui.banner.TopBannerViewModel$1$2")
+            .declaredMethods
+            .filter { it.name == "invokeSuspend" }
+            .forEach { method ->
+                xposedModule.hook(method).intercept { chain ->
+                    try {
+                        val continuation = chain.thisObject
+                        val banners = continuation.reflect[$$"L$0"] as? List<*>
+                        if (banners != null) {
+                            val filtered = banners.filterNot {
+                                it != null && it.javaClass.name == audioEraserClassName
+                            }
+                            if (filtered.size != banners.size) {
+                                continuation.reflect[$$"L$0"] = filtered
+                            }
+                        }
+                    } catch (t: Throwable) {
+                        xlog(t)
+                    }
+                    chain.proceed()
+                }
+            }
     }
 
     // related classes: BarFactory BarController  BarOrderInteractor
@@ -359,6 +425,115 @@ object QS {
         }
 
     context(xposedModule: XposedModule)
+    fun setQuickQsTileCount(count: Int) = afterAttachTry(ONE_UI_VERSION >= 80000) {
+        val layoutClass = classLoader.loadClass("com.android.systemui.qs.SecHeaderTileLayout")
+        val onMeasureMethod = layoutClass.getDeclaredMethod(
+            "onMeasure",
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        xposedModule.hook(onMeasureMethod).intercept { chain ->
+            chain.thisObject.reflect["mSidePadding"] = 0
+            chain.proceed()
+        }
+
+        val topCustomizerClass = classLoader.loadClass("com.android.systemui.qs.customize.view.QSTopTileCustomizer")
+        xposedModule.deoptimize(topCustomizerClass.getDeclaredMethod(
+            "onMeasure", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType
+        ))
+        @SuppressLint("DiscouragedApi")
+        val activeParentId = resources.getIdentifier("qs_active_page_parent", "id", Package.SYSTEMUI)
+        val customizerClass = classLoader.loadClass("com.android.systemui.qs.customize.view.QSTileCustomizerBase")
+        xposedModule.hook(customizerClass.getDeclaredMethod(
+            "setTileLayoutRowColumn",
+            Int::class.javaPrimitiveType, Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType, Int::class.javaPrimitiveType
+        )).intercept { chain ->
+            if (topCustomizerClass.isInstance(chain.thisObject)) {
+                val parent = (chain.thisObject as View).findViewById<View>(activeParentId)
+                (parent.layoutParams as ViewGroup.MarginLayoutParams).apply {
+                    leftMargin = 0
+                    rightMargin = 0
+                }
+                val args = chain.args.toTypedArray()
+                args[0] = 1
+                args[1] = count
+                chain.proceed(args)
+            } else {
+                chain.proceed()
+            }
+        }
+
+        val editorLayoutClass = classLoader.loadClass("com.android.systemui.qs.customize.CustomizerTileLayout")
+        xposedModule.hook(editorLayoutClass.getDeclaredMethod(
+            "onMeasure", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType
+        )).intercept { chain ->
+            val layout = chain.thisObject as View
+            if (layout.reflect["mShowLabel"] == false) {
+                val tiles = layout.reflect["mCustomTilesInfo"] as List<*>
+                val firstTile = tiles.firstOrNull()?.reflect?.get("customTileView") as? View
+                    ?: return@intercept chain.proceed()
+                val size = (firstTile.reflect["mBg"] as View).layoutParams.width
+                layout.reflect["mCellWidth"] = size
+                val result = chain.proceed()
+                val gap = (layout.measuredWidth - count * size) / (count - 1)
+                layout.reflect["mTileHorizontalMargin"] = gap
+                layout.reflect["mSidePadding"] = (layout.measuredWidth - count * size - (count - 1) * gap) / 2
+                tiles.forEach { tile ->
+                    val tileView = tile!!.reflect["customTileView"] as? View ?: return@forEach
+                    val icon = tileView.reflect["mCustomizeIcon"]!!
+                    val remove = icon.reflect["mIconRemove"] as? View ?: return@forEach
+                    remove.translationX = ((icon.reflect["mRemoveIconSizePx"] as Int) / 4).toFloat()
+                }
+                result
+            } else {
+                chain.proceed()
+            }
+        }
+
+        val controllerClass = classLoader.loadClass("com.android.systemui.qs.SecQuickQSPanelController")
+        xposedModule.hook(controllerClass.getDeclaredMethod("updatePaddingAndMargins")).intercept { chain ->
+            val result = chain.proceed()
+            val layout = chain.thisObject.reflect["mTileLayout"] as? View ?: return@intercept result
+            layout.setPadding(0, layout.paddingTop, 0, layout.paddingBottom)
+            val container = layout.parent as? View ?: return@intercept result
+            val panel = container.parent as? View ?: return@intercept result
+            container.layoutParams = (container.layoutParams as ViewGroup.MarginLayoutParams).apply {
+                leftMargin = -panel.paddingLeft
+                rightMargin = -panel.paddingRight
+            }
+            result
+        }
+
+        val settingsClass = classLoader.loadClass("com.android.systemui.util.settings.SecureSettingsImpl")
+        val getStringMethod = settingsClass.getDeclaredMethod(
+            "getStringForUser",
+            String::class.java,
+            Int::class.javaPrimitiveType
+        )
+        xposedModule.hook(getStringMethod).intercept { chain ->
+            val result = chain.proceed()
+            if (chain.args[0] == "sysui_quick_qs_tiles" && !((result as? String).isNullOrEmpty())) {
+                val tiles = chain.proceed(arrayOf("sysui_qs_tiles", chain.args[1])) as? String
+                (result.split(',') + tiles.orEmpty().split(','))
+                    .filter { it.isNotEmpty() }.distinct().joinToString(",")
+            } else {
+                result
+            }
+        }
+
+        @SuppressLint("DiscouragedApi")
+        val countIds = listOf("sec_quick_qs_panel_max_columns", "quick_qs_tile_min_num")
+            .map { resources.getIdentifier(it, "integer", Package.SYSTEMUI) }.filter { it != 0 }
+        if (countIds.isNotEmpty()) {
+            val getIntegerMethod = Resources::class.java.getDeclaredMethod("getInteger", Int::class.javaPrimitiveType)
+            xposedModule.hook(getIntegerMethod).intercept { chain ->
+                if (chain.args[0] in countIds) count else chain.proceed()
+            }
+        }
+    }
+
+    context(xposedModule: XposedModule)
     fun setQsClockStyle(
         monospaced: Boolean,
         modifyTextSize: Boolean,
@@ -613,6 +788,25 @@ object QS {
         }
     }
 
+    @SuppressLint("DiscouragedPrivateApi")
+    context(xposedModule: XposedModule)
+    fun disableHighBrightnessDialog() = afterAttachTry {
+        val getIntForUserMethod = Settings.System::class.java.getDeclaredMethod(
+            "getIntForUser",
+            ContentResolver::class.java,
+            String::class.java,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        xposedModule.hook(getIntForUserMethod).intercept { chain ->
+            if (chain.args[1] == "shown_max_brightness_dialog") {
+                1
+            } else {
+                chain.proceed()
+            }
+        }
+    }
+
     context(xposedModule: XposedModule)
     fun addBrightnessProgressToQsBar() = afterAttachTry(
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && ONE_UI_VERSION < 80500
@@ -843,5 +1037,55 @@ object QS {
             android.content.Context.RECEIVER_EXPORTED
         )
         if (DIAG) diagBoth(xposedModule, "QS_REFRESH receiver registered (exported)")
+    }
+    @SuppressLint("PrivateApi")
+    context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
+    fun turnOn5gQsTile() {
+        if (Build.VERSION.SDK_INT != Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            return
+        }
+        if (param.packageName == Package.SYSTEMUI ||
+            param.packageName == Package.TELEPHONYUI
+        ) {
+            try {
+                val semCscFeatureClass =
+                    param.classLoader.loadClass("com.samsung.android.feature.SemCscFeature")
+                semCscFeatureClass.declaredMethods
+                    .filter { it.name == "getString" }
+                    .forEach { method ->
+                        xposedModule.hook(method).intercept { chain ->
+                            val result = chain.proceed()
+                            if (chain.args.firstOrNull() == "CscFeature_SystemUI_ConfigDefQuickSettingItem") {
+                                val quickSettingItem = result as? String ?: ""
+                                if (!quickSettingItem.contains("TurnOn5g")) {
+                                    "$quickSettingItem,TurnOn5g"
+                                } else {
+                                    quickSettingItem
+                                }
+                            } else {
+                                result
+                            }
+                        }
+                    }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
+        }
+        if (param.packageName == Package.SYSTEMUI) {
+            try {
+                val qsTileHostClass = param.classLoader.loadClass("com.android.systemui.qs.QSTileHost")
+                val isAvailableCustomTileMethod =
+                    qsTileHostClass.getDeclaredMethod("isAvailableCustomTile", String::class.java)
+                xposedModule.hook(isAvailableCustomTileMethod).intercept { chain ->
+                    if (chain.args.firstOrNull() == "TurnOn5g") {
+                        true
+                    } else {
+                        chain.proceed()
+                    }
+                }
+            } catch (t: Throwable) {
+                xlog(t)
+            }
+        }
     }
 }

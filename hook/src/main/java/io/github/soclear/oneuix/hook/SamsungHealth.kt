@@ -605,14 +605,16 @@ object SamsungHealth {
     context(xposedModule: XposedModule)
     fun hideDiscover() = afterAttachTry {
         val config = getHookConfig { getHookConfigFromDexKit() } ?: return@afterAttachTry
-        xposedModule.hook(DexMethod(config.isDiscoverPlusSupported).getMethodInstance(classLoader))
-            .intercept { false }
+        listOf(config.isDiscoverPlusSupported, config.isPromotionSupported).forEach {
+            xposedModule.hook(DexMethod(it).getMethodInstance(classLoader)).intercept { false }
+        }
     }
 
     @Serializable
     private data class SamsungHealthHookConfig(
         override val versionCode: Long,
         val isDiscoverPlusSupported: String,
+        val isPromotionSupported: String,
     ) : HookConfig
 
     private fun Context.getHookConfigFromDexKit(): SamsungHealthHookConfig? {
@@ -625,9 +627,21 @@ object SamsungHealth {
                     paramCount = 0
                 }
             }.singleOrNull() ?: return null
+            val promotionSupported = bridge.findClass {
+                matcher {
+                    usingEqStrings("SHEALTH#PromotionManager", "restorePromotions started")
+                }
+            }.findMethod {
+                matcher {
+                    modifiers = Modifier.PUBLIC or Modifier.STATIC
+                    returnType = "boolean"
+                    paramCount = 0
+                }
+            }.singleOrNull() ?: return null
             return SamsungHealthHookConfig(
                 versionCode = longVersionCode,
                 isDiscoverPlusSupported = method.toDexMethod().serialize(),
+                isPromotionSupported = promotionSupported.toDexMethod().serialize(),
             )
         }
     }

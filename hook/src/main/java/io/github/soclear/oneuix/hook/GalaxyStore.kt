@@ -7,12 +7,14 @@ import io.github.libxposed.api.XposedModuleInterface
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttach
+import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.getHookConfig
+import io.github.soclear.oneuix.hook.util.longVersionCode
 import kotlinx.serialization.Serializable
 import org.luckypray.dexkit.DexKitBridge
-import org.luckypray.dexkit.query.enums.MatchType
 import org.luckypray.dexkit.wrap.DexMethod
+import java.io.File
 import java.lang.reflect.Modifier
 
 
@@ -156,6 +158,20 @@ object GalaxyStore {
         }
     }
 
+    context(xposedModule: XposedModule)
+    fun hideTabs(discover: Boolean, benefits: Boolean) = afterAttachTry(discover || benefits) {
+        val hookConfig = getHookConfig(File(filesDir, "GalaxyStoreTabsHookConfig.json")) {
+            getTabsHookConfigFromDexKit()
+        } ?: return@afterAttachTry
+        val getters = buildList {
+            if (discover) add(hookConfig.discoverTabSupport)
+            if (benefits) add(hookConfig.benefitsTabSupport)
+        }
+        getters.forEach {
+            xposedModule.hook(DexMethod(it).getMethodInstance(classLoader)).intercept { "N" }
+        }
+    }
+
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun blockGalaxyStoreAds() {
         if (param.packageName != Package.STORE) {
@@ -177,31 +193,59 @@ object GalaxyStore {
         val isWebViewPopupHideDay: String,
         val requestMapPutMethod: String,
         val getAdDataGroupParentMethod: String,
+        val onAdAvailable: String,
         val checkAge: String,
     ) : HookConfig
+
+    @Serializable
+    private data class GalaxyStoreTabsHookConfig(
+        override val versionCode: Long,
+        val discoverTabSupport: String,
+        val benefitsTabSupport: String,
+    ) : HookConfig
+
+    private fun Context.getTabsHookConfigFromDexKit(): GalaxyStoreTabsHookConfig? {
+        System.loadLibrary("dexkit")
+        DexKitBridge.create(classLoader, true).use { bridge ->
+            val resultClass = bridge.getClassData("com.sec.android.app.commonlib.doc.GetCommonInfoResult")
+                ?: return null
+            fun tabSupportGetter(field: String): String? = resultClass.findMethod {
+                matcher {
+                    paramCount = 0
+                    returnType = "java.lang.String"
+                    addUsingField { name = field }
+                }
+            }.singleOrNull()?.toDexMethod()?.serialize()
+
+            return GalaxyStoreTabsHookConfig(
+                versionCode = longVersionCode,
+                discoverTabSupport = tabSupportGetter("discoverTabSupport") ?: return null,
+                benefitsTabSupport = tabSupportGetter("benefitsTabSupport") ?: return null,
+            )
+        }
+    }
 
     private fun Context.getHookConfigFromDexKit(): GalaxyStoreHookConfig? {
         System.loadLibrary("dexkit")
         DexKitBridge.create(classLoader, true).use { bridge ->
-            val prepareRecommendPopupOnDownloading = bridge.findClass {
+            val prepareRecommendPopupOnDownloading = bridge.findMethod {
                 searchPackages("com.sec.android.app.samsungapps.detail.activity")
                 matcher {
-                    modifiers(Modifier.PUBLIC, MatchType.Equals)
+                    returnType = "void"
+                    paramCount = 0
+                    usingEqStrings("detail_game_download_count")
                 }
-            }.findMethod {
-                matcher { name = "prepareRecommendPopupOnDownloading" }
             }
             if (prepareRecommendPopupOnDownloading.isEmpty()) {
                 return null
             }
 
-            val isWebViewPopupHideDay = bridge.findClass {
-                searchPackages("com.samsung.android.game.cloudgame.sdk")
+            val isWebViewPopupHideDay = bridge.findMethod {
                 matcher {
-                    addInterface("com.sec.android.app.commonlib.doc.DataExchanger")
+                    returnType = "boolean"
+                    paramTypes(String::class.java)
+                    usingEqStrings("WEB_VIEW_POPUP_HIDE_DAY", "WEB_VIEW_POPUP_HIDE_DAY_CLOSEDPOPUP")
                 }
-            }.findMethod {
-                matcher { name = "isWebViewPopupHideDay" }
             }.singleOrNull() ?: return null
 
             val requestMapPutMethod = bridge.findClass {
@@ -242,18 +286,27 @@ object GalaxyStore {
                 }
             }.singleOrNull() ?: return null
 
-            val checkAge = bridge.findClass {
+            val onAdAvailable = bridge.findMethod {
+                matcher {
+                    declaredClass = "com.sec.android.app.samsungapps.slotpage.GalaxyAppsMainActivity"
+                    returnType = "void"
+                    paramTypes($$"com.sec.android.app.samsungapps.curate.ad.AdInventoryManager$PLATFORM")
+                }
+            }.singleOrNull() ?: return null
+
+            val checkAge = bridge.findMethod {
                 searchPackages("com.samsung.android.game.cloudgame.sdk")
                 matcher {
-                    modifiers = Modifier.PUBLIC or Modifier.FINAL
-                    addInterface("com.sec.android.app.commonlib.realnameage.IAgeLimitChecker")
-                    superClass = "java.lang.Object"
-                }
-            }.findMethod {
-                matcher {
-                    modifiers = Modifier.PUBLIC or Modifier.FINAL
                     returnType = "void"
-                    name = "check"
+                    paramTypes(
+                        "android.content.Context",
+                        "java.lang.String",
+                        "java.lang.String",
+                        "int",
+                        $$"com.sec.android.app.commonlib.realnameage.IAgeLimitChecker$POPUP_TYPE",
+                        null,
+                    )
+                    usingEqStrings("CREDIT_CARD_VALIDATION_YN")
                 }
             }.singleOrNull() ?: return null
 
@@ -266,6 +319,7 @@ object GalaxyStore {
                 requestMapPutMethod = requestMapPutMethod.toDexMethod().serialize(),
                 getAdDataGroupParentMethod = getAdDataGroupParentMethod.toDexMethod()
                     .serialize(),
+                onAdAvailable = onAdAvailable.toDexMethod().serialize(),
                 checkAge = checkAge.toDexMethod().serialize(),
             )
         }
@@ -301,12 +355,8 @@ object GalaxyStore {
             }
 
         // 拦截广告加载完成回调
-        val platformClass =
-            classLoader.loadClass($$"com.sec.android.app.samsungapps.curate.ad.AdInventoryManager$PLATFORM")
-        xposedModule.hook(
-            classLoader.loadClass("com.sec.android.app.samsungapps.slotpage.GalaxyAppsMainActivity")
-                .getDeclaredMethod("onAdAvailable", platformClass)
-        ).intercept { null }
+        xposedModule.hook(DexMethod(hookConfig.onAdAvailable).getMethodInstance(classLoader))
+            .intercept { null }
 
         // 清空广告列表
         val listClass = classLoader.loadClass("java.util.List")
@@ -331,8 +381,13 @@ object GalaxyStore {
             }
 
         // 去除年龄验证
-        xposedModule.hook(DexMethod(hookConfig.checkAge).getMethodInstance(classLoader)).intercept { chain ->
-            chain.args.last()?.reflect?.call("onResult", true)
+        val checkAge = DexMethod(hookConfig.checkAge).getMethodInstance(classLoader)
+        val onResult = checkAge.parameterTypes.last().declaredMethods.single {
+            it.returnType == Void.TYPE &&
+                it.parameterTypes.contentEquals(arrayOf(Boolean::class.javaPrimitiveType))
+        }.apply { isAccessible = true }
+        xposedModule.hook(checkAge).intercept { chain ->
+            chain.args.last()?.let { onResult.invoke(it, true) }
             null
         }
     }

@@ -70,6 +70,7 @@
 
 - 快捷设置时间设为等宽字体
 - 隐藏快捷设置的设备控制
+- 隐藏折叠通知栏的快捷开关行（One UI 6.1）
 - 隐藏快捷设置的 Smart View
 - 开启快捷设置 5G 磁贴
 - 开启沉浸模式快捷设置磁贴
@@ -153,6 +154,7 @@
 - 支持三星笔记的所有功能
 - 日历中显示中国节假日
 - 支持拦截短信
+- 解除三星信息的本地 RCS 限制（仍需运营商支持）
 - 主题和图标试用永不过期
 - 伪装浏览器国家/地区代码为美国（解锁搜索引擎和广告拦截器）
 - 禁用 AI 水印
@@ -237,6 +239,7 @@
 
 - Set Quick Settings clock to monospaced font
 - Hide Device Control in Quick Settings
+- Hide Quick Settings tiles in the collapsed notification panel (One UI 6.1)
 - Hide Smart View in Quick Settings
 - Enable 5G Quick Settings tile
 - Enable Immersive mode Quick Settings tile
@@ -320,6 +323,7 @@
 - Support all Samsung Notes features
 - Show Chinese holidays in Calendar
 - Support message blocking
+- Bypass local RCS restrictions in Samsung Messages (carrier support required)
 - Never expire theme and icon trials
 - Spoof Browser Region to US
 - Disable AI watermark
