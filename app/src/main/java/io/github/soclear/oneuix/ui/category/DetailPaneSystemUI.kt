@@ -698,6 +698,15 @@ fun DetailPaneSystemUI(
                     onEvent(SystemUIEvent.QS.ShowTraditionalChineseDateOnQS(it))
                 }
             )
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.light_mode),
+                title = stringResource(id = R.string.removeQsBarTileAlpha_title),
+                summary = stringResource(id = R.string.removeQsBarTileAlpha_summary),
+                checked = uiState.qs.removeQsBarTileAlpha,
+                onCheckedChange = {
+                    onEvent(SystemUIEvent.QS.RemoveQsBarTileAlpha(it))
+                }
+            )
             Column {
                 var textSize by remember { mutableFloatStateOf(uiState.qs.qsClockTextSize) }
                 var expanded by rememberSaveable { mutableStateOf(false) }
@@ -1108,6 +1117,9 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class ShowTraditionalChineseDateOnQS(val value: Boolean) : QS
+
+        @JvmInline
+        value class RemoveQsBarTileAlpha(val value: Boolean) : QS
 
         @JvmInline
         value class ModifyQSClockTextSize(val value: Boolean) : QS
@@ -1599,6 +1611,16 @@ private fun SettingViewModel.onQSEvent(event: SystemUIEvent.QS) {
                     systemUI = preference.systemUI.copy(
                         qs = preference.systemUI.qs.copy(
                             addBrightnessProgressToQsBar = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.QS.RemoveQsBarTileAlpha -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        qs = preference.systemUI.qs.copy(
+                            removeQsBarTileAlpha = event.value
                         )
                     )
                 )

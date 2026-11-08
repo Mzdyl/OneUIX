@@ -18,7 +18,9 @@ import io.github.libxposed.api.XposedModule
 import io.github.soclear.oneuix.common.ONE_UI_VERSION
 import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.TraditionalChineseCalendar
+import io.github.soclear.oneuix.hook.util.DIAG_MARKER
 import io.github.soclear.oneuix.hook.util.afterAttachTry
+import io.github.soclear.oneuix.hook.util.diagBoth
 import io.github.soclear.oneuix.hook.util.reflect
 import io.github.soclear.oneuix.hook.util.xlog
 import kotlin.math.roundToInt
@@ -668,5 +670,178 @@ object QS {
             }
             result
         }
+    }
+
+    // ------------------------------------------------------------------
+    // 去掉 SystemUI 对 bar tile 自定义图额外套的 Modifier.alpha(0.5f)
+    //
+    // 反编译证据（One UI 8 / SM-S9280ZCU5DZDP）：
+    //   IconProgressBarWithTile.kt:140   亮度/音量        Image(fillMaxSize().clip(shape).alpha(0.5f))
+    //   QuickTileBox.kt:753              按钮背景        同上
+    //   EmptyMediaPlayer.kt:528          媒体播放器(空态) 同上
+    // quick tile（QuickTileKt.kt）没有这一层 alpha，所以 bar 才显得更淡。
+    //
+    // 手法：AlphaKt.alpha(Modifier, float) 是普通 static 方法，Compose 自己就有
+    // 「alpha == 1f 直接 return 入参」的短路分支，这里命中时直接返回 args[0]，
+    // 等价于这一层 alpha 不存在，不改变任何其它渲染语义。
+    // ------------------------------------------------------------------
+    private val BAR_TILE_ALPHA_CALLERS = arrayOf(
+        "com.android.systemui.samsung.quicksetting.ui.tiles.IconProgressBarWithTileKt",
+        "com.android.systemui.samsung.quicksetting.ui.tiles.QuickTileBoxKt\$\$ExternalSyntheticLambda8",
+        "com.android.systemui.samsung.quicksetting.ui.tiles.EmptyMediaPlayerKt\$\$ExternalSyntheticLambda6",
+    )
+
+    private fun callerIsQsBarTile(): Boolean {
+        val st = Throwable().stackTrace
+        for (i in 1 until minOf(st.size, 12)) {
+            val name = st[i].className
+            // 精确类名优先；退化为按包前缀判断，避免 Compose 编译产物改名导致漏命中
+            // 只认这三个 bar tile 的类（含其 lambda 类名），
+            // 不要用整个 quicksetting 包前缀，否则会误伤夜间模式的整体变暗遮罩
+            if (name.contains("IconProgressBarWithTileKt")) return true
+            if (name.contains("QuickTileBoxKt")) return true
+            if (name.contains("EmptyMediaPlayerKt")) return true
+        }
+        return false
+    }
+
+    // ---------------------------------------------------------------
+    // 去掉 bar tile 的 alpha(0.5)：让 亮度/音量/按钮背景/媒体播放器 的自定义图
+    // 与 quick tile 一样实。几何上报（QsGeom）已废弃 —— 几何改走 SystemUI
+    // DataStore 的 grid 规格，进程内语义树上报不再需要，这里只留 alpha hook。
+    // DIAG=true 只在诊断构建里用，正式版必须是 false（不往 logcat 写任何东西）。
+    // ---------------------------------------------------------------
+    const val DIAG = false
+
+    context(xposedModule: XposedModule)
+    fun removeQsBarTileAlpha() = afterAttachTry(Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        val alphaKt = classLoader.loadClass("androidx.compose.ui.draw.AlphaKt")
+        // 用反射拿方法，避免给 hook 模块引入 compose 编译期依赖
+        val alphaMethod = alphaKt.declaredMethods.firstOrNull {
+            it.name == "alpha" &&
+                it.parameterTypes.size == 2 &&
+                it.parameterTypes[1] == Float::class.javaPrimitiveType
+        } ?: run {
+            if (DIAG) android.util.Log.e("OneUIXDiag", "[$DIAG_MARKER] alpha: AlphaKt.alpha(Modifier,float) NOT FOUND")
+            return@afterAttachTry
+        }
+        if (DIAG) android.util.Log.e("OneUIXDiag", "[$DIAG_MARKER] alpha: hook installed -> " + alphaMethod)
+        val hit = java.util.concurrent.atomic.AtomicInteger(0)
+        val seen = java.util.concurrent.atomic.AtomicInteger(0)
+        xposedModule.hook(alphaMethod).intercept { chain ->
+            val alpha = chain.args[1] as Float
+            if (DIAG && alpha == 0.5f) {
+                val n = seen.incrementAndGet()
+                if (n <= 6) {
+                    val st = Throwable().stackTrace
+                    android.util.Log.e(
+                        "OneUIXDiag",
+                        "[$DIAG_MARKER] alpha 0.5f #$n caller=" + (st.getOrNull(1)?.className ?: "?") +
+                            " whitelisted=" + callerIsQsBarTile()
+                    )
+                }
+            }
+            if (alpha == 0.5f && callerIsQsBarTile()) {
+                if (DIAG && hit.incrementAndGet() == 1) {
+                    android.util.Log.e("OneUIXDiag", "[$DIAG_MARKER] alpha: FIRST HIT -> returned original Modifier")
+                }
+                chain.args[0]
+            } else {
+                chain.proceed()
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // 无 UI 刷新 QS 主题
+    //
+    // 外部一条广播 → 在 SystemUI 进程内冒充 SystemUI 调 QsTuner 的 provider：
+    //   call("grantUriPermissions()", bundle("button_info_list_json" = json))
+    // 拿到 granted_count 后，再写 Settings.Secure + notifyChange（和 QsTuner 内部流程一致）。
+    //
+    // 为什么必须在 SystemUI 进程里做：
+    //   1) QsTuner 的 provider 有调用方校验：
+    //      Rune.canSupportPeaceUX() && !"com.android.systemui".equals(callingPackage) → return null
+    //      （shell 里 `content call` 实测拿到 null）
+    //   2) shell 的 `content call --extra KEY:TYPE:VALUE` 按 ':' 分段，JSON 里的 content:// 会解析崩
+    //   3) 只有拿到 URIGrant 之后 SystemUI 才能读 content://...fileprovider/customImages/*.png，
+    //      否则所有 tile 掉回默认样式
+    //
+    // 刷新的真相：URI 不变 → SystemUI 按 URI 命中解码缓存，图不会更新。
+    // 所以这条例行必须配合"换文件名（时间戳命名）"的部署产物，它负责的是"授权 + 触发重读"。
+    //
+    // 用法（root shell）：
+    //   am broadcast -a io.github.soclear.oneuix.action.QS_REFRESH --es json "$(cat list.json)"
+    //
+    // 回执：<systemui filesDir>/oneuix_qs_refresh.status
+    //   （SystemUI 自己的 data 目录 root 可读；不要写 /data/local/tmp，SELinux 会挡）
+    // ---------------------------------------------------------------
+    const val ACTION_QS_REFRESH = "io.github.soclear.oneuix.action.QS_REFRESH"
+    private const val QSTUNER_PROVIDER_URI = "content://com.samsung.android.qstuner.provider"
+    private const val KEY_BUTTON_INFO = "quickstar_button_info_list"
+    private const val REFRESH_STATUS_FILE = "oneuix_qs_refresh.status"
+
+    context(xposedModule: XposedModule)
+    fun registerQsRefreshReceiver() = afterAttachTry {
+        val app = this
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+                val json = intent.getStringExtra("json")
+                if (json == null) {
+                    if (DIAG) diagBoth(xposedModule, "QS_REFRESH received without json, ignore")
+                    return
+                }
+                // binder 调用放到后台线程，别占 SystemUI 主线程
+                Thread {
+                    var err = ""
+                    val granted = try {
+                        val out = app.contentResolver.call(
+                            android.net.Uri.parse(QSTUNER_PROVIDER_URI),
+                            "grantUriPermissions()",
+                            null,
+                            android.os.Bundle().apply { putString("button_info_list_json", json) }
+                        )
+                        out?.getInt("granted_count", -1) ?: -1
+                    } catch (t: Throwable) {
+                        err += "call=${t.javaClass.simpleName};"
+                        -1
+                    }
+                    var settingsOk = false
+                    try {
+                        android.provider.Settings.Secure.putString(
+                            app.contentResolver, KEY_BUTTON_INFO, json
+                        )
+                        app.contentResolver.notifyChange(
+                            android.provider.Settings.Secure.getUriFor(KEY_BUTTON_INFO), null
+                        )
+                        settingsOk = true
+                    } catch (t: Throwable) {
+                        err += "settings=${t.javaClass.simpleName};"
+                    }
+                    val ts = System.currentTimeMillis()
+                    if (DIAG) {
+                        diagBoth(
+                            xposedModule,
+                            "QS_REFRESH granted=$granted settings=$settingsOk err=$err"
+                        )
+                    }
+                    // 回执必须落盘：正式包不打日志，这是唯一的可观测点
+                    runCatching {
+                        java.io.File(app.filesDir, REFRESH_STATUS_FILE).writeText(
+                            "granted=$granted at $ts\n" +
+                                "json_len=${json.length}\n" +
+                                "settings=$settingsOk\n" +
+                                "err=$err\n"
+                        )
+                    }
+                }.start()
+            }
+        }
+        app.registerReceiver(
+            receiver,
+            android.content.IntentFilter(ACTION_QS_REFRESH),
+            android.content.Context.RECEIVER_EXPORTED
+        )
+        if (DIAG) diagBoth(xposedModule, "QS_REFRESH receiver registered (exported)")
     }
 }

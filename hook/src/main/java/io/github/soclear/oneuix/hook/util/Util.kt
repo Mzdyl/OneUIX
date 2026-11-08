@@ -48,10 +48,35 @@ val Context.longVersionCode get() = packageManager.getPackageInfo(packageName, 0
 @SuppressLint("DiscouragedPrivateApi")
 private val attachMethod: Method = Application::class.java.getDeclaredMethod("attach", Context::class.java)
 
+// 诊断构建标记：改这里能一眼看出手机上跑的是哪一版诊断包
+const val DIAG_MARKER = "ONEUIXDIAG/v3"
+
+// 【唯一的诊断总闸】正式版必须是 false：Main / QS / afterAttach 的 diagBoth 全在这里被闸掉，
+// 保证干净包一行日志都不打。
+const val DIAG_ENABLED = false
+
+// 双通道诊断：android.util.Log（logcat 直接可见，不受框架 tag 白名单影响）
+//             + XposedModule.log（进 LSPosed 管理器的模块日志）
+// 两条都写，避免"日志被过滤"和"模块没加载"两种完全不同的原因看起来一样。
+fun diagBoth(module: XposedModule, message: String) {
+    if (!DIAG_ENABLED) return
+    val line = "[$DIAG_MARKER] $message"
+    runCatching { android.util.Log.e("OneUIXDiag", line) }
+    runCatching { module.log(Log.ERROR, "OneUIXDiag", line) }
+}
+
+private val attachLogged = java.util.concurrent.atomic.AtomicBoolean(false)
+
 context(xposedModule: XposedModule)
 fun afterAttach(action: Context.() -> Unit) {
     xposedModule.hook(attachMethod).intercept { chain ->
         val result = chain.proceed()
+        if (attachLogged.compareAndSet(false, true)) {
+            diagBoth(
+                xposedModule,
+                "Application.attach fired in " + (chain.args[0] as? Context)?.packageName
+            )
+        }
         action(chain.args[0] as Context)
         result
     }
