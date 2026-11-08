@@ -126,9 +126,6 @@
     <string name="disableNotificationGrouping_summary">同一个应用的多个通知在状态栏不合并图标，通知中心不折叠</string>
     <string name="hideGalaxyStoreDiscover_title">隐藏“发现”标签</string>
     <string name="hideGalaxyStoreBenefits_title">隐藏“优惠”标签</string>
-    <string name="galaxyStoreRegion_title">应用商店 SIM 运营商代码（MCC+MNC）</string>
-    <string name="galaxyStoreRegion_summary">填写 5 或 6 位数字，保留前导零，点击确认保存；留空不修改。重启应用商店后生效。</string>
-    <string name="galaxyStoreRegion_reference">查询国家和运营商代码（ITU）</string>
     <string name="autoExpandNotifications_title">自动展开通知</string>
     <string name="hideOngoingActivityMedia_title">隐藏正在进行的活动（媒体应用）</string>
     <string name="hideOngoingActivityMedia_summary">隐藏后台播放音乐时状态栏的正在进行活动胶囊和通知栏媒体通知卡片</string>
@@ -203,6 +200,8 @@
     <string name="recentsGridThreeRows_title">最近任务网格显示三行</string>
     <string name="recentsGridThreeRows_summary">网格（Grid）样式由两行扩展为三行</string>
     <string name="supportOutdoorMode_title">解锁户外模式</string>
+    <string name="enableQsRefreshReceiver_title">QS 主题刷新广播（root）</string>
+    <string name="enableQsRefreshReceiver_summary">注册 SystemUI 广播，让 root shell 用 am broadcast -a io.github.soclear.oneuix.action.QS_REFRESH --es json "$(cat list.json)" 刷新快捷面板磁贴图片。开启后 SystemUI 会代你授权图片 URI 并改写 QuickStar 磁贴配置，不用该脚本时请保持关闭。</string>
     <string name="removeQsBarTileAlpha_title">去掉 QS bar tile 的半透明</string>
     <string name="removeQsBarTileAlpha_summary">亮度/音量/按钮背景/媒体播放器的自定义图不再被 SystemUI 额外乘 alpha(0.5)，与 quick tile 一样原样显示。改完需要重启 SystemUI。</string>
     <string name="hideRecentsCloseAllButton_title">隐藏最近任务关闭全部按钮</string>
@@ -293,8 +292,6 @@
     <string name="mdecDeviceType_default">默认（跟随系统）</string>
     <string name="mdecDeviceType_phone">手机（模拟为主设备 - 共享本机通话和短信）</string>
     <string name="mdecDeviceType_tablet">平板（模拟为副设备 - 接打其他手机上的电话）</string>
-    <string name="useSPenGoogleTranslate_title">S Pen 使用谷歌翻译</string>
-    <string name="useSPenGoogleTranslate_summary">将 S Pen 翻译源从百度切换为谷歌</string>
     <string name="supportCallAndTextOnOtherDevices_title">支持跨设备接打电话和收发短信</string>
     <string name="supportCallAndTextOnOtherDevices_summary">设置 -> 已连接的设备 -> 跨设备接打电话和收发短信</string>
     <string name="hideAppsSearchBar_title">隐藏应用屏幕搜索栏</string>

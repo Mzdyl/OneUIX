@@ -146,6 +146,10 @@ data class Preference(
             val modifyQSClockTextSize: Boolean = false,
             // 去掉 SystemUI 给 bar tile 自定义图套的 Modifier.alpha(0.5f)
             val removeQsBarTileAlpha: Boolean = true,
+            // 无 UI 刷新 QS 主题：注册 QS_REFRESH 导出广播接收器。默认关闭 ——
+            // 开启后 SystemUI 会替广播发送方 grantUriPermissions 并改写 Settings.Secure，
+            // 属于特权原语，必须由用户显式开启。
+            val enableQsRefreshReceiver: Boolean = false,
             val qsClockTextSize: Float = 32f,
         )
 

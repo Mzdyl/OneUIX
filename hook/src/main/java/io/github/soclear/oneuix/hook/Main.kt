@@ -606,7 +606,11 @@ class Main : XposedModule() {
                 }
                 // 无 UI 刷新 QS 主题：注册导出广播接收器，让 qstuner 侧一条 am broadcast
                 // 就能走"授权 URI + 写 Settings.Secure + notifyChange"，不必打开 QsTuner 界面
-                QS.registerQsRefreshReceiver()
+                if (preference.systemUI.qs.enableQsRefreshReceiver) {
+                    QS.registerQsRefreshReceiver()
+                } else {
+                    diag("SYSTEMUI: enableQsRefreshReceiver switch is OFF, receiver not registered")
+                }
 
                 if (preference.systemUI.aod.hideAODChargingInfo) {
                     AOD.hideAODChargingInfo()

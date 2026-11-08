@@ -32,7 +32,6 @@ com.android.server.telecom
 com.android.phone
 com.sec.imsservice
 com.samsung.android.app.sharelive
-com.sec.android.app.shealth
 com.samsung.android.agent.storage
 io.github.soclear.oneuix
 io.github.mzdyl.oneuix

@@ -172,17 +172,20 @@ object Android {
             val policyClass = param.classLoader
                 .loadClass("com.android.server.asks.Policy")
             runCatching { policyClass.reflect["mIsTargetList"] = ArrayList<Any>() }
+                .onFailure { xlog(it) }
             runCatching { policyClass.reflect["mTargetList"] = ArrayList<Any>() }
+                .onFailure { xlog(it) }
             runCatching { policyClass.reflect["mTargetModelList"] = ArrayList<Any>() }
+                .onFailure { xlog(it) }
             runCatching { policyClass.reflect["mTargetModelPolicy"] = ArrayList<Any>() }
+                .onFailure { xlog(it) }
             runCatching { policyClass.reflect["mModelCheckList"] = ArrayList<Any>() }
+                .onFailure { xlog(it) }
 
             asksManagerClass.declaredMethods
                 .filter { it.name == "isBlockTarget" || it.name == "hasBlockPolicy" }
-                .forEach {
-                    xposedModule.hook(it).intercept { false }
-                }
-        }
+                .forEach { installAsksBooleanHook(it, false) }
+        }.onFailure { xlog(it) }
 
         // Modern ASKS (One UI 6+ / Android 14, 15, 16)
         runCatching {
@@ -191,27 +194,41 @@ object Android {
             asksServiceClass.declaredMethods
                 .filter {
                     it.name == "isTargetPackage" ||
-                    it.name == "isUnknownApps" ||
-                    it.name == "isSuspiciousMsgTarget" ||
-                    it.name == "isBlockTarget" ||
-                    it.name == "hasBlockPolicy"
+                        it.name == "isUnknownApps" ||
+                        it.name == "isSuspiciousMsgTarget" ||
+                        it.name == "isBlockTarget" ||
+                        it.name == "hasBlockPolicy"
                 }
-                .forEach {
-                    xposedModule.hook(it).intercept { false }
-                }
+                .forEach { installAsksBooleanHook(it, false) }
 
             asksServiceClass.declaredMethods
                 .filter { it.name == "checkFollowingLegitimateWay" }
-                .forEach {
-                    xposedModule.hook(it).intercept { true }
-                }
+                .forEach { installAsksBooleanHook(it, true) }
 
             asksServiceClass.declaredMethods
                 .filter { it.name == "checkASKSTarget" }
-                .forEach {
-                    xposedModule.hook(it).intercept { emptyArray<String>() }
+                .forEach { method ->
+                    // 返回类型不符时别硬挂：拦截体返回 String[] 而目标是别的类型，
+                    // 会在 ASKS 自己的调用点炸 ClassCastException
+                    if (method.returnType != Array<String>::class.java) {
+                        xlog("ASKS: skip ${method.name} -> ${method.returnType}")
+                        return@forEach
+                    }
+                    xposedModule.hook(method).intercept { emptyArray<String>() }
                 }
+        }.onFailure { xlog(it) }
+    }
+
+    // 只按方法名过滤会把签名变了的版本一起挂上；拦截体返回 Boolean 而目标不是 boolean
+    // 时，异常会抛在 ASKS 的调用点而不是这里，所以先校验再挂。
+    context(xposedModule: XposedModule)
+    private fun installAsksBooleanHook(method: java.lang.reflect.Method, result: Boolean) {
+        val returnType = method.returnType
+        if (returnType != Boolean::class.javaPrimitiveType && returnType != java.lang.Boolean::class.java) {
+            xlog("ASKS: skip ${method.name} -> $returnType")
+            return
         }
+        xposedModule.hook(method).intercept { result }
     }
 
     // FCM 强制唤醒

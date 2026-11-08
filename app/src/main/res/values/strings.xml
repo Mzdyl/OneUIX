@@ -192,6 +192,10 @@
     <string name="supportAllNotesFeatures_summary">Math solver, AI text to image, Sketch to image, Voice to text, OCR, Translation</string>
     <string name="modifyMaxNeverKilledAppNum_title">Modify max number of \'Keep open\' apps</string>
     <string name="showTraditionalChineseDateOnQS_title">Show Lunar calendar in QS panel</string>
+    <string name="supportCallAndTextOnOtherDevices_title">Support call &amp; text on other devices</string>
+    <string name="supportCallAndTextOnOtherDevices_summary">Settings -> Connected devices -> Call &amp; text on other devices</string>
+    <string name="enableQsRefreshReceiver_title">QS theme refresh broadcast (root)</string>
+    <string name="enableQsRefreshReceiver_summary">Register a SystemUI broadcast so a root shell can refresh QS tile images with: am broadcast -a io.github.soclear.oneuix.action.QS_REFRESH --es json "$(cat list.json)". SystemUI then grants the image URIs and rewrites the QuickStar tile config on your behalf, so leave it off unless you actually use that script.</string>
     <string name="removeQsBarTileAlpha_title">Remove QS bar tile transparency</string>
     <string name="removeQsBarTileAlpha_summary">Bar tiles (brightness/volume/button background/media player) show custom images at full opacity, same as quick tiles. Requires SystemUI restart.</string>
     <string name="modifyQSClockTextSize_title">Modify Quick Settings panel clock text size</string>

@@ -3,6 +3,7 @@ package io.github.soclear.oneuix.hook
 import android.content.Context
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
+import io.github.soclear.oneuix.common.Package
 import io.github.soclear.oneuix.hook.util.HookConfig
 import io.github.soclear.oneuix.hook.util.afterAttachTry
 import io.github.soclear.oneuix.hook.util.getHookConfig

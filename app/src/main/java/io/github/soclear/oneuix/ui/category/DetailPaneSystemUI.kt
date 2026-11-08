@@ -759,6 +759,15 @@ fun DetailPaneSystemUI(
                     onEvent(SystemUIEvent.QS.RemoveQsBarTileAlpha(it))
                 }
             )
+            SwitchItem(
+                icon = ImageVector.vectorResource(id = R.drawable.light_mode),
+                title = stringResource(id = R.string.enableQsRefreshReceiver_title),
+                summary = stringResource(id = R.string.enableQsRefreshReceiver_summary),
+                checked = uiState.qs.enableQsRefreshReceiver,
+                onCheckedChange = {
+                    onEvent(SystemUIEvent.QS.EnableQsRefreshReceiver(it))
+                }
+            )
             Column {
                 var textSize by remember { mutableFloatStateOf(uiState.qs.qsClockTextSize) }
                 var expanded by rememberSaveable { mutableStateOf(false) }
@@ -1167,6 +1176,9 @@ sealed interface SystemUIEvent {
 
         @JvmInline
         value class RemoveQsBarTileAlpha(val value: Boolean) : QS
+
+        @JvmInline
+        value class EnableQsRefreshReceiver(val value: Boolean) : QS
 
         @JvmInline
         value class ModifyQSClockTextSize(val value: Boolean) : QS
@@ -1704,6 +1716,16 @@ private fun SettingViewModel.onQSEvent(event: SystemUIEvent.QS) {
                     systemUI = preference.systemUI.copy(
                         qs = preference.systemUI.qs.copy(
                             removeQsBarTileAlpha = event.value
+                        )
+                    )
+                )
+            }
+
+            is SystemUIEvent.QS.EnableQsRefreshReceiver -> {
+                preference.copy(
+                    systemUI = preference.systemUI.copy(
+                        qs = preference.systemUI.qs.copy(
+                            enableQsRefreshReceiver = event.value
                         )
                     )
                 )

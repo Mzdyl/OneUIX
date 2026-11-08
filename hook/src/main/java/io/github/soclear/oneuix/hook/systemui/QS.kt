@@ -879,12 +879,6 @@ object QS {
     // 「alpha == 1f 直接 return 入参」的短路分支，这里命中时直接返回 args[0]，
     // 等价于这一层 alpha 不存在，不改变任何其它渲染语义。
     // ------------------------------------------------------------------
-    private val BAR_TILE_ALPHA_CALLERS = arrayOf(
-        "com.android.systemui.samsung.quicksetting.ui.tiles.IconProgressBarWithTileKt",
-        "com.android.systemui.samsung.quicksetting.ui.tiles.QuickTileBoxKt\$\$ExternalSyntheticLambda8",
-        "com.android.systemui.samsung.quicksetting.ui.tiles.EmptyMediaPlayerKt\$\$ExternalSyntheticLambda6",
-    )
-
     private fun callerIsQsBarTile(): Boolean {
         val st = Throwable().stackTrace
         for (i in 1 until minOf(st.size, 12)) {
@@ -970,14 +964,22 @@ object QS {
     // 回执：<systemui filesDir>/oneuix_qs_refresh.status
     //   （SystemUI 自己的 data 目录 root 可读；不要写 /data/local/tmp，SELinux 会挡）
     // ---------------------------------------------------------------
-    const val ACTION_QS_REFRESH = "io.github.soclear.oneuix.action.QS_REFRESH"
+const val ACTION_QS_REFRESH = "io.github.soclear.oneuix.action.QS_REFRESH"
     private const val QSTUNER_PROVIDER_URI = "content://com.samsung.android.qstuner.provider"
     private const val KEY_BUTTON_INFO = "quickstar_button_info_list"
     private const val REFRESH_STATUS_FILE = "oneuix_qs_refresh.status"
+    private const val MAX_REFRESH_JSON_LEN = 64 * 1024
+    private const val MIN_REFRESH_INTERVAL_MS = 2_000L
 
     context(xposedModule: XposedModule)
     fun registerQsRefreshReceiver() = afterAttachTry {
         val app = this
+        // 单线程执行器：原来每条广播都起一条裸线程，广播一密集就把 SystemUI 线程数打满
+        val worker = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+            Thread(r, "oneuix-qs-refresh").apply { isDaemon = true }
+        }
+        // 限速：两次实际处理至少间隔 MIN_REFRESH_INTERVAL_MS，重复广播直接丢弃
+        val lastAccepted = java.util.concurrent.atomic.AtomicLong(0L)
         val receiver = object : android.content.BroadcastReceiver() {
             override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
                 val json = intent.getStringExtra("json")
@@ -985,8 +987,17 @@ object QS {
                     if (DIAG) diagBoth(xposedModule, "QS_REFRESH received without json, ignore")
                     return
                 }
-                // binder 调用放到后台线程，别占 SystemUI 主线程
-                Thread {
+                if (json.length > MAX_REFRESH_JSON_LEN) {
+                    if (DIAG) diagBoth(xposedModule, "QS_REFRESH json too long, ignore")
+                    return
+                }
+                val now = android.os.SystemClock.elapsedRealtime()
+                val previous = lastAccepted.get()
+                if (now - previous < MIN_REFRESH_INTERVAL_MS || !lastAccepted.compareAndSet(previous, now)) {
+                    if (DIAG) diagBoth(xposedModule, "QS_REFRESH throttled, ignore")
+                    return
+                }
+                worker.execute {
                     var err = ""
                     val granted = try {
                         val out = app.contentResolver.call(
@@ -1019,7 +1030,6 @@ object QS {
                             "QS_REFRESH granted=$granted settings=$settingsOk err=$err"
                         )
                     }
-                    // 回执必须落盘：正式包不打日志，这是唯一的可观测点
                     runCatching {
                         java.io.File(app.filesDir, REFRESH_STATUS_FILE).writeText(
                             "granted=$granted at $ts\n" +
@@ -1028,7 +1038,7 @@ object QS {
                                 "err=$err\n"
                         )
                     }
-                }.start()
+                }
             }
         }
         app.registerReceiver(
@@ -1038,6 +1048,7 @@ object QS {
         )
         if (DIAG) diagBoth(xposedModule, "QS_REFRESH receiver registered (exported)")
     }
+
     @SuppressLint("PrivateApi")
     context(xposedModule: XposedModule, param: XposedModuleInterface.PackageReadyParam)
     fun turnOn5gQsTile() {
